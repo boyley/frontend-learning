@@ -1,0 +1,32 @@
+{
+  // TypeScript 编译配置（教学用）：开启严格模式，方便观察类型错误
+  // 详细逐项讲解见 15-tsconfig 模块
+  "compilerOptions": {
+    /* 目标与模块 */
+    "target": "ES2020",                 // 编译产物的 JS 版本
+    "module": "CommonJS",               // 模块规范（ts-node 默认走 CommonJS）
+    "lib": ["ES2020", "DOM"],           // 内置类型库（DOM 让示例可用 console / document）
+    "moduleResolution": "node",         // 模块解析策略
+
+    /* 严格类型检查（教学核心）：strict 等于一次开启下面一整组 */
+    "strict": true,                     // = noImplicitAny + strictNullChecks + ... 全开
+    "noImplicitAny": true,              // 禁止隐式 any
+    "strictNullChecks": true,           // null/undefined 不再随意赋值
+    "noImplicitThis": true,             // this 不能隐式为 any
+    "alwaysStrict": true,               // 产物加 "use strict"
+
+    /* 装饰器（13-decorators 模块需要） */
+    "experimentalDecorators": true,     // 开启实验性（旧版/legacy）装饰器语法
+    "emitDecoratorMetadata": true,      // 配合反射元数据
+
+    /* 其它常用项 */
+    "esModuleInterop": true,            // 兼容 CommonJS 默认导入
+    "forceConsistentCasingInFileNames": true, // 文件名大小写一致
+    "skipLibCheck": true,               // 跳过 .d.ts 检查，加快编译
+    "noEmitOnError": false,             // 教学示例含反例，保留以便观察
+    "outDir": "./dist"                  // 编译输出目录
+  },
+  // 只编译各模块的 demo.ts
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

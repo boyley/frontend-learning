@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>07 · @extend 与 %placeholder</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body { margin: 0; padding: 40px; font-family: system-ui, sans-serif; background: #f5f3fb; }
+      .stack > * { margin-bottom: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="stack">
+      <button class="btn-primary">Primary（继承 %btn-base）</button>
+      <button class="btn-ghost">Ghost（继承 %btn-base）</button>
+      <div class="message-success">成功提示（@extend .message）</div>
+      <div class="message-error">错误提示（@extend .message）</div>
+    </div>
+  </body>
+</html>

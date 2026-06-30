@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>13 · 组合器 / 关系选择器</title>
+  <style>
+    /* ===== 基础排版 ===== */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f7fa;
+      color: #222;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .subtitle { color: #666; margin-top: 0; }
+
+    /* ===== 演示区：一棵嵌套 DOM 树 ===== */
+    .tree {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+      margin: 24px 0;
+    }
+    /* 树里的每个盒子统一样式，方便观察高亮 */
+    .tree section,
+    .tree article,
+    .tree p,
+    .tree span {
+      border: 1px dashed #c7ccd6;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      background: #fbfcfe;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .tree section::before { content: "section.box"; }
+    .tree article::before { content: "article"; }
+    .tree p::before { content: "p"; }
+    .tree span::before { content: "span"; }
+    .tree section::before,
+    .tree article::before,
+    .tree p::before,
+    .tree span::before {
+      display: inline-block;
+      font-size: 11px;
+      color: #99a;
+      background: #eef0f5;
+      border-radius: 4px;
+      padding: 0 6px;
+      margin-right: 8px;
+      font-family: monospace;
+    }
+
+    /* ===== 切换按钮组 ===== */
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+    .controls button {
+      border: 1px solid #d0d4dc;
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all .15s;
+    }
+    .controls button:hover { border-color: #6c8cff; }
+    .controls button.active {
+      background: #4361ee;
+      border-color: #4361ee;
+      color: #fff;
+    }
+    code.sel {
+      font-family: monospace;
+      background: #2b2d42;
+      color: #ffd166;
+      padding: 2px 8px;
+      border-radius: 5px;
+    }
+
+    /* ===== 高亮规则：通过给 .tree 加 data 标记来切换不同组合器 ===== */
+    /* 命中元素统一的高亮外观 */
+    .tree.descendant .box p,
+    .tree.child .box > article,
+    .tree.adjacent .box + section,
+    .tree.sibling .box ~ section {
+      background: #4361ee !important;
+      border-color: #4361ee !important;
+      color: #fff !important;
+    }
+    .tree.descendant .box p::before,
+    .tree.child .box > article::before,
+    .tree.adjacent .box + section::before,
+    .tree.sibling .box ~ section::before {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+
+    .explain {
+      background: #fff;
+      border-left: 4px solid #4361ee;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      margin-top: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.05);
+    }
+    .explain b { color: #4361ee; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.05);}
+    th, td { border: 1px solid #e6e8ee; padding: 10px 12px; text-align: left; font-size: 14px; }
+    th { background: #4361ee; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>13 · 组合器 / 关系选择器（Combinators）</h1>
+    <p class="subtitle">通过元素之间的「位置关系」选取目标元素，而不是只看自身的 class / id。</p>
+
+    <!-- 切换不同组合器的按钮 -->
+    <div class="controls">
+      <button data-mode="descendant" class="active">后代 <code class="sel">.box p</code></button>
+      <button data-mode="child">子代 <code class="sel">.box &gt; article</code></button>
+      <button data-mode="adjacent">相邻兄弟 <code class="sel">.box + section</code></button>
+      <button data-mode="sibling">通用兄弟 <code class="sel">.box ~ section</code></button>
+    </div>
+
+    <!-- 一棵嵌套的 DOM 树：故意安排多层级与多个兄弟，方便对比命中差异 -->
+    <div class="tree descendant" id="tree">
+      <!-- 第一个 section 带 class="box"，是组合器的基准元素 -->
+      <section class="box">
+        <article>
+          <p>段落甲（box 的孙级 p）</p>
+        </article>
+        <p>段落乙（box 的直接子 p）</p>
+      </section>
+
+      <!-- 紧跟 .box 后面的兄弟 section：相邻兄弟会命中它 -->
+      <section>
+        <article>
+          <p>段落丙（这里的 p 不是 .box 的后代）</p>
+        </article>
+      </section>
+
+      <!-- 再往后的兄弟 section：通用兄弟也会命中 -->
+      <section>
+        <p>段落丁</p>
+      </section>
+    </div>
+
+    <div class="explain" id="explain"></div>
+
+    <table>
+      <thead>
+        <tr><th>组合器</th><th>写法</th><th>含义</th><th>是否要求直接相邻 / 直接子级</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>后代选择器</td><td><code class="sel">A B</code>（空格）</td><td>A 内部所有层级的 B</td><td>否，任意深度</td></tr>
+        <tr><td>子代选择器</td><td><code class="sel">A &gt; B</code></td><td>A 的直接子元素 B</td><td>是，仅一层</td></tr>
+        <tr><td>相邻兄弟</td><td><code class="sel">A + B</code></td><td>紧跟在 A 后面的第一个兄弟 B</td><td>是，仅紧邻一个</td></tr>
+        <tr><td>通用兄弟</td><td><code class="sel">A ~ B</code></td><td>A 之后所有同级兄弟 B</td><td>否，之后全部</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // ===== 切换组合器演示：本质是替换 .tree 上的 class，命中由 CSS 规则决定 =====
+    const tree = document.getElementById('tree');
+    const explainBox = document.getElementById('explain');
+    const buttons = document.querySelectorAll('.controls button');
+
+    const texts = {
+      descendant: '<b>后代选择器 .box p</b>：选中 .box 内<strong>任意深度</strong>的所有 p（段落甲、段落乙都命中）。空格表示“在内部即可”。',
+      child:      '<b>子代选择器 .box &gt; article</b>：只选中 .box 的<strong>直接子级</strong> article。孙级不算。',
+      adjacent:   '<b>相邻兄弟 .box + section</b>：只选中紧跟 .box <strong>后面第一个</strong>同级 section（第二个 section 命中，第三个不命中）。',
+      sibling:    '<b>通用兄弟 .box ~ section</b>：选中 .box <strong>之后所有</strong>同级 section（第二、第三个 section 都命中）。'
+    };
+
+    function setMode(mode) {
+      // 移除全部模式类，只保留当前模式
+      tree.className = 'tree ' + mode;
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      explainBox.innerHTML = texts[mode];
+    }
+
+    buttons.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    setMode('descendant'); // 初始展示后代选择器
+  </script>
+</body>
+</html>

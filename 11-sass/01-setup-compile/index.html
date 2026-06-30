@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>01 · 安装与编译 setup & compile</title>
+    <!-- 关键：HTML 永远只引入「编译后的 CSS」，浏览器不认识 .scss -->
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 40px;
+        background: #f5f3fb;
+        display: flex;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2 class="card__title">Hello Sass 👋</h2>
+      <p>这张卡片的样式来自 <code>style.scss</code> 编译出的 <code>style.css</code>。</p>
+      <p>把鼠标移上来试试 hover 效果。</p>
+    </div>
+  </body>
+</html>

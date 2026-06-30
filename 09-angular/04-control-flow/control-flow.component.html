@@ -1,0 +1,75 @@
+<!--
+  内置控制流模板演示
+  注意：@if / @for / @switch 是模板语法，不是指令，
+  因此模板里 *不需要* 写 *ngIf 之类的星号语法。
+-->
+
+<!-- ============ 1. @if / @else if / @else ============ -->
+<section>
+  <h3>@if 条件渲染</h3>
+
+  <!-- 条件为真渲染第一个块，否则走 @else -->
+  @if (isLoggedIn()) {
+    <p>✅ 已登录，欢迎回来！</p>
+  } @else {
+    <p>❌ 未登录，请先登录。</p>
+  }
+
+  <button (click)="toggleLogin()">切换登录状态</button>
+</section>
+
+<!-- ============ 2. @switch / @case / @default ============ -->
+<section>
+  <h3>@switch 多分支</h3>
+
+  <!-- @switch 按值匹配 @case，都不匹配走 @default -->
+  @switch (role()) {
+    @case ('admin') {
+      <p>👑 管理员：拥有全部权限</p>
+    }
+    @case ('user') {
+      <p>🙂 普通用户：可读写自己的数据</p>
+    }
+    @default {
+      <p>👀 访客：只读</p>
+    }
+  }
+
+  <button (click)="cycleRole()">切换角色（当前：{{ role() }}）</button>
+</section>
+
+<!-- ============ 3. @for + track + @empty + 上下文变量 ============ -->
+<section>
+  <h3>@for 列表渲染</h3>
+
+  <ul>
+    <!--
+      track 是必填项：告诉 Angular 用什么标识每一行，
+      DOM diff 时据此复用节点，性能关键。这里用唯一 id。
+      上下文变量：$index 序号、$first 首项、$last 末项、$even 偶数行
+    -->
+    @for (user of users(); track user.id; let i = $index) {
+      <li [class.first-row]="$first" [class.even-row]="$even">
+        {{ i + 1 }}. {{ user.name }}
+        （{{ user.role }}）
+        {{ user.online ? '🟢在线' : '⚪离线' }}
+        @if ($last) { <span>← 最后一个</span> }
+      </li>
+    } @empty {
+      <!-- 列表为空时渲染 @empty 块，省去额外的 @if -->
+      <li>📭 暂无用户</li>
+    }
+  </ul>
+
+  <button (click)="clearUsers()">清空列表</button>
+</section>
+
+<!-- ============ 4. @let 模板局部变量（Angular 18.1+） ============ -->
+<section>
+  <h3>@let 模板变量</h3>
+
+  <!-- @let 声明只读的模板局部变量，避免重复调用表达式 -->
+  @let total = users().length;
+  @let onlineCount = users().filter((u) => u.online).length;
+  <p>共 {{ total }} 人，其中 {{ onlineCount }} 人在线。</p>
+</section>

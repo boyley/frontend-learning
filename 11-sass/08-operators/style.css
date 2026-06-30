@@ -1,0 +1,29 @@
+.layout {
+  padding: 32px;
+  margin-bottom: 24px;
+  gap: 8px;
+  z-index: 1;
+}
+
+.unit-demo {
+  width: 120px;
+  height: 30px;
+  flex-basis: 25%;
+}
+
+.color-demo {
+  background: #6750a4;
+  border-color: #473771;
+  box-shadow: 0 4px 12px rgba(103, 80, 164, 0.4);
+  outline: 2px solid #a496c8;
+}
+
+.conditional {
+  content: "is-large=true, show=true";
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.hero {
+  background-image: url("/assets/hero.png");
+}

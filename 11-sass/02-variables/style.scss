@@ -1,0 +1,63 @@
+// ============================================================
+// 02 · 变量（Variables）
+// ------------------------------------------------------------
+// 用 $名字: 值; 声明变量，把重复的颜色、尺寸、字体集中管理，
+// 改一处即可全局生效。Sass 变量在「编译期」就被替换成真实值。
+// ============================================================
+
+// ---------- 1) 基础变量：各种数据类型 ----------
+$primary: #6750a4; // 颜色
+$text: #1c1b1f; // 颜色
+$font-stack: system-ui, -apple-system, sans-serif; // 列表(list)
+$base-size: 16px; // 带单位的数字
+$line-height: 1.6; // 无单位数字
+$enable-shadow: true; // 布尔值
+
+// ---------- 2) !default：仅当变量未定义时才赋值 ----------
+// 常用于「可被覆盖的默认配置」。若上方已定义 $primary，则这里不生效。
+$primary: #6750a4 !default;
+
+// ---------- 3) !global：在局部作用域里修改全局变量 ----------
+$theme: light;
+.dark-mode {
+  // 默认情况下在选择器内部赋值只是局部变量；加 !global 才会改全局
+  $theme: dark !global;
+}
+
+// ---------- 4) 变量的作用域 ----------
+// 选择器 {} 内声明的变量是「局部变量」，只在该块内可见
+.box {
+  $local-pad: 24px; // 局部变量，仅 .box 内可用
+  padding: $local-pad;
+}
+
+// ---------- 5) 插值 #{} ：把变量嵌进选择器名/属性名/字符串 ----------
+$side: left;
+$prefix: app;
+.#{$prefix}-banner {
+  border-#{$side}: 4px solid $primary; // 编译成 border-left
+  // 在字符串中拼接也要用插值
+  content: "主题：#{$theme}";
+}
+
+// ---------- 6) 实际使用变量 ----------
+body {
+  font-family: $font-stack;
+  font-size: $base-size;
+  line-height: $line-height;
+  color: $text;
+}
+
+.btn {
+  background: $primary;
+  color: #fff;
+  font-size: $base-size;
+  padding: ($base-size * 0.5) ($base-size * 1.25); // 变量可参与运算
+  border: none;
+  border-radius: 8px;
+
+  // 布尔变量配合 @if 决定是否加阴影（控制流详见 09 模块）
+  @if $enable-shadow {
+    box-shadow: 0 4px 12px rgba($primary, 0.4);
+  }
+}

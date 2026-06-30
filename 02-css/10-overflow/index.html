@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 · 溢出处理 overflow</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
+      margin: 0;
+      padding: 24px;
+      background: #f5f7fa;
+      color: #2c3e50;
+    }
+    h1 { font-size: 24px; border-left: 5px solid #4a90d9; padding-left: 12px; }
+    h2 { font-size: 18px; color: #4a90d9; margin-top: 36px; }
+    .desc { color: #666; font-size: 14px; }
+
+    /* 演示区网格布局 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .card .tag {
+      display: inline-block;
+      font-size: 12px;
+      background: #eaf2fb;
+      color: #4a90d9;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-family: monospace;
+    }
+
+    /* ===== 核心：固定尺寸的溢出盒子 ===== */
+    /* 统一一个固定尺寸的盒子，内部塞入超长内容，便于对比不同 overflow 值 */
+    .box {
+      width: 100%;
+      height: 110px;
+      border: 2px dashed #c0392b;
+      background: #fffbea;
+      padding: 8px;
+      font-size: 13px;
+      /* 不同卡片通过修饰类覆盖 overflow 取值 */
+    }
+    .ov-visible { overflow: visible; }   /* 默认：内容溢出，可见，可能覆盖到邻居 */
+    .ov-hidden  { overflow: hidden; }    /* 裁剪溢出部分，不可滚动 */
+    .ov-scroll  { overflow: scroll; }    /* 始终显示滚动条 */
+    .ov-auto    { overflow: auto; }      /* 需要时才出现滚动条 */
+    .ov-clip    { overflow: clip; }      /* 裁剪且禁止一切滚动（含脚本滚动）*/
+
+    /* ===== 文本省略号演示 ===== */
+    .ellipsis-single {
+      width: 220px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px;
+      /* 单行省略号三件套 */
+      white-space: nowrap;       /* 1. 不换行 */
+      overflow: hidden;          /* 2. 溢出隐藏 */
+      text-overflow: ellipsis;   /* 3. 溢出处显示 ... */
+    }
+    .ellipsis-multi {
+      width: 220px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px;
+      /* 多行省略号：基于 webkit 弹性盒的行数裁剪 */
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;     /* 限制 2 行，超出显示 ... */
+      line-clamp: 2;
+      overflow: hidden;
+    }
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <!-- 页面标题 -->
+  <h1>10 · 溢出处理 overflow</h1>
+  <p class="desc">当内容超出盒子尺寸时，<code>overflow</code> 决定如何处理：显示、裁剪还是滚动。</p>
+
+  <!-- ===== 演示一：overflow 五种取值对比 ===== -->
+  <h2>① overflow 五种取值对比（盒子固定 110px 高，内容超长）</h2>
+  <div class="grid">
+    <!-- visible：默认值，溢出内容照常显示 -->
+    <div class="card">
+      <span class="tag">visible（默认）</span>
+      <div class="box ov-visible">
+        这是一段很长的文字内容，用来撑爆固定高度的盒子。visible 表示溢出部分依然可见，会溢出到盒子外面，可能盖住下方元素。这是它的典型表现，继续加字继续加字继续加字。
+      </div>
+    </div>
+    <!-- hidden：裁剪掉溢出部分 -->
+    <div class="card">
+      <span class="tag">hidden</span>
+      <div class="box ov-hidden">
+        这是一段很长的文字内容，用来撑爆固定高度的盒子。hidden 表示溢出部分被裁剪掉，不显示也不能滚动查看，超出边界的内容直接消失，继续加字继续加字继续加字。
+      </div>
+    </div>
+    <!-- scroll：始终显示滚动条 -->
+    <div class="card">
+      <span class="tag">scroll</span>
+      <div class="box ov-scroll">
+        这是一段很长的文字内容，用来撑爆固定高度的盒子。scroll 不论内容是否溢出都会显示滚动条，可以拖动查看被遮住的内容，继续加字继续加字继续加字继续加字。
+      </div>
+    </div>
+    <!-- auto：需要时才出现滚动条 -->
+    <div class="card">
+      <span class="tag">auto</span>
+      <div class="box ov-auto">
+        这是一段很长的文字内容，用来撑爆固定高度的盒子。auto 只在内容真正溢出时才出现滚动条，是最常用的取值，继续加字继续加字继续加字继续加字继续加字。
+      </div>
+    </div>
+    <!-- clip：裁剪且彻底禁止滚动 -->
+    <div class="card">
+      <span class="tag">clip</span>
+      <div class="box ov-clip">
+        这是一段很长的文字内容，用来撑爆固定高度的盒子。clip 与 hidden 类似都会裁剪，但更彻底，连脚本滚动也禁止，性能更好，继续加字继续加字继续加字。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 演示二：文本省略号 ===== -->
+  <h2>② 文本溢出省略号</h2>
+  <div class="grid">
+    <!-- 单行省略号 -->
+    <div class="card">
+      <span class="tag">单行 ellipsis</span>
+      <div class="ellipsis-single">
+        这是一段会被截断的单行长标题文字内容超出后显示省略号
+      </div>
+    </div>
+    <!-- 多行省略号 -->
+    <div class="card">
+      <span class="tag">多行 line-clamp:2</span>
+      <div class="ellipsis-multi">
+        这是一段多行的简介文字，限制最多显示两行，当内容超过两行时会在第二行末尾自动出现省略号，常用于卡片摘要、文章列表等场景。
+      </div>
+    </div>
+  </div>
+</body>
+</html>

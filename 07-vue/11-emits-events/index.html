@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 · 自定义事件（子传父）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    .child { background: #eef; padding: 12px; border-radius: 6px; }
+    button { padding: 6px 12px; margin: 2px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>11 · 自定义事件（emits / 子传父）</h1>
+  <div id="app">
+    <div class="card">
+      <h3>父组件总数：{{ total }}</h3>
+      <p>子组件通过 emit 把「增量」传回父组件，父组件累加</p>
+      <!-- @add 监听子组件 emit 出来的 'add' 事件，$event 是 emit 携带的数据 -->
+      <counter-button label="每次 +1" :step="1" @add="total += $event"></counter-button>
+      <counter-button label="每次 +5" :step="5" @add="onAdd"></counter-button>
+
+      <hr />
+      <h3>自定义组件上的 v-model</h3>
+      <!-- v-model 在组件上 = :modelValue + @update:modelValue -->
+      <p>当前选中颜色：<b :style="{ color }">{{ color }}</b></p>
+      <color-picker v-model="color"></color-picker>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    const app = createApp({
+      setup() {
+        const total = ref(0);
+        const onAdd = (step) => (total.value += step);
+        const color = ref('green');
+        return { total, onAdd, color };
+      }
+    });
+
+    // 子组件：点击时 emit 一个 'add' 事件，把 step 传回父组件
+    app.component('CounterButton', {
+      props: { label: String, step: { type: Number, default: 1 } },
+      emits: ['add'], // 显式声明会触发哪些事件（推荐）
+      setup(props, { emit }) {
+        // 第二个参数解构出 emit，用它向父组件发事件
+        const fire = () => emit('add', props.step);
+        return { fire };
+      },
+      template: `<button @click="fire">{{ label }}</button>`
+    });
+
+    // 支持 v-model 的子组件：约定 prop 名 modelValue + 事件 update:modelValue
+    app.component('ColorPicker', {
+      props: { modelValue: String },
+      emits: ['update:modelValue'],
+      setup(props, { emit }) {
+        const colors = ['red', 'green', 'blue', 'orange'];
+        const pick = (c) => emit('update:modelValue', c); // 通知父组件更新
+        return { colors, pick };
+      },
+      template: `
+        <span>
+          <button v-for="c in colors" :key="c"
+            :style="{ background: c, color: '#fff', outline: c === modelValue ? '3px solid #333' : 'none' }"
+            @click="pick(c)">{{ c }}</button>
+        </span>
+      `
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

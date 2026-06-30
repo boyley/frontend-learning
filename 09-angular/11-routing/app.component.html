@@ -1,0 +1,24 @@
+<nav>
+  <!--
+    routerLink 是 Angular 的导航指令，替代原生 href，触发的是「客户端路由」而不刷新整页。
+    routerLinkActive 在该链接对应路由处于激活状态时，给元素加上指定的 CSS 类（这里是 'active'），
+    常用于高亮当前所在的导航项。
+    [routerLinkActiveOptions]="{ exact: true }" 让根路径 '/' 只在完全匹配时才高亮，
+    否则任何子路由都会让首页一直高亮。
+  -->
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+    首页
+  </a>
+  <!-- 带参数导航：数组形式 [routerLink]="['/users', 1]" 拼成 /users/1 -->
+  <a [routerLink]="['/users', 1]" routerLinkActive="active">用户 1</a>
+  <a routerLink="/admin" routerLinkActive="active">管理后台</a>
+  <a routerLink="/settings" routerLinkActive="active">设置</a>
+</nav>
+
+<hr />
+
+<!--
+  RouterOutlet 是「路由占位符」：匹配到的组件会被渲染到这里。
+  整个 app 里通常根布局放一个，嵌套路由可在子组件里再放一个。
+-->
+<router-outlet />

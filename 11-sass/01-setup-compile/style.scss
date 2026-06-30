@@ -1,0 +1,35 @@
+// ============================================================
+// 01 · 安装与编译（setup & compile）
+// ------------------------------------------------------------
+// 这是一个最小的 SCSS 文件，用来验证「SCSS → CSS」编译链路是否打通。
+// 它故意用到了几个 Sass 特性（变量 + 嵌套），以便编译后能直观看出
+// 「源码写得简洁、编译产物是标准 CSS」的差异。
+// ============================================================
+
+@use "sass:color"; // 引入内置颜色模块（现代写法，替代已弃用的 lighten()）
+
+// 1) 变量：用 $ 声明，集中管理设计 token
+$brand: #6750a4; // 主题紫
+$radius: 12px; // 圆角
+$gap: 16px; // 间距
+
+// 2) 嵌套：.card 内部直接写子选择器，结构一目了然
+.card {
+  padding: $gap;
+  border-radius: $radius;
+  background: $brand;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+
+  // & 代表父选择器 .card，这里组合成 .card__title
+  &__title {
+    margin: 0 0 8px;
+    font-size: 20px;
+  }
+
+  // 嵌套 + 伪类，编译后会展开为 .card:hover
+  &:hover {
+    // color.scale 把颜色朝白色方向调亮 15%（现代写法，替代旧的 lighten()）
+    background: color.scale($brand, $lightness: 15%);
+  }
+}

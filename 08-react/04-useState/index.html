@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · useState 状态</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .box { border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; max-width: 360px; margin-bottom: 16px; }
+    button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    .on { color: #fff; background: #0a7d34; }
+    .off { color: #fff; background: #999; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ① 计数器：演示 state、setState 触发重渲染、以及「函数式更新」
+    function Counter() {
+      // useState(初始值) 返回 [当前值, 更新函数]
+      const [count, setCount] = useState(0);
+
+      // ❌ 错误示范：连续三次 setCount(count + 1)，因为本轮 count 始终是同一个旧值（如 0），
+      //    三次都是 setCount(1)，最终只 +1。
+      const addWrong = () => {
+        setCount(count + 1);
+        setCount(count + 1);
+        setCount(count + 1);
+      };
+
+      // ✅ 正确示范：函数式更新 setCount(c => c + 1)，每次都基于「最新值」计算，连加三次 = +3
+      const addRight = () => {
+        setCount(c => c + 1);
+        setCount(c => c + 1);
+        setCount(c => c + 1);
+      };
+
+      return (
+        <div className="box">
+          <h3>计数：{count}</h3>
+          <button onClick={() => setCount(count + 1)}>+1</button>
+          <button onClick={addWrong}>连点3次(错:只+1)</button>
+          <button onClick={addRight}>连点3次(对:+3)</button>
+          <button onClick={() => setCount(0)}>重置</button>
+        </div>
+      );
+    }
+
+    // ② Toggle 开关：演示布尔状态与「取反更新」
+    function Toggle() {
+      const [on, setOn] = useState(false);
+      return (
+        <div className="box">
+          <h3>开关状态：{on ? '开 🟢' : '关 ⚪'}</h3>
+          {/* 基于旧值取反，推荐用函数式更新 */}
+          <button className={on ? 'on' : 'off'} onClick={() => setOn(v => !v)}>
+            {on ? '点击关闭' : '点击开启'}
+          </button>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <>
+          <Counter />
+          <Toggle />
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

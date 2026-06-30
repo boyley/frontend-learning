@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>11 · 伪类 pseudo-classes</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
+      margin: 0;
+      padding: 24px;
+      background: #f5f7fa;
+      color: #2c3e50;
+    }
+    h1 { font-size: 24px; border-left: 5px solid #8e44ad; padding-left: 12px; }
+    h2 { font-size: 18px; color: #8e44ad; margin-top: 36px; }
+    .desc { color: #666; font-size: 14px; }
+    .panel {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      margin-bottom: 18px;
+    }
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+
+    /* ===== 演示一：斑马纹列表（结构伪类 nth-child）===== */
+    .zebra { list-style: none; margin: 0; padding: 0; border: 1px solid #eee; border-radius: 6px; overflow: hidden; }
+    .zebra li { padding: 10px 14px; }
+    /* nth-child(odd) 选中第 1、3、5... 行 → 斑马纹 */
+    .zebra li:nth-child(odd) { background: #f4ecfa; }
+    /* :first-child / :last-child 给首尾行特殊样式 */
+    .zebra li:first-child { font-weight: bold; color: #8e44ad; }
+    .zebra li:last-child { border-top: 2px dashed #d6b9ec; }
+    /* :hover 鼠标悬停整行高亮 */
+    .zebra li:hover { background: #8e44ad; color: #fff; cursor: pointer; }
+
+    /* ===== 演示二：nth-child 公式 ===== */
+    .nth-demo { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nth-demo span {
+      width: 38px; height: 38px; line-height: 38px; text-align: center;
+      background: #ecf0f1; border-radius: 6px; font-size: 14px; transition: .2s;
+    }
+    /* 3n+1 选中第 1、4、7、10 个 */
+    .nth-demo span:nth-child(3n+1) { background: #8e44ad; color: #fff; }
+
+    /* ===== 演示三：表单伪类 ===== */
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; margin-bottom: 4px; font-size: 14px; }
+    .form-row input[type="text"] {
+      width: 260px; padding: 8px 10px; border: 2px solid #ddd; border-radius: 6px; outline: none; transition: .2s;
+    }
+    /* :focus 聚焦时高亮边框 */
+    .form-row input[type="text"]:focus { border-color: #8e44ad; box-shadow: 0 0 0 3px rgba(142,68,173,.15); }
+    /* :required 必填项左侧加红条 */
+    .form-row input:required { border-left: 4px solid #e74c3c; }
+    /* :disabled 禁用态变灰 */
+    .form-row input:disabled { background: #f0f0f0; color: #aaa; cursor: not-allowed; }
+
+    /* 自定义复选框：:checked 改变外观 */
+    .check-list label { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; cursor: pointer; }
+    .check-list input { width: 18px; height: 18px; accent-color: #8e44ad; }
+    /* :checked 时让相邻文字变色加粗（兄弟选择器配合伪类）*/
+    .check-list input:checked + span { color: #8e44ad; font-weight: bold; }
+
+    /* ===== 演示四：:not() 与 :empty ===== */
+    .tag-list span {
+      display: inline-block; padding: 4px 10px; margin: 3px; border-radius: 14px;
+      background: #ecf0f1; font-size: 13px;
+    }
+    /* :not(.active) 选中所有非激活标签 */
+    .tag-list span:not(.active) { color: #888; }
+    .tag-list span.active { background: #8e44ad; color: #fff; }
+  </style>
+</head>
+<body>
+  <h1>11 · 伪类 pseudo-classes</h1>
+  <p class="desc">伪类（单冒号 <code>:</code>）用来匹配元素的<strong>特定状态</strong>或在文档树中的<strong>特定位置</strong>。</p>
+
+  <!-- ===== 演示一：斑马纹 + hover ===== -->
+  <h2>① 斑马纹列表（:nth-child / :first-child / :hover）</h2>
+  <div class="panel">
+    <ul class="zebra">
+      <li>表头行（:first-child 加粗）</li>
+      <li>第二行</li>
+      <li>第三行</li>
+      <li>第四行</li>
+      <li>第五行</li>
+      <li>末行（:last-child 虚线分隔）</li>
+    </ul>
+    <p class="desc">奇数行用 <code>:nth-child(odd)</code> 着色；把鼠标移到任意行体验 <code>:hover</code> 高亮。</p>
+  </div>
+
+  <!-- ===== 演示二：nth-child 公式 ===== -->
+  <h2>② 结构伪类公式 :nth-child(3n+1)</h2>
+  <div class="panel">
+    <div class="nth-demo">
+      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+      <span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+    </div>
+    <p class="desc">被选中（紫色）的是第 1、4、7、10 个。公式 <code>an+b</code>：<code>2n</code>=偶数、<code>odd</code>=奇数、<code>3n+1</code>=每 3 个取第 1 个。</p>
+  </div>
+
+  <!-- ===== 演示三：表单伪类 ===== -->
+  <h2>③ 表单状态伪类（:focus / :required / :disabled / :checked）</h2>
+  <div class="panel">
+    <div class="form-row">
+      <label>用户名（必填，:required 红条 + :focus 高亮）</label>
+      <input type="text" required placeholder="点我聚焦试试">
+    </div>
+    <div class="form-row">
+      <label>禁用输入框（:disabled 变灰）</label>
+      <input type="text" disabled value="不可编辑">
+    </div>
+    <div class="check-list">
+      <label><input type="checkbox" checked><span>已勾选项（:checked 变紫）</span></label>
+      <label><input type="checkbox"><span>未勾选项</span></label>
+    </div>
+  </div>
+
+  <!-- ===== 演示四：:not() ===== -->
+  <h2>④ 否定伪类 :not()</h2>
+  <div class="panel">
+    <div class="tag-list">
+      <span class="active">激活标签</span>
+      <span>普通标签 A</span>
+      <span>普通标签 B</span>
+      <span>普通标签 C</span>
+    </div>
+    <p class="desc">用 <code>span:not(.active)</code> 让所有非激活标签变灰。</p>
+  </div>
+</body>
+</html>

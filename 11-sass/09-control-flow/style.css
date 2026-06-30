@@ -1,0 +1,100 @@
+.card-dark {
+  background: #1c1b1f;
+  color: #e6e1e5;
+}
+
+.card-light {
+  background: #ffffff;
+  color: #1c1b1f;
+}
+
+.text-small {
+  font-size: 12px;
+}
+
+.text-medium {
+  font-size: 16px;
+}
+
+.text-large {
+  font-size: 22px;
+}
+
+.bg-primary {
+  background: #6750a4;
+  color: #fff;
+}
+
+.text-primary {
+  color: #6750a4;
+}
+
+.bg-success {
+  background: #21a366;
+  color: #fff;
+}
+
+.text-success {
+  color: #21a366;
+}
+
+.bg-danger {
+  background: #b3261e;
+  color: #fff;
+}
+
+.text-danger {
+  color: #b3261e;
+}
+
+.m-1 {
+  margin: 4px;
+}
+
+.col-1 {
+  width: 20%;
+}
+
+.m-2 {
+  margin: 8px;
+}
+
+.col-2 {
+  width: 40%;
+}
+
+.m-3 {
+  margin: 12px;
+}
+
+.col-3 {
+  width: 60%;
+}
+
+.m-4 {
+  margin: 16px;
+}
+
+.col-4 {
+  width: 80%;
+}
+
+.m-5 {
+  margin: 20px;
+}
+
+.col-5 {
+  width: 100%;
+}
+
+.opacity-1 {
+  opacity: 0.3333333333;
+}
+
+.opacity-2 {
+  opacity: 0.6666666667;
+}
+
+.opacity-3 {
+  opacity: 1;
+}

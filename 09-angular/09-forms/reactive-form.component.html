@@ -1,0 +1,63 @@
+<!--
+  reactive-form.component.html
+  模板要点：
+   - [formGroup]="form" 把整张表单模型绑定到 <form>
+   - formControlName="xxx" 把每个 input 绑到对应 FormControl
+   - 用 control.invalid && control.touched 控制错误提示显示时机
+-->
+<section class="reactive-form">
+  <h3>响应式表单（Reactive Forms）</h3>
+
+  <!-- ngSubmit 触发提交；form 模型由 TS 提供 -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- 用户名 -->
+    <div class="field">
+      <label>用户名：</label>
+      <input type="text" formControlName="username" />
+      <!-- 仅当字段无效且已被触碰(touched)时才提示，避免一进来就报红 -->
+      @if (username.invalid && username.touched) {
+        <div class="error">
+          @if (username.errors?.['required']) { <span>用户名必填</span> }
+          @if (username.errors?.['minlength']) { <span>至少 3 个字符</span> }
+        </div>
+      }
+    </div>
+
+    <!-- 邮箱 -->
+    <div class="field">
+      <label>邮箱：</label>
+      <input type="email" formControlName="email" />
+      @if (email.invalid && email.touched) {
+        <div class="error">
+          @if (email.errors?.['required']) { <span>邮箱必填</span> }
+          @if (email.errors?.['email']) { <span>邮箱格式不正确</span> }
+        </div>
+      }
+    </div>
+
+    <!-- 年龄 -->
+    <div class="field">
+      <label>年龄：</label>
+      <input type="number" formControlName="age" />
+      @if (age.invalid && age.touched) {
+        <div class="error">
+          @if (age.errors?.['min'] || age.errors?.['max']) {
+            <span>年龄需在 1~120 之间</span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- 整表无效时禁用提交按钮 -->
+    <button type="submit" [disabled]="form.invalid">提交</button>
+    <button type="button" (click)="reset()">重置</button>
+  </form>
+
+  <!-- 实时调试：观察表单状态 -->
+  <p>表单状态：valid={{ form.valid }} | dirty={{ form.dirty }} | touched={{ form.touched }}</p>
+
+  <!-- 提交结果 -->
+  @if (submitted()) {
+    <p class="ok">提交成功：{{ submitted() }}</p>
+  }
+</section>

@@ -1,0 +1,17 @@
+# 依赖
+node_modules/
+# 构建产物
+dist/
+build/
+# 编译产物（Sass/TS 可按需保留，这里默认忽略自动生成的 map）
+*.css.map
+*.js.map
+# 系统/编辑器
+.DS_Store
+.idea/
+.vscode/
+*.log
+npm-debug.log*
+# 环境变量
+.env
+.env.local

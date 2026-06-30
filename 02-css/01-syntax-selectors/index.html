@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS 语法与基础选择器</title>
+  <style>
+    /* ===== 基础排版，让 demo 好看一点 ===== */
+    body {
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      line-height: 1.7;
+      color: #2c3e50;
+      background: #f7f9fb;
+    }
+    h1 { font-size: 24px; }
+    h2 {
+      font-size: 18px;
+      margin-top: 32px;
+      border-left: 4px solid #4a90d9;
+      padding-left: 10px;
+    }
+    .demo {
+      background: #fff;
+      border: 1px solid #e1e6eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    code { background: #eef2f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+    /* ===== 1. 通用选择器 * ：命中所有元素（这里只给演示区描边） ===== */
+    .universal-box * {
+      outline: 1px dashed #c0392b; /* 给内部所有元素加虚线框 */
+    }
+
+    /* ===== 2. 元素/类型选择器：按标签名命中 ===== */
+    .type-box p {
+      color: #27ae60; /* 所有 p 标签变绿 */
+      font-weight: bold;
+    }
+
+    /* ===== 3. 类选择器 .class：命中带该 class 的元素 ===== */
+    .highlight {
+      background: #fff3cd; /* 浅黄高亮 */
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    /* ===== 4. id 选择器 #id：命中唯一 id 的元素 ===== */
+    #special {
+      color: #fff;
+      background: #8e44ad; /* 紫色背景 */
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    /* ===== 5. 属性选择器 [attr] / [attr=value] / [attr^=] / [attr$=] / [attr*=] ===== */
+    a[target] { color: #16a085; }                 /* 含 target 属性 */
+    a[href^="https"] { font-weight: bold; }        /* href 以 https 开头 */
+    a[href$=".pdf"] { color: #e67e22; }            /* href 以 .pdf 结尾 */
+    a[href*="mdn"] { text-decoration: underline wavy; } /* href 含 mdn */
+
+    /* ===== 6. 选择器列表（逗号分组）：一次给多个选择器同样的样式 ===== */
+    .group h3, .group .tag {
+      color: #2980b9;
+      border-bottom: 2px solid #2980b9;
+      display: inline-block;
+    }
+
+    .tag { padding: 2px 6px; }
+  </style>
+</head>
+<body>
+  <h1>CSS 语法与基础选择器</h1>
+  <p>CSS 规则结构：<code>选择器 { 属性: 值; }</code>。下面每个区块演示一种选择器的命中效果。</p>
+
+  <!-- 1. 通用选择器 -->
+  <h2>1. 通用选择器 <code>*</code></h2>
+  <div class="demo universal-box">
+    <!-- 区块内每个元素都会被加上红色虚线框 -->
+    <p>段落一</p>
+    <span>这是 span</span>
+    <strong>加粗文字</strong>
+  </div>
+
+  <!-- 2. 元素/类型选择器 -->
+  <h2>2. 元素 / 类型选择器</h2>
+  <div class="demo type-box">
+    <!-- 只有 p 标签变绿加粗，div 不受影响 -->
+    <p>我是 p，会变绿加粗</p>
+    <div>我是 div，不受影响</div>
+  </div>
+
+  <!-- 3. 类选择器 -->
+  <h2>3. 类选择器 <code>.highlight</code></h2>
+  <div class="demo">
+    <p>普通文字，<span class="highlight">这一段被 .highlight 高亮</span>，其余正常。</p>
+  </div>
+
+  <!-- 4. id 选择器 -->
+  <h2>4. id 选择器 <code>#special</code></h2>
+  <div class="demo">
+    <!-- 页面内 id 应唯一 -->
+    <span id="special">我是 #special，紫底白字</span>
+  </div>
+
+  <!-- 5. 属性选择器 -->
+  <h2>5. 属性选择器</h2>
+  <div class="demo">
+    <p><a href="https://developer.mozilla.org" target="_blank">https 开头 + 含 mdn + 有 target</a></p>
+    <p><a href="report.pdf">以 .pdf 结尾</a></p>
+    <p><a href="http://example.com">普通 http 链接（无加粗）</a></p>
+  </div>
+
+  <!-- 6. 选择器列表 -->
+  <h2>6. 选择器列表（逗号分组）</h2>
+  <div class="demo group">
+    <!-- h3 和 .tag 共享同一套样式 -->
+    <h3>我是 h3 标题</h3>
+    <p><span class="tag">我是 .tag</span> 与上面 h3 共享蓝色下划线样式</p>
+  </div>
+</body>
+</html>

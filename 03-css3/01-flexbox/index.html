@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flexbox 弹性布局可视化</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8edf3 100%);
+      color: #2c3e50;
+      padding: 24px;
+    }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    .desc { color: #64748b; margin: 0 0 20px; font-size: 14px; }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(31, 41, 55, 0.08);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .card h2 { margin: 0 0 14px; font-size: 18px; }
+
+    /* ===== 控制面板 ===== */
+    .controls {
+      display: flex;       /* 控制区本身也用 flex 排布 */
+      flex-wrap: wrap;     /* 允许换行，窗口窄时不溢出 */
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .control { display: flex; flex-direction: column; gap: 4px; }
+    .control label { font-size: 12px; color: #475569; font-weight: 600; }
+    select {
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* ===== 演示容器：核心 flex 容器 ===== */
+    .flex-demo {
+      display: flex;                 /* 开启弹性布局 */
+      justify-content: flex-start;   /* 主轴对齐，会被 JS 动态修改 */
+      align-items: stretch;          /* 交叉轴对齐，会被 JS 动态修改 */
+      gap: 10px;                     /* 项目间距，比 margin 更优雅 */
+      min-height: 180px;             /* 给交叉轴留出高度，才能看出 align 效果 */
+      border: 2px dashed #c7d2fe;
+      border-radius: 12px;
+      padding: 12px;
+      background: repeating-linear-gradient(
+        45deg, #fafbff, #fafbff 12px, #f1f4ff 12px, #f1f4ff 24px
+      );
+    }
+    /* 演示项目：彩色盒子 */
+    .item {
+      width: 64px;
+      min-height: 50px;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 700;
+      display: flex;            /* 让数字在盒子内居中 */
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+    /* 不同高度，方便观察 align-items:stretch/center 等差异 */
+    .item:nth-child(1) { background:#ef4444; height: 60px; }
+    .item:nth-child(2) { background:#f59e0b; height: 90px; }
+    .item:nth-child(3) { background:#10b981; height: 70px; }
+    .item:nth-child(4) { background:#3b82f6; height: 110px; }
+    .item:nth-child(5) { background:#8b5cf6; height: 55px; }
+
+    /* ===== flex-grow 比例分配演示 ===== */
+    .grow-demo { display: flex; gap: 8px; }
+    .grow-item {
+      height: 60px;
+      border-radius: 10px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    /* flex-grow 决定剩余空间的分配比例 */
+    .g1 { flex-grow: 1; background:#06b6d4; }  /* 占 1 份 */
+    .g2 { flex-grow: 2; background:#6366f1; }  /* 占 2 份 */
+    .g3 { flex-grow: 3; background:#ec4899; }  /* 占 3 份 */
+
+    .tip { font-size: 13px; color:#64748b; margin-top: 10px; }
+    code { background:#eef2ff; padding:1px 6px; border-radius:5px; color:#4338ca; }
+  </style>
+</head>
+<body>
+  <h1>Flexbox 弹性布局可视化</h1>
+  <p class="desc">
+    Flexbox 沿「主轴」和「交叉轴」排列子项。下方下拉框可实时切换
+    <code>justify-content</code>（主轴对齐）与 <code>align-items</code>（交叉轴对齐），观察彩色盒子排列变化。
+  </p>
+
+  <div class="card">
+    <h2>① 交互演示：主轴 / 交叉轴对齐</h2>
+    <div class="controls">
+      <div class="control">
+        <label>flex-direction（主轴方向）</label>
+        <select id="dir">
+          <option value="row">row（默认，水平）</option>
+          <option value="row-reverse">row-reverse</option>
+          <option value="column">column（垂直）</option>
+          <option value="column-reverse">column-reverse</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>justify-content（主轴对齐）</label>
+        <select id="justify">
+          <option value="flex-start">flex-start</option>
+          <option value="center">center</option>
+          <option value="flex-end">flex-end</option>
+          <option value="space-between">space-between</option>
+          <option value="space-around">space-around</option>
+          <option value="space-evenly">space-evenly</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>align-items（交叉轴对齐）</label>
+        <select id="align">
+          <option value="stretch">stretch（默认拉伸*）</option>
+          <option value="flex-start">flex-start</option>
+          <option value="center">center</option>
+          <option value="flex-end">flex-end</option>
+          <option value="baseline">baseline</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex-demo" id="demo">
+      <div class="item">1</div>
+      <div class="item">2</div>
+      <div class="item">3</div>
+      <div class="item">4</div>
+      <div class="item">5</div>
+    </div>
+    <p class="tip">* 盒子设了固定 height，stretch 不会再拉伸；去掉高度时 stretch 才会撑满交叉轴。</p>
+  </div>
+
+  <div class="card">
+    <h2>② flex-grow 比例分配</h2>
+    <p class="tip">三个盒子 <code>flex-grow</code> 分别为 1 / 2 / 3，按 <b>1:2:3</b> 瓜分容器剩余空间。</p>
+    <div class="grow-demo">
+      <div class="grow-item g1">grow:1</div>
+      <div class="grow-item g2">grow:2</div>
+      <div class="grow-item g3">grow:3</div>
+    </div>
+  </div>
+
+  <script>
+    // 拿到演示容器和三个下拉框
+    const demo = document.getElementById('demo');
+    const dir = document.getElementById('dir');
+    const justify = document.getElementById('justify');
+    const align = document.getElementById('align');
+
+    // 任一下拉变化时，把值同步到容器的内联样式
+    function update() {
+      demo.style.flexDirection = dir.value;       // 改变主轴方向
+      demo.style.justifyContent = justify.value;  // 主轴对齐
+      demo.style.alignItems = align.value;        // 交叉轴对齐
+    }
+    [dir, justify, align].forEach(el => el.addEventListener('change', update));
+    update(); // 初始执行一次
+  </script>
+</body>
+</html>

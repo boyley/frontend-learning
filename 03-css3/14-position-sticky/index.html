@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 · 粘性定位 position: sticky</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #ecfeff 0%, #eef2ff 100%);
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 24px;
+    }
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { margin: 0 0 8px; color: #0e7490; font-size: clamp(1.4rem, 4vw, 2rem); }
+    header p { margin: 0; color: #64748b; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 24px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ===== 演示 A：sticky 侧边栏 ===== */
+    /* sticky 元素必须指定 top 阈值；它相对最近的"滚动祖先"吸附 */
+    .sidebar {
+      position: sticky;
+      top: 24px;                 /* 关键：到达距视口顶部 24px 时吸住 */
+      align-self: start;         /* grid 中防止被拉伸，保证 sticky 生效 */
+      background: linear-gradient(160deg, #06b6d4, #3b82f6);
+      color: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(6, 182, 212, .25);
+    }
+    .sidebar h3 { margin: 0 0 10px; }
+    .sidebar a {
+      display: block;
+      color: #ecfeff;
+      text-decoration: none;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,.25);
+      font-size: .9rem;
+    }
+    .sidebar p { font-size: .8rem; opacity: .9; margin: 12px 0 0; }
+
+    /* ===== 演示 B：通讯录分组吸顶 ===== */
+    .contacts {
+      height: 360px;             /* 固定高度 + overflow 形成内部滚动容器 */
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, .12);
+      padding: 0 0 12px;
+    }
+    /* 分组标题：相对“.contacts 这个滚动容器”吸顶 */
+    .group-title {
+      position: sticky;
+      top: 0;                    /* 关键：吸到滚动容器顶部 */
+      z-index: 2;                /* 避免被后面的列表项盖住 */
+      background: rgba(99, 102, 241, .92);
+      color: #fff;
+      font-weight: 700;
+      padding: 10px 18px;
+      backdrop-filter: blur(4px);
+    }
+    .contact-item {
+      padding: 12px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #a78bfa, #6366f1);
+      color: #fff; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; flex-shrink: 0;
+    }
+
+    .hint {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #64748b;
+      font-size: .9rem;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    }
+    /* 让页面够长以便整页滚动看侧边栏吸附 */
+    .filler {
+      grid-column: 1 / -1;
+      height: 700px;
+      border-radius: 16px;
+      background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 20px, #eef2ff 20px, #eef2ff 40px);
+      display: flex; align-items: center; justify-content: center;
+      color: #94a3b8; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>粘性定位 position: sticky</h1>
+    <p>relative 与 fixed 的混合体：到达阈值前正常排版，到达后吸附在原地</p>
+  </header>
+
+  <div class="layout">
+    <p class="hint">⬇️ 整页向下滚动，观察左侧栏吸住顶部；右侧通讯录区域内部滚动，分组标题逐个吸顶 / 顶走。</p>
+
+    <!-- 侧边栏：随整页滚动吸附 -->
+    <aside class="sidebar">
+      <h3>📌 sticky 侧边栏</h3>
+      <a href="#">导航项 一</a>
+      <a href="#">导航项 二</a>
+      <a href="#">导航项 三</a>
+      <a href="#">导航项 四</a>
+      <p>top: 24px ——滚动到距顶 24px 就吸住，但会被父容器底边约束。</p>
+    </aside>
+
+    <!-- 通讯录：内部滚动容器，分组标题吸顶 -->
+    <main class="contacts" id="contacts">
+      <!-- JS 注入分组 -->
+    </main>
+
+    <div class="filler">继续向下滚动整页，体会侧边栏的吸附与释放</div>
+  </div>
+
+  <script>
+    /* 生成 A~F 分组的通讯录数据，演示多组标题依次吸顶 */
+    const groups = {
+      A: ['阿黛尔', '艾米', '安德鲁'],
+      B: ['贝拉', '布莱恩', '邦妮'],
+      C: ['卡尔', '辛迪', '克洛伊'],
+      D: ['丹尼尔', '黛西'],
+      E: ['伊森', '艾玛', '埃文'],
+      F: ['菲奥娜', '弗兰克']
+    };
+    const box = document.getElementById('contacts');
+    let html = '';
+    for (const [letter, names] of Object.entries(groups)) {
+      html += `<div class="group-title">${letter}</div>`;
+      for (const n of names) {
+        html += `<div class="contact-item">
+                   <span class="avatar">${n[0]}</span>${n}
+                 </div>`;
+      }
+    }
+    box.innerHTML = html;
+  </script>
+</body>
+</html>

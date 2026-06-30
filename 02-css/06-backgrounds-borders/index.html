@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 · 背景与边框 Backgrounds & Borders</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin:0; padding:24px; background:#f5f6fa; color:#2d3436;
+      font-family:"Microsoft YaHei","Segoe UI",sans-serif; line-height:1.6;
+    }
+    h1 { font-size:24px; }
+    h2 { font-size:18px; border-left:4px solid #0984e3; padding-left:10px; margin-top:32px; }
+    .card { background:#fff; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .row { display:flex; gap:20px; flex-wrap:wrap; }
+    .box { width:180px; height:120px; display:flex; align-items:center; justify-content:center;
+           text-align:center; font-size:14px; color:#fff; font-weight:bold; }
+    .label { font-size:12px; color:#636e72; display:block; margin-top:6px; }
+    code { background:#f1f2f6; padding:2px 6px; border-radius:4px; color:#e84393; font-size:13px; }
+
+    /* ===== 背景颜色 / 线性渐变 ===== */
+    .bg-color   { background-color:#00b894; }
+    .bg-linear  { background-image: linear-gradient(135deg,#6c5ce7,#00cec9); }  /* 135度渐变 */
+    .bg-radial  { background-image: radial-gradient(circle,#fd79a8,#e84393); }   /* 径向渐变 */
+
+    /* ===== background-size: cover vs contain ===== */
+    /* 用一张内联 SVG 作为背景图，避免依赖外部资源 */
+    .bg-img {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><rect width="120" height="80" fill="%23ffeaa7"/><circle cx="60" cy="40" r="28" fill="%23e17055"/></svg>');
+      background-repeat: no-repeat;
+      background-position: center;
+      color:#2d3436;
+    }
+    .bg-cover   { background-size: cover; }    /* 铺满容器，可能裁剪 */
+    .bg-contain { background-size: contain; }  /* 完整显示，可能留白 */
+    .bg-repeat {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><circle cx="15" cy="15" r="6" fill="%230984e3"/></svg>');
+      background-repeat: repeat;               /* 平铺 */
+      color:#2d3436;
+    }
+
+    /* ===== background 简写 + 多重背景 ===== */
+    .bg-short {
+      /* color image repeat position / size 简写 */
+      background: #2d3436 linear-gradient(135deg, rgba(108,92,231,.8), rgba(0,206,201,.8)) no-repeat center / cover;
+    }
+    .bg-multi {
+      /* 多重背景：逗号分隔，先写的在上层 */
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.6) 0, transparent 40%),
+        linear-gradient(135deg, #fd79a8, #fdcb6e);
+    }
+
+    /* ===== 边框样式 ===== */
+    .bd-solid  { border: 4px solid #0984e3; }
+    .bd-dashed { border: 4px dashed #00b894; }
+    .bd-dotted { border: 4px dotted #e17055; }
+    .bd-double { border: 6px double #6c5ce7; }
+    .bd-one    { border-bottom: 4px solid #e84393; }   /* 单边边框 */
+    .bd-box    { background:#dfe6ff; color:#2d3436; }
+
+    /* ===== 圆角 ===== */
+    .radius-sm  { border-radius: 12px; }
+    .radius-mix { border-radius: 40px 8px 40px 8px; }   /* 四角不同 */
+    .radius-circle { border-radius: 50%; width:120px; height:120px; }  /* 正圆 */
+
+    /* ===== outline vs border ===== */
+    .has-outline { border:4px solid #b2bec3; outline:4px solid #e17055; outline-offset:4px; }
+
+    /* ===== box-shadow ===== */
+    .shadow-soft  { background:#fff; color:#2d3436; box-shadow:0 6px 16px rgba(0,0,0,.18); }
+    .shadow-inset { background:#fff; color:#2d3436; box-shadow: inset 0 0 0 4px #74b9ff; }  /* 内阴影 */
+    .shadow-glow  { background:#6c5ce7; box-shadow:0 0 0 4px rgba(108,92,231,.3), 0 8px 24px rgba(108,92,231,.5); }
+
+    /* ===== 综合卡片：渐变 + 圆角 + 阴影 + 边框 ===== */
+    .hero {
+      width:100%; max-width:420px; height:200px; padding:24px; color:#fff;
+      border-radius:20px;
+      border:2px solid rgba(255,255,255,.4);
+      background: linear-gradient(135deg,#667eea 0%, #764ba2 100%);
+      box-shadow: 0 12px 30px rgba(118,75,162,.45);
+      display:flex; flex-direction:column; justify-content:flex-end;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 背景与边框 Backgrounds &amp; Borders</h1>
+
+  <!-- 背景颜色与渐变 -->
+  <section class="card">
+    <h2>① 背景：颜色 / 线性渐变 / 径向渐变</h2>
+    <div class="row">
+      <div><div class="box bg-color">background-color</div><span class="label">纯色</span></div>
+      <div><div class="box bg-linear">linear-gradient</div><span class="label">线性渐变 135°</span></div>
+      <div><div class="box bg-radial">radial-gradient</div><span class="label">径向渐变</span></div>
+    </div>
+  </section>
+
+  <!-- 背景图与 size -->
+  <section class="card">
+    <h2>② 背景图：repeat / position / size(cover/contain)</h2>
+    <div class="row">
+      <div><div class="box bg-repeat">repeat 平铺</div><span class="label">background-repeat</span></div>
+      <div><div class="box bg-img bg-cover">cover</div><span class="label">铺满(可能裁剪)</span></div>
+      <div><div class="box bg-img bg-contain">contain</div><span class="label">完整(可能留白)</span></div>
+    </div>
+  </section>
+
+  <!-- 简写与多重背景 -->
+  <section class="card">
+    <h2>③ background 简写 / 多重背景</h2>
+    <div class="row">
+      <div><div class="box bg-short">background 简写</div><span class="label">color+image+repeat+position/size</span></div>
+      <div><div class="box bg-multi">多重背景</div><span class="label">两层背景叠加</span></div>
+    </div>
+  </section>
+
+  <!-- 边框样式 -->
+  <section class="card">
+    <h2>④ 边框样式 border-style</h2>
+    <div class="row">
+      <div><div class="box bd-box bd-solid">solid</div></div>
+      <div><div class="box bd-box bd-dashed">dashed</div></div>
+      <div><div class="box bd-box bd-dotted">dotted</div></div>
+      <div><div class="box bd-box bd-double">double</div></div>
+      <div><div class="box bd-box bd-one">单边 border-bottom</div></div>
+    </div>
+  </section>
+
+  <!-- 圆角 -->
+  <section class="card">
+    <h2>⑤ 圆角 border-radius</h2>
+    <div class="row">
+      <div><div class="box bg-color radius-sm">12px 圆角</div></div>
+      <div><div class="box bg-linear radius-mix">四角不同</div></div>
+      <div><div class="box bg-radial radius-circle">50% 正圆</div></div>
+    </div>
+  </section>
+
+  <!-- outline vs border + 阴影 -->
+  <section class="card">
+    <h2>⑥ outline vs border / box-shadow 阴影</h2>
+    <div class="row">
+      <div><div class="box bd-box has-outline">border+outline</div><span class="label">outline 不占空间(灰border外橙线)</span></div>
+      <div><div class="box shadow-soft">外阴影</div><span class="label">box-shadow 外发光</span></div>
+      <div><div class="box shadow-inset">inset 内阴影</div><span class="label">inset</span></div>
+      <div><div class="box shadow-glow">多层阴影</div><span class="label">叠加发光</span></div>
+    </div>
+  </section>
+
+  <!-- 综合卡片 -->
+  <section class="card">
+    <h2>⑦ 综合：渐变背景卡片 + 圆角 + 阴影 + 边框</h2>
+    <div class="hero">
+      <h3 style="margin:0">前端学习合集</h3>
+      <p style="margin:4px 0 0">Backgrounds &amp; Borders 综合演示卡片</p>
+    </div>
+  </section>
+</body>
+</html>

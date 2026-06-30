@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · 计算属性</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    input { padding: 6px; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    .done { text-decoration: line-through; color: #999; }
+  </style>
+</head>
+<body>
+  <h1>04 · 计算属性（computed）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① 基础：派生数据</h3>
+      <input v-model="firstName" placeholder="姓" />
+      <input v-model="lastName" placeholder="名" />
+      <!-- fullName 由 firstName/lastName 派生，自动随之更新 -->
+      <p>全名：<b>{{ fullName }}</b></p>
+    </div>
+
+    <div class="card">
+      <h3>② 缓存特性</h3>
+      <p>现在时间戳（computed，被缓存）：{{ cachedTime }}</p>
+      <p>现在时间戳（method，每次渲染都算）：{{ methodTime() }}</p>
+      <button @click="tick++">触发一次重新渲染（tick={{ tick }}）</button>
+      <small>反复点击，观察：method 每次都变，computed 因依赖没变所以不变</small>
+    </div>
+
+    <div class="card">
+      <h3>③ 可写计算属性（getter + setter）</h3>
+      <p>已完成 {{ doneCount }} / {{ todos.length }} 项</p>
+      <!-- allDone 可读可写：勾选它会反向把所有 todo 标记为完成/未完成 -->
+      <label><input type="checkbox" v-model="allDone" /> 全部完成</label>
+      <ul>
+        <li v-for="t in todos" :key="t.id" :class="{ done: t.done }">
+          <input type="checkbox" v-model="t.done" /> {{ t.text }}
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, reactive, computed } = Vue;
+    createApp({
+      setup() {
+        const firstName = ref('张');
+        const lastName = ref('三');
+        // 只读计算属性：传一个 getter 函数
+        const fullName = computed(() => firstName.value + lastName.value);
+
+        const tick = ref(0);
+        // 依赖是 firstName/lastName，不依赖 tick，所以点 tick 它不重新计算
+        const cachedTime = computed(() => {
+          return firstName.value && Date.now();
+        });
+        const methodTime = () => Date.now();
+
+        const todos = reactive([
+          { id: 1, text: '学习 ref', done: true },
+          { id: 2, text: '学习 computed', done: false },
+          { id: 3, text: '学习 watch', done: false },
+        ]);
+        const doneCount = computed(() => todos.filter(t => t.done).length);
+        // 可写计算属性：同时提供 get 和 set
+        const allDone = computed({
+          get: () => todos.every(t => t.done),
+          set: (val) => todos.forEach(t => (t.done = val)),
+        });
+
+        return { firstName, lastName, fullName, tick, cachedTime, methodTime,
+                 todos, doneCount, allDone };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

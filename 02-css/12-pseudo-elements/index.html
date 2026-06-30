@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>12 · 伪元素 pseudo-elements</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
+      margin: 0;
+      padding: 24px;
+      background: #f5f7fa;
+      color: #2c3e50;
+    }
+    h1 { font-size: 24px; border-left: 5px solid #16a085; padding-left: 12px; }
+    h2 { font-size: 18px; color: #16a085; margin-top: 36px; }
+    .desc { color: #666; font-size: 14px; }
+    .panel {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      margin-bottom: 18px;
+    }
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+
+    /* ===== 演示一：::before 加图标 ===== */
+    .with-icon {
+      font-size: 15px; padding: 8px 0;
+    }
+    /* ::before 在元素内容前插入虚拟元素，content 必填 */
+    .with-icon::before {
+      content: "✅ ";          /* 用 content 插入图标字符 */
+      color: #16a085;
+    }
+    .with-icon.warn::before {
+      content: "⚠️ ";
+    }
+
+    /* ===== 演示二：::after 角标 ===== */
+    .badge-box {
+      position: relative;
+      display: inline-block;
+      padding: 14px 22px;
+      background: #16a085;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    /* ::after 做右上角 NEW 角标 */
+    .badge-box::after {
+      content: "NEW";              /* 角标文字 */
+      position: absolute;
+      top: -10px; right: -14px;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+
+    /* ===== 演示三：::first-letter 首字下沉 + ::first-line ===== */
+    .article {
+      font-size: 15px;
+      width: 100%;
+      max-width: 560px;
+    }
+    /* ::first-letter 选中首字母/首字，做下沉效果 */
+    .article::first-letter {
+      font-size: 52px;
+      float: left;
+      line-height: 1;
+      margin: 4px 10px 0 0;
+      color: #16a085;
+      font-weight: bold;
+    }
+    /* ::first-line 选中第一行 */
+    .article::first-line {
+      font-weight: bold;
+      color: #34495e;
+    }
+
+    /* ===== 演示四：::selection 选中变色 ===== */
+    .select-me::selection {
+      background: #16a085;   /* 被鼠标选中文字的高亮底色 */
+      color: #fff;
+    }
+
+    /* ===== 演示五：attr() 与计数器 / 引号 ===== */
+    .quote {
+      position: relative;
+      padding: 10px 30px;
+      font-style: italic;
+      color: #555;
+    }
+    /* 用 ::before 插入装饰性大引号 */
+    .quote::before {
+      content: "\201C";   /* 左双引号 */
+      font-size: 40px;
+      color: #16a085;
+      position: absolute;
+      left: 0; top: -6px;
+    }
+    /* attr()：把 HTML 属性值读出来显示 */
+    .link-attr::after {
+      content: " (" attr(data-host) ")";
+      color: #999;
+      font-size: 13px;
+    }
+
+    /* ===== 演示六：::marker 列表标记 ===== */
+    .marker-list li::marker {
+      color: #16a085;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>12 · 伪元素 pseudo-elements</h1>
+  <p class="desc">伪元素（双冒号 <code>::</code>）创建并修饰一个<strong>不在 DOM 中的虚拟元素</strong>，常用于插入装饰内容。</p>
+
+  <!-- ===== 演示一：::before 图标 ===== -->
+  <h2>① ::before 插入图标（content 必填）</h2>
+  <div class="panel">
+    <div class="with-icon">任务已完成，可以提交</div>
+    <div class="with-icon warn">注意：存在未保存的修改</div>
+    <p class="desc">图标由 <code>::before</code> 的 <code>content</code> 插入，不占用真实 DOM 节点。</p>
+  </div>
+
+  <!-- ===== 演示二：::after 角标 ===== -->
+  <h2>② ::after 制作角标</h2>
+  <div class="panel">
+    <span class="badge-box">商品卡片</span>
+    <p class="desc">右上角的 <code>NEW</code> 是 <code>::after</code> + 绝对定位实现的纯 CSS 角标。</p>
+  </div>
+
+  <!-- ===== 演示三：::first-letter / ::first-line ===== -->
+  <h2>③ ::first-letter 首字下沉 & ::first-line 首行加粗</h2>
+  <div class="panel">
+    <p class="article">伪元素让我们可以在不增加 HTML 标签的前提下，对元素的局部内容进行精细化样式控制。比如这段文字的首字被放大下沉，而第一整行被加粗显示，全部由 CSS 伪元素完成，没有任何额外的 span 包裹。</p>
+  </div>
+
+  <!-- ===== 演示四：::selection ===== -->
+  <h2>④ ::selection 选中变色</h2>
+  <div class="panel">
+    <p class="select-me">用鼠标选中这段文字试试看，被选中部分的高亮底色会变成主题绿色，而不是浏览器默认的蓝色。</p>
+  </div>
+
+  <!-- ===== 演示五：引号 / attr() ===== -->
+  <h2>⑤ 装饰引号 与 attr() 读取属性</h2>
+  <div class="panel">
+    <p class="quote">伪元素是 CSS 中性价比极高的工具，能用一行 content 解决很多装饰需求。</p>
+    <p class="link-attr" data-host="developer.mozilla.org">参考文档</p>
+    <p class="desc"><code>::before</code> 插入大引号；<code>::after</code> 用 <code>attr(data-host)</code> 读取并显示 HTML 属性值。</p>
+  </div>
+
+  <!-- ===== 演示六：::marker ===== -->
+  <h2>⑥ ::marker 自定义列表标记</h2>
+  <div class="panel">
+    <ul class="marker-list">
+      <li>列表项的圆点 / 序号叫 marker</li>
+      <li>用 ::marker 可单独给它上色加粗</li>
+      <li>无需破坏列表语义</li>
+    </ul>
+  </div>
+</body>
+</html>

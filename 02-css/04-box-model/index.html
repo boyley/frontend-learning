@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 · CSS 盒模型 Box Model</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; }              /* 推荐的全局实践：所有元素用替代盒模型 */
+    body {
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f5f6fa;
+      color: #2d3436;
+      line-height: 1.6;
+    }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; border-left: 4px solid #6c5ce7; padding-left: 10px; margin-top: 32px; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+
+    /* ===== 盒模型四层可视化 ===== */
+    /* 外层 margin 区域：用浅黄色背景模拟外边距占用的空间 */
+    .layer-margin {
+      background: #ffeaa7;                      /* margin 区（黄）*/
+      display: inline-block;
+      padding: 30px;                            /* 这里的 padding 实际是在“画”margin 的厚度 */
+      text-align: center;
+    }
+    .layer-border {
+      background: #fab1a0;                       /* border 区（橙红）*/
+      padding: 20px;                            /* 画 border 厚度 */
+    }
+    .layer-padding {
+      background: #55efc4;                       /* padding 区（绿）*/
+      padding: 20px;                            /* 画 padding 厚度 */
+    }
+    .layer-content {
+      background: #74b9ff;                       /* content 区（蓝）*/
+      color: #fff;
+      padding: 16px 24px;
+      font-weight: bold;
+    }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 14px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+
+    /* ===== content-box vs border-box 对比 ===== */
+    .compare { display: flex; gap: 40px; flex-wrap: wrap; }
+    .ruler {
+      /* 标尺：宽 300px 的参照线，用来观察盒子是否“超出” */
+      width: 300px;
+      border-top: 2px dashed #d63031;
+      position: relative;
+      padding-top: 6px;
+      font-size: 12px;
+      color: #d63031;
+    }
+    .demo-box {
+      width: 200px;                             /* 两个盒子都设 width:200px */
+      padding: 20px;                            /* 都加 20px 内边距 */
+      border: 10px solid #6c5ce7;               /* 都加 10px 边框 */
+      background: #dfe6ff;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .content-box { box-sizing: content-box; }    /* 标准盒模型：总宽 = 200 + 20*2 + 10*2 = 260px */
+    .border-box  { box-sizing: border-box; }     /* 替代盒模型：总宽就是 200px，padding/border 向内挤 */
+
+    /* ===== margin 折叠演示 ===== */
+    .collapse-wrap { background: #fff; border: 1px dashed #b2bec3; }
+    .mb { background: #a29bfe; color:#fff; padding:8px; text-align:center; }
+    .mb.top    { margin-bottom: 40px; }          /* 上块下边距 40px */
+    .mb.bottom { margin-top: 30px; }             /* 下块上边距 30px —— 实际间距取较大值 40px，而非 70px */
+
+    code { background:#f1f2f6; padding:2px 6px; border-radius:4px; color:#e84393; font-size:13px; }
+  </style>
+</head>
+<body>
+  <!-- 页面主标题 -->
+  <h1>📦 CSS 盒模型 Box Model</h1>
+  <p>每个元素都是一个矩形盒子，由内到外分为 <code>content</code> → <code>padding</code> → <code>border</code> → <code>margin</code> 四层。</p>
+
+  <!-- 区块一：四层结构可视化 -->
+  <section class="card">
+    <h2>① 盒模型四层结构</h2>
+    <div class="layer-margin">
+      margin（外边距）
+      <div class="layer-border">
+        border（边框）
+        <div class="layer-padding">
+          padding（内边距）
+          <div class="layer-content">content（内容）</div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:#ffeaa7"></i>margin 外边距</span>
+      <span><i class="dot" style="background:#fab1a0"></i>border 边框</span>
+      <span><i class="dot" style="background:#55efc4"></i>padding 内边距</span>
+      <span><i class="dot" style="background:#74b9ff"></i>content 内容</span>
+    </div>
+  </section>
+
+  <!-- 区块二：标准盒模型 vs 替代盒模型 -->
+  <section class="card">
+    <h2>② content-box vs border-box（红色虚线为 300px 参照标尺）</h2>
+    <div class="compare">
+      <div>
+        <strong>content-box（标准盒模型）</strong>
+        <div class="ruler">↑ 300px 参照线</div>
+        <!-- width:200 但实际占位 260px -->
+        <div class="demo-box content-box">width:200px<br>实际占位 = 200 + 20×2 + 10×2 = <b>260px</b></div>
+      </div>
+      <div>
+        <strong>border-box（替代盒模型）</strong>
+        <div class="ruler">↑ 300px 参照线</div>
+        <!-- width:200 就是最终占位 200px -->
+        <div class="demo-box border-box">width:200px<br>实际占位 = <b>200px</b>（padding/border 向内挤压内容）</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 区块三：margin 折叠 -->
+  <section class="card">
+    <h2>③ margin 折叠（相邻外边距合并）</h2>
+    <p>上块 <code>margin-bottom:40px</code> + 下块 <code>margin-top:30px</code>，实际间距 <b>取较大值 40px</b>，而不是相加 70px。</p>
+    <div class="collapse-wrap">
+      <div class="mb top">上方块 · margin-bottom: 40px</div>
+      <div class="mb bottom">下方块 · margin-top: 30px</div>
+    </div>
+  </section>
+</body>
+</html>

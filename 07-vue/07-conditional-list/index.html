@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 条件渲染与列表渲染</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    ul { padding-left: 20px; }
+    .tag { display: inline-block; background: #eee; border-radius: 4px; padding: 1px 8px; margin-left: 6px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>07 · 条件渲染（v-if）与列表渲染（v-for）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① v-if / v-else-if / v-else</h3>
+      <button @click="score = (score + 10) % 110">加分（当前 {{ score }}）</button>
+      <p v-if="score >= 90">🏆 优秀</p>
+      <p v-else-if="score >= 60">✅ 及格</p>
+      <p v-else>❌ 不及格</p>
+    </div>
+
+    <div class="card">
+      <h3>② v-show（只是切换 display，元素始终在 DOM 里）</h3>
+      <button @click="visible = !visible">切换 v-show（{{ visible }}）</button>
+      <p v-show="visible">我用 display:none 控制显隐，频繁切换更省</p>
+    </div>
+
+    <div class="card">
+      <h3>③ v-for 遍历数组（务必加 :key）</h3>
+      <button @click="addTodo">新增一项</button>
+      <ul>
+        <!-- :key 给每项一个稳定唯一标识，帮助 Vue 高效更新 -->
+        <li v-for="(todo, index) in todos" :key="todo.id">
+          {{ index + 1 }}. {{ todo.text }}
+          <span class="tag">id={{ todo.id }}</span>
+          <button @click="removeTodo(todo.id)">删除</button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>④ v-for 遍历对象 + 配合 computed 过滤</h3>
+      <label><input type="checkbox" v-model="onlyEven" /> 只看偶数</label>
+      <!-- 不要在同一元素上同时用 v-if 和 v-for，改用 computed 过滤 -->
+      <ul>
+        <li v-for="n in shownNumbers" :key="n">{{ n }}</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, reactive, computed } = Vue;
+    createApp({
+      setup() {
+        const score = ref(75);
+        const visible = ref(true);
+
+        let nextId = 4;
+        const todos = reactive([
+          { id: 1, text: '买菜' },
+          { id: 2, text: '写代码' },
+          { id: 3, text: '健身' },
+        ]);
+        const addTodo = () => todos.push({ id: nextId++, text: '新任务 ' + nextId });
+        const removeTodo = (id) => {
+          const i = todos.findIndex(t => t.id === id);
+          if (i > -1) todos.splice(i, 1);
+        };
+
+        const numbers = [1, 2, 3, 4, 5, 6];
+        const onlyEven = ref(false);
+        // 用 computed 做过滤，而不是在 v-for 上挂 v-if
+        const shownNumbers = computed(() =>
+          onlyEven.value ? numbers.filter(n => n % 2 === 0) : numbers
+        );
+
+        return { score, visible, todos, addTodo, removeTodo, onlyEven, shownNumbers };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

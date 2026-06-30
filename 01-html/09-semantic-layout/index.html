@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<!-- HTML5 文档类型声明，告诉浏览器用标准模式解析 -->
+<html lang="zh-CN">
+<!-- lang="zh-CN" 声明页面主语言为简体中文，利于无障碍朗读与搜索引擎 -->
+<head>
+  <!-- meta charset 必须放在 head 最前面，声明字符编码为 UTF-8，避免中文乱码 -->
+  <meta charset="UTF-8">
+  <!-- viewport 让页面在移动端按设备宽度渲染 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>09 · 语义化布局标签 Demo</title>
+  <style>
+    /* 仅为了让各语义区块在视觉上可见，真实项目里语义标签本身没有默认样式差异 */
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      margin: 0;
+      line-height: 1.6;
+      color: #222;
+    }
+    /* 给每个语义区块加边框+标注，方便观察页面结构 */
+    header, nav, main, article, section, aside, footer {
+      border: 2px dashed #888;
+      padding: 12px;
+      margin: 8px;
+      position: relative;
+    }
+    /* 用 ::before 在每个区块左上角打上标签名 */
+    header::before, nav::before, main::before, article::before,
+    section::before, aside::before, footer::before {
+      content: attr(data-tag);
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      background: #2d6cdf;
+      color: #fff;
+      font-size: 12px;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    header { background: #eaf2ff; }
+    nav    { background: #f3eaff; }
+    main   { background: #eafff0; }
+    aside  { background: #fff7ea; }
+    footer { background: #f0f0f0; text-align: center; }
+    /* main 内部用 flex 让 article 与 aside 横向排列 */
+    .layout { display: flex; gap: 8px; }
+    .layout main { flex: 3; }
+    .layout aside { flex: 1; }
+    nav ul { list-style: none; display: flex; gap: 16px; margin: 0; padding: 0; }
+    nav a { text-decoration: none; color: #2d6cdf; }
+  </style>
+</head>
+<body>
+  <!-- header：页面或区块的页眉，通常放 logo、标题、主导航 -->
+  <header data-tag="&lt;header&gt;">
+    <h1>语义化博客示例</h1>
+    <p>用正确的标签表达正确的含义</p>
+
+    <!-- nav：导航链接区域，包裹主要导航。一个页面可有多个 nav -->
+    <nav data-tag="&lt;nav&gt;">
+      <ul>
+        <li><a href="#home">首页</a></li>
+        <li><a href="#blog">博客</a></li>
+        <li><a href="#about">关于</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- 用 flex 容器把主体内容与侧栏并排展示 -->
+  <div class="layout">
+    <!-- main：页面唯一的主内容区，每个页面只能有一个 main -->
+    <main data-tag="&lt;main&gt;">
+
+      <!-- article：可独立分发、自成一体的内容（一篇博客、一条评论、一个商品卡） -->
+      <article data-tag="&lt;article&gt;">
+        <h2>什么是语义化标签</h2>
+        <p>语义化标签用元素名字本身表达内容的含义，而不是统统用无意义的 div。</p>
+
+        <!-- section：文档中有主题的内容分段，通常带一个标题 -->
+        <section data-tag="&lt;section&gt;">
+          <h3>第一节：为什么重要</h3>
+          <p>对屏幕阅读器、SEO、团队协作都更友好，结构一目了然。</p>
+        </section>
+
+        <section data-tag="&lt;section&gt;">
+          <h3>第二节：div 汤的问题</h3>
+          <p>满屏的 &lt;div class="header"&gt; 机器无法理解含义，可读性与可维护性差。</p>
+        </section>
+      </article>
+    </main>
+
+    <!-- aside：与主内容相关但可独立的旁支内容，如侧栏、广告、相关链接 -->
+    <aside data-tag="&lt;aside&gt;">
+      <h3>相关链接</h3>
+      <ul>
+        <li><a href="#">HTML 教程</a></li>
+        <li><a href="#">CSS 教程</a></li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- footer：页脚，放版权、联系方式、次要链接 -->
+  <footer data-tag="&lt;footer&gt;">
+    <p>&copy; 2026 语义化示例 · 用 HTML5 语义标签构建</p>
+  </footer>
+</body>
+</html>

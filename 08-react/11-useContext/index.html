@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 · useContext 主题切换</title>
+  <!-- React 18 运行时 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel standalone：让浏览器直接解析 JSX，无需构建 -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; transition: all .3s; }
+    .card { border: 1px solid #ccc; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    button { padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useContext, createContext } = React;
+
+    // 1) 创建 Context。括号里是「默认值」——只有当某个消费者
+    //    外层没有对应的 Provider 时，才会拿到这个默认值。
+    const ThemeContext = createContext({
+      theme: 'light',
+      toggle: () => {}, // 默认空函数，避免没有 Provider 时调用报错
+    });
+
+    // 2) 顶层组件：在这里维护真正的 state，并通过 Provider 的 value 下发。
+    function App() {
+      const [theme, setTheme] = useState('light');
+      const toggle = () => setTheme(t => (t === 'light' ? 'dark' : 'light'));
+
+      // 动态计算页面背景与字色，体现主题确实生效
+      const pageStyle = theme === 'light'
+        ? { background: '#fff', color: '#222' }
+        : { background: '#222', color: '#eee' };
+      Object.assign(document.body.style, pageStyle);
+
+      return (
+        // Provider 包裹整棵子树；value 即所有子组件能消费的数据
+        <ThemeContext.Provider value={{ theme, toggle }}>
+          <h2>useContext 主题切换 Demo</h2>
+          <p>当前主题（来自顶层 state）：<b>{theme}</b></p>
+          {/* 注意：Layout / Sidebar 都没有接收 theme 这个 prop，
+              数据是通过 Context「穿透」传下去的，避免 prop drilling */}
+          <Layout />
+        </ThemeContext.Provider>
+      );
+    }
+
+    // 3) 中间层组件：它完全不关心 theme，也不需要透传 props。
+    function Layout() {
+      return (
+        <div className="card">
+          <p>我是中间层 Layout，我没有碰过 theme，只是单纯地渲染子组件。</p>
+          <DeepChild />
+        </div>
+      );
+    }
+
+    // 4) 深层子组件：直接用 useContext 读取最近一个 Provider 的 value。
+    function DeepChild() {
+      const { theme, toggle } = useContext(ThemeContext);
+      const style = theme === 'light'
+        ? { background: '#f5f5f5', color: '#222' }
+        : { background: '#444', color: '#fff' };
+      return (
+        <div className="card" style={style}>
+          <p>我是深层子组件 DeepChild，读到的主题是：<b>{theme}</b></p>
+          <button onClick={toggle}>切换主题</button>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

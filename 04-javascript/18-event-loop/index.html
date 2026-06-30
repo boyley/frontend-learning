@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>18 · 事件循环</title>
+    <style>
+      body {
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 24px;
+        line-height: 1.7;
+        color: #222;
+        background: #fafafa;
+      }
+      h1 {
+        border-bottom: 3px solid #f7df1e;
+        padding-bottom: 8px;
+      }
+      .tip {
+        background: #fff8d6;
+        border-left: 4px solid #f7df1e;
+        padding: 10px 14px;
+        border-radius: 4px;
+        margin: 16px 0;
+      }
+      pre#output {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>18 · 事件循环（Event Loop）</h1>
+    <p>
+      演示调用栈、宏任务（<code>setTimeout</code>）、微任务
+      （<code>Promise.then / queueMicrotask</code>）的执行顺序：
+      <strong>同步代码 → 清空微任务 → 取一个宏任务 → 再清空微任务</strong>。
+    </p>
+    <p class="tip">💡 打开浏览器控制台（F12）查看完整输出，重点对照打印顺序。</p>
+    <pre id="output">正在加载…</pre>
+    <script src="demo.js"></script>
+  </body>
+</html>

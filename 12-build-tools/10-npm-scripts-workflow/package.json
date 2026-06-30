@@ -1,0 +1,36 @@
+{
+  "name": "npm-scripts-workflow",
+  "private": true,
+  "version": "1.0.0",
+  "description": "12-build-tools · 10 · npm scripts 工程化工作流",
+  "type": "module",
+  "scripts": {
+    "//说明": "下面演示 npm scripts 的各种用法，部分依赖未真实安装，重在讲解语法",
+
+    "hello": "node scripts/hello.js",
+
+    "//1": "===== pre/post 生命周期钩子：运行 build 会自动先跑 prebuild、后跑 postbuild =====",
+    "prebuild": "node scripts/clean.js",
+    "build": "vite build",
+    "postbuild": "node scripts/done.js",
+
+    "//2": "===== 常规脚本 =====",
+    "dev": "vite",
+    "preview": "vite preview",
+
+    "//3": "===== 串行 && 与传参 -- =====",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check": "npm run lint && npm run format",
+
+    "//4": "===== 并行：用 npm-run-all 或 concurrently（需安装）=====",
+    "dev:all": "npm-run-all --parallel dev mock",
+    "mock": "node scripts/mock-server.js",
+
+    "//5": "===== 调用本地依赖的 CLI（无需全局安装）=====",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

@@ -1,0 +1,64 @@
+// ============================================================
+// 08 · 运算（Operators）：数学 / 颜色 / 比较 / 逻辑
+// ------------------------------------------------------------
+// Sass 能在编译期做算术、比较、逻辑、字符串拼接、颜色运算。
+// ⚠️ 除法不再用 /，必须用 math.div()。
+// ============================================================
+
+@use "sass:math"; // 除法、百分比等
+@use "sass:color"; // 颜色运算
+
+// ---------- 1) 数学运算：+ - * % ----------
+$gutter: 16px;
+$columns: 12;
+
+.layout {
+  padding: $gutter * 2; // 乘 → 32px
+  margin-bottom: $gutter + 8px; // 加 → 24px
+  // 除法：必须用 math.div（$gutter / 2 已弃用）
+  gap: math.div($gutter, 2); // → 8px
+  // 取模 %
+  z-index: 10 % 3; // → 1
+}
+
+// ---------- 2) 单位运算：同类单位可加减，乘除会叠加/抵消单位 ----------
+.unit-demo {
+  width: 100px + 20px; // → 120px（同单位相加）
+  height: 10px * 3; // → 30px（数 × px = px）
+  // 百分比换算：3 列占满 12 列 → 25%
+  flex-basis: math.percentage(math.div(3, $columns)); // → 25%
+}
+
+// ---------- 3) 颜色运算（现代写法，用 color 模块）----------
+$brand: #6750a4;
+
+.color-demo {
+  background: $brand;
+  // color.adjust：按通道增减（这里调暗：lightness -15%）
+  border-color: color.adjust($brand, $lightness: -15%);
+  // color.scale：按比例朝端点缩放（更自然的变亮/变暗）
+  box-shadow: 0 4px 12px color.adjust($brand, $alpha: -0.6);
+  // color.mix：两色混合
+  outline: 2px solid color.mix($brand, white, 60%);
+}
+
+// ---------- 4) 比较与逻辑运算（多用于 @if，见 09）----------
+$size: 18px;
+$is-large: $size >= 16px; // 比较 → true
+$show: true and ($size > 10px); // 逻辑 and → true
+
+.conditional {
+  // 用插值把布尔结果展示出来（仅演示）
+  content: "is-large=#{$is-large}, show=#{$show}";
+  @if $is-large {
+    font-size: $size;
+    font-weight: 700;
+  }
+}
+
+// ---------- 5) 字符串拼接（+ 连接字符串）----------
+$base-url: "/assets";
+.hero {
+  // 字符串 + 拼接路径
+  background-image: url($base-url + "/hero.png");
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>09 · 控制流 Control Flow</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body { margin: 0; padding: 40px; font-family: system-ui, sans-serif; background: #f5f3fb; }
+      .grid { display: flex; gap: 8px; margin: 12px 0; }
+      .chip { padding: 6px 12px; border-radius: 6px; }
+      .card-dark, .card-light { padding: 16px; border-radius: 8px; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="card-dark">@if 主题：dark</div>
+    <div class="card-light">@if 主题：light</div>
+
+    <h3>@each 遍历 map 生成的工具类</h3>
+    <div class="grid">
+      <span class="chip bg-primary">bg-primary</span>
+      <span class="chip bg-success">bg-success</span>
+      <span class="chip bg-danger">bg-danger</span>
+    </div>
+
+    <h3>@each 列表生成的字号</h3>
+    <p class="text-small">text-small 12px</p>
+    <p class="text-medium">text-medium 16px</p>
+    <p class="text-large">text-large 22px</p>
+
+    <h3>@for 生成的 margin 阶梯（m-1 ~ m-5）</h3>
+    <div class="m-1" style="background:#ddd;">m-1</div>
+    <div class="m-5" style="background:#ddd;">m-5</div>
+  </body>
+</html>

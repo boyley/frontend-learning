@@ -1,0 +1,66 @@
+// ============================================================
+// 07 · 继承（@extend）与占位符（%placeholder）
+// ------------------------------------------------------------
+// @extend 让一个选择器「继承」另一个选择器的样式——编译时把它们
+// 合并到同一条规则的选择器列表里（共享样式、不复制属性）。
+// %placeholder 是「只为被 @extend 而生」的占位选择器，自己不输出。
+// ============================================================
+
+// ---------- 1) %placeholder：占位选择器 ----------
+// 用 % 开头声明。它本身不会编译进 CSS，只有被 @extend 时才「激活」。
+%btn-base {
+  display: inline-block;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: center;
+}
+
+// ---------- 2) @extend %placeholder：继承占位符 ----------
+.btn-primary {
+  @extend %btn-base; // 继承基础按钮样式
+  background: #6750a4;
+  color: #fff;
+}
+
+.btn-ghost {
+  @extend %btn-base; // 同样继承
+  background: transparent;
+  color: #6750a4;
+  box-shadow: inset 0 0 0 2px #6750a4;
+}
+
+// ---------- 3) @extend 一个真实类（也可以，但占位符更干净）----------
+.message {
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.message-success {
+  @extend .message; // 继承真实类 .message
+  border-color: #21a366;
+  background: #e6f4ea;
+}
+
+.message-error {
+  @extend .message;
+  border-color: #b3261e;
+  background: #fce8e6;
+}
+
+// ---------- 4) %placeholder 也能带嵌套，被继承时一并带过去 ----------
+%clearfix {
+  &::after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+}
+
+.row {
+  @extend %clearfix;
+  // ...float 布局时清除浮动
+}

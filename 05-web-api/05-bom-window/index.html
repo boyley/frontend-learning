@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · BOM 浏览器对象模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f5f6fa;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; margin-top: 30px; border-left: 4px solid #00a8a8; padding-left: 10px; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      margin-top: 14px;
+    }
+    button {
+      background: #00a8a8;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 4px 6px 4px 0;
+    }
+    button:hover { background: #008888; }
+    button.danger { background: #e17055; }
+    button.danger:hover { background: #c0504a; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    td { padding: 7px 10px; border-bottom: 1px solid #eee; word-break: break-all; }
+    td:first-child { color: #00a8a8; font-weight: bold; width: 36%; white-space: nowrap; }
+    .info-grid { display: grid; grid-template-columns: 160px 1fr; gap: 8px 14px; font-size: 14px; }
+    .info-grid .label { color: #00a8a8; font-weight: bold; }
+    .info-grid .value { word-break: break-all; }
+    .log {
+      background: #2c3e50; color: #ecf0f1; border-radius: 6px;
+      padding: 10px 12px; font-family: Menlo, Consolas, monospace;
+      font-size: 13px; min-height: 22px; margin-top: 10px;
+    }
+    .big { font-size: 20px; font-weight: bold; color: #00a8a8; }
+    .spacer { height: 600px; }
+    .tip { font-size: 13px; color: #7f8c8d; }
+  </style>
+</head>
+<body>
+  <h1>05 · BOM 浏览器对象模型（window）</h1>
+  <p class="tip">window 是顶层全局对象，下挂 location / navigator / screen / history / document。</p>
+
+  <h2>① window.location（当前 URL 解析）</h2>
+  <div class="card">
+    <table><tbody id="loc-body"></tbody></table>
+    <div style="margin-top:10px;">
+      <button id="btn-hash">🔗 随机修改 hash</button>
+      <button id="btn-reload" class="danger">🔄 location.reload()</button>
+    </div>
+    <div class="log" id="hash-log">修改 hash 后这里会显示 hashchange 事件。</div>
+  </div>
+
+  <h2>② window.navigator（浏览器信息）</h2>
+  <div class="card">
+    <div class="info-grid">
+      <span class="label">language</span><span class="value" id="nav-language"></span>
+      <span class="label">languages</span><span class="value" id="nav-languages"></span>
+      <span class="label">onLine（网络）</span><span class="value" id="nav-online"></span>
+      <span class="label">platform</span><span class="value" id="nav-platform"></span>
+      <span class="label">userAgent</span><span class="value" id="nav-ua"></span>
+    </div>
+    <p class="tip">试试断开/恢复网络，onLine 会通过 online/offline 事件自动更新。</p>
+  </div>
+
+  <h2>③ window.screen 与窗口尺寸（resize 实时）</h2>
+  <div class="card">
+    <div class="info-grid">
+      <span class="label">screen 物理屏幕</span><span class="value big" id="screen-size"></span>
+      <span class="label">screen 可用区域</span><span class="value" id="avail-size"></span>
+      <span class="label">视口 inner 尺寸</span><span class="value big" id="inner-size"></span>
+    </div>
+    <p class="tip">缩放浏览器窗口，「视口 inner 尺寸」会随 resize 事件实时变化。</p>
+  </div>
+
+  <h2>④ 对话框 / 窗口 / 滚动</h2>
+  <div class="card">
+    <button id="btn-alert">alert</button>
+    <button id="btn-confirm">confirm</button>
+    <button id="btn-prompt">prompt</button>
+    <button id="btn-open">window.open 新窗口</button>
+    <button id="btn-close-win">window.close 关闭</button>
+    <div class="log" id="dialog-log">对话框返回值显示在这里。</div>
+    <div class="log" id="open-log" style="margin-top:6px;">window.open/close 结果显示在这里。</div>
+  </div>
+
+  <div class="spacer"></div>
+  <button id="btn-top">⬆️ scrollTo 滚动到顶部（平滑）</button>
+
+  <script src="demo.js"></script>
+</body>
+</html>

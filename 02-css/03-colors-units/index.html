@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>颜色与单位</title>
+  <style>
+    /* 根字号：rem 以它为基准 */
+    :root { font-size: 16px; }
+
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      line-height: 1.6;       /* 行高用无单位数字：等于 1.6 倍当前字号，可被子元素安全继承 */
+      color: #2c3e50;
+      background: #f7f9fb;
+    }
+    h1 { font-size: 24px; }
+    h2 {
+      font-size: 18px;
+      margin-top: 32px;
+      border-left: 4px solid #4a90d9;
+      padding-left: 10px;
+    }
+    .demo { background: #fff; border: 1px solid #e1e6eb; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    code { background: #eef2f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+    /* ===== 颜色样例块 ===== */
+    .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+    .swatch {
+      width: 120px; height: 70px; border-radius: 8px;
+      display: flex; align-items: flex-end; justify-content: center;
+      color: #fff; font-size: 12px; padding-bottom: 6px;
+      text-shadow: 0 1px 2px rgba(0,0,0,.4);
+      border: 1px solid rgba(0,0,0,.1);
+    }
+    .c-keyword  { background: tomato; }                 /* 关键字 */
+    .c-hex3     { background: #09f; }                    /* #rgb 简写 */
+    .c-hex6     { background: #3366cc; }                 /* #rrggbb */
+    .c-hex8     { background: #33cc6688; }               /* #rrggbbaa 带透明度 */
+    .c-rgb      { background: rgb(231, 76, 60); }        /* rgb() */
+    .c-rgba     { background: rgba(142, 68, 173, 0.6); } /* rgba() 半透明 */
+    .c-hsl      { background: hsl(145, 63%, 42%); }      /* hsl() 色相/饱和度/亮度 */
+    .c-hsla     { background: hsla(45, 100%, 50%, 0.7); }/* hsla() 半透明 */
+
+    /* currentColor：颜色取自当前 color，常用于图标描边 */
+    .current-demo { color: #e67e22; border: 3px solid currentColor; padding: 10px; border-radius: 8px; }
+
+    /* ===== 单位对比盒子 ===== */
+    .box { background: #4a90d9; color: #fff; margin: 6px 0; padding: 6px 10px; border-radius: 6px; white-space: nowrap; }
+    .w-px  { width: 200px; }   /* 绝对：固定 200 像素 */
+    .w-pct { width: 50%; }     /* 相对父元素宽度 */
+    .w-vw  { width: 30vw; }    /* 相对视口宽度，缩放窗口会变化 */
+    .w-ch  { width: 20ch; }    /* 约等于 20 个 0 字符宽 */
+
+    /* ===== em 嵌套放大陷阱 ===== */
+    .em-outer { font-size: 20px; }
+    .em-outer .em-child { font-size: 1.5em; } /* 1.5 × 20 = 30px */
+    .em-outer .em-child .em-grandchild { font-size: 1.5em; } /* 1.5 × 30 = 45px，逐层放大！ */
+
+    /* rem 不会逐层放大：始终相对根字号 16px */
+    .rem-demo { font-size: 1.5rem; } /* 恒等于 24px，不受父字号影响 */
+  </style>
+</head>
+<body>
+  <h1>颜色与单位</h1>
+
+  <!-- 颜色 -->
+  <h2>1. 颜色表示方式</h2>
+  <div class="demo">
+    <div class="swatches">
+      <div class="swatch c-keyword">关键字 tomato</div>
+      <div class="swatch c-hex3">#09f</div>
+      <div class="swatch c-hex6">#3366cc</div>
+      <div class="swatch c-hex8">#33cc6688</div>
+      <div class="swatch c-rgb">rgb(231,76,60)</div>
+      <div class="swatch c-rgba">rgba(...,0.6)</div>
+      <div class="swatch c-hsl">hsl(145,63%,42%)</div>
+      <div class="swatch c-hsla">hsla(...,0.7)</div>
+    </div>
+    <p style="margin-top:14px"><span class="current-demo">currentColor：边框颜色自动跟随文字颜色（橙色）</span></p>
+  </div>
+
+  <!-- 单位 -->
+  <h2>2. 长度单位对比（盒子宽度）</h2>
+  <div class="demo">
+    <div class="box w-px">px：固定 200px（绝对单位）</div>
+    <div class="box w-pct">%：父元素宽度的 50%</div>
+    <div class="box w-vw">vw：视口宽度的 30%（拖动窗口试试）</div>
+    <div class="box w-ch">ch：约 20 个字符宽</div>
+  </div>
+
+  <!-- em 陷阱 -->
+  <h2>3. em 嵌套放大陷阱</h2>
+  <div class="demo em-outer">
+    父级 20px（基准）
+    <div class="em-child">child 1.5em → 30px
+      <div class="em-grandchild">grandchild 1.5em → 45px（逐层叠乘，越来越大！）</div>
+    </div>
+  </div>
+
+  <h2>4. rem 不会逐层放大</h2>
+  <div class="demo em-outer">
+    父级 20px
+    <div class="rem-demo">我是 1.5rem，恒等于 24px（相对根字号 16px，与父级无关）</div>
+  </div>
+
+  <p style="color:#888;font-size:13px">提示：em 相对“自身/父级字号”，rem 相对“根元素字号”，故 rem 更可控。</p>
+</body>
+</html>

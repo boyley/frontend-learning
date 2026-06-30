@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · Hello React</title>
+  <!-- React 18 UMD 开发版（含友好报错，体积大但调试方便；生产应换成 .production.min.js） -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel：让浏览器直接编译 JSX（仅学习用，生产环境用 Vite 预编译以获得性能） -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; line-height: 1.6; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; max-width: 360px; }
+    .clock { color: #0a7d34; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- 注意 type="text/babel"，Babel 才会编译这段 JSX -->
+  <script type="text/babel">
+    // 从全局 React 解构出需要的 Hook（CDN 模式下 React 挂在 window 上）
+    const { useState, useEffect } = React;
+
+    // ① 一个最简单的组件：组件就是「返回 JSX 的函数」，函数名必须大写开头
+    function Hello() {
+      // JSX 看起来像 HTML，本质是 React.createElement(...) 的语法糖
+      return <h1>Hello React 👋</h1>;
+    }
+
+    // ② 一个会随时间变化的组件：演示「声明式 UI」——你只描述「此刻该长什么样」，
+    //    数据一变 React 自动重渲染，你不用手动操作 DOM
+    function Clock() {
+      const [now, setNow] = useState(new Date()); // 状态：当前时间
+
+      useEffect(() => {
+        // 每秒更新一次 state，state 一变组件就重渲染
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer); // 组件卸载时清理定时器
+      }, []); // 空依赖数组：只在挂载时执行一次
+
+      return (
+        <p>
+          现在时间：<strong className="clock">{now.toLocaleTimeString()}</strong>
+        </p>
+      );
+    }
+
+    // ③ 根组件：用 JSX 把上面两个组件「声明式」地组合起来
+    function App() {
+      return (
+        <div className="card">
+          <Hello />
+          <Clock />
+          <p>这是你的第一个 React 应用，数据驱动视图，无需手动改 DOM。</p>
+        </div>
+      );
+    }
+
+    // ④ React 18 的入口：先 createRoot 拿到根，再 render
+    //    旧版是 ReactDOM.render(<App/>, container)，已废弃
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

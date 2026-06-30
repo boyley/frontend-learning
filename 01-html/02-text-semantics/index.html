@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · 文本与语义 Text Semantics</title>
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.8;
+      color: #222;
+    }
+    h1, h2, h3, h4, h5, h6 { color: #2563eb; margin: 16px 0 4px; }
+    section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 20px;
+      margin: 16px 0;
+    }
+    .tip { color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>文本与语义标签 Text Semantics</h1>
+
+  <!-- ========== 标题层级 h1~h6 ========== -->
+  <section>
+    <h2>1. 标题层级 h1 ~ h6</h2>
+    <!-- 标题用来表示「内容大纲」，h1 最重要，h6 最次要。
+         一个页面通常只有一个 h1，层级要逐级使用，不要为了字体大小跳级 -->
+    <h1>h1 一级标题</h1>
+    <h2>h2 二级标题</h2>
+    <h3>h3 三级标题</h3>
+    <h4>h4 四级标题</h4>
+    <h5>h5 五级标题</h5>
+    <h6>h6 六级标题</h6>
+    <p class="tip">标题表达的是「重要性/层级」，不是「字号大小」。字号要交给 CSS。</p>
+  </section>
+
+  <!-- ========== 段落 p、换行 br、分隔线 hr ========== -->
+  <section>
+    <h2>2. 段落 p / 换行 br / 分隔线 hr</h2>
+    <!-- <p> 表示一个段落，段落之间天然有上下间距 -->
+    <p>这是第一个段落。段落是文本最基本的块级容器。</p>
+    <p>
+      这是第二个段落。<br />
+      <!-- <br> 是「强制换行」，是个空元素（没有闭合标签内容），
+           只在「换行本身有语义」时使用，比如地址、诗歌。不要用它来拉间距！ -->
+      这一行是被 &lt;br&gt; 换下来的（如地址、诗句的换行）。
+    </p>
+    <!-- <hr> 主题性分隔，表示话题转换，会渲染成一条横线 -->
+    <hr />
+    <p>上面那条横线是 &lt;hr&gt;，表示「主题分隔」。</p>
+  </section>
+
+  <!-- ========== 语义强调 vs 视觉加粗/倾斜 ========== -->
+  <section>
+    <h2>3. 语义强调 strong/em vs 视觉 b/i</h2>
+    <!-- <strong> 表示「重要、严重、紧急」——有语义，屏幕阅读器会加重语气 -->
+    <p>请<strong>务必在午夜前提交</strong>，否则视为放弃。</p>
+    <!-- <em> 表示「着重强调、语气重音」——有语义 -->
+    <p>我是说<em>现在</em>就去，而不是等会儿。</p>
+    <!-- <b>/<i> 只表示「视觉加粗/倾斜」，无强调语义，
+         仅在没有更合适语义标签时用（如关键词、术语、船名） -->
+    <p>视觉对比：<b>这是 b 纯加粗</b>，<i>这是 i 纯倾斜</i>（无强调语义）。</p>
+    <p class="tip">视觉上 strong≈b（粗）、em≈i（斜），但语义不同：能表达「重要/强调」就优先用 strong/em。</p>
+  </section>
+
+  <!-- ========== mark / small / sub / sup ========== -->
+  <section>
+    <h2>4. mark / small / sub / sup</h2>
+    <!-- <mark> 高亮标记，表示「与上下文相关、值得注意」，默认黄色背景 -->
+    <p>搜索结果里命中的关键词常用 <mark>高亮 mark</mark> 标出。</p>
+    <!-- <small> 表示「附属细则」，如版权、免责声明 -->
+    <p><small>© 2026 前端学习合集，保留所有权利（small 细则）。</small></p>
+    <!-- <sub> 下标，<sup> 上标 -->
+    <p>化学式：水 H<sub>2</sub>O，二氧化碳 CO<sub>2</sub>（sub 下标）。</p>
+    <p>数学式：E = mc<sup>2</sup>，平方米 m<sup>2</sup>（sup 上标）。</p>
+  </section>
+</body>
+</html>

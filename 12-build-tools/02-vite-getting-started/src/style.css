@@ -1,0 +1,53 @@
+/* src/style.css —— 被 main.js 直接 import 的样式 */
+:root {
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #213547;
+  background-color: #f7f8fa;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-height: 100vh;
+}
+
+#app {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.card {
+  padding: 2.5rem 3rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.logo {
+  transition: filter 0.3s;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 1.2em #646cffaa);
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  background-color: #646cff;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+button:hover {
+  background-color: #535bf2;
+}
+
+.tip {
+  color: #888;
+  font-size: 0.85rem;
+  max-width: 380px;
+}

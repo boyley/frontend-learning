@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 · useRef 引用 DOM 与可变值</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; line-height: 1.6; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    input { padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    // ① 用 ref 访问 DOM 节点：点击按钮聚焦输入框
+    function FocusInput() {
+      // 初始 null；React 挂载后会把对应 DOM 写进 inputRef.current
+      const inputRef = useRef(null);
+
+      function focusIt() {
+        // current 指向真实 <input> DOM，可调用原生方法
+        inputRef.current.focus();
+        inputRef.current.select(); // 顺便选中已有文字
+      }
+
+      return (
+        <div className="box">
+          <h3>🎯 用 ref 操作 DOM</h3>
+          {/* ref={inputRef} 把这个 DOM 节点交给 inputRef.current */}
+          <input ref={inputRef} placeholder="点右边按钮我会被聚焦" defaultValue="hello" />
+          <button onClick={focusIt}>聚焦输入框</button>
+        </div>
+      );
+    }
+
+    // ② 用 ref 保存「跨渲染、改了不触发重渲染」的可变值
+    function RenderCounter() {
+      const [, forceRender] = useState(0); // 仅用于手动触发渲染演示
+      const renderCount = useRef(0);        // 渲染次数：放 ref，改它不会重渲染
+      const prevValue = useRef('（无）');    // 保存上一次的输入值
+
+      const [text, setText] = useState('');
+
+      // 每次渲染都自增计数（注意：改 ref 不会引起重渲染，所以不会无限循环）
+      renderCount.current += 1;
+
+      useEffect(() => {
+        // 渲染提交后，记录这次的值作为“上一次”，供下次渲染对比
+        prevValue.current = text;
+      });
+
+      return (
+        <div className="box">
+          <h3>🔢 用 ref 存不触发渲染的可变值</h3>
+          <p>组件已渲染 <b>{renderCount.current}</b> 次（这个数字本身改变不会触发渲染）</p>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="输入点东西"
+          />
+          <p>当前值：{text || '（空）'}　|　上一次值：{prevValue.current || '（空）'}</p>
+          <button onClick={() => forceRender((n) => n + 1)}>手动重渲染一次</button>
+          <p><small>对比：renderCount 用的是 ref，每次渲染 +1 但不会因此再次渲染；只有 setState 才会重渲染。</small></p>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h1>10 · useRef</h1>
+          <FocusInput />
+          <RenderCounter />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

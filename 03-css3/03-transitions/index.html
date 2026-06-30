@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSS Transitions 过渡演示</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin:0;
+      font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #ecfeff 0%, #f0fdf4 100%);
+      color:#2c3e50; padding:24px;
+    }
+    h1 { margin:0 0 6px; font-size:24px; }
+    .desc { color:#64748b; margin:0 0 20px; font-size:14px; }
+    .card {
+      background:#fff; border-radius:16px;
+      box-shadow:0 6px 24px rgba(31,41,55,0.08);
+      padding:20px; margin-bottom:24px;
+    }
+    .card h2 { margin:0 0 6px; font-size:18px; }
+    .tip { font-size:13px; color:#64748b; margin:6px 0 14px; }
+    code { background:#eef2ff; padding:1px 6px; border-radius:5px; color:#4338ca; }
+
+    /* ===== 演示一：不同 timing-function 速度曲线对比 ===== */
+    .track {
+      display:flex; align-items:center; gap:12px;
+      margin:10px 0; padding:8px 12px;
+      border-radius:10px; background:#f8fafc;
+    }
+    .track .name { width:140px; font-size:13px; color:#475569; font-weight:600; }
+    .ball {
+      width:44px; height:44px; border-radius:50%;
+      background:linear-gradient(135deg,#06b6d4,#3b82f6);
+      box-shadow:0 4px 10px rgba(0,0,0,.15);
+      /* 过渡写在常态上：把 transform 平滑过渡 0.9s，双向都生效 */
+      transition-property: transform;
+      transition-duration: .9s;
+    }
+    /* 给每个小球不同的缓动函数 */
+    .ease       { transition-timing-function: ease; }
+    .linear     { transition-timing-function: linear; }
+    .ease-in-out{ transition-timing-function: ease-in-out; }
+    .bezier     { transition-timing-function: cubic-bezier(.68,-0.55,.27,1.55); } /* 回弹 */
+    .steps      { transition-timing-function: steps(4, end); } /* 分 4 段跳跃 */
+    /* 添加 .run 后整排小球向右平移，比较快慢曲线 */
+    .demo1.run .ball { transform: translateX(360px); }
+
+    button {
+      border:none; border-radius:10px; padding:9px 18px;
+      background:#3b82f6; color:#fff; font-weight:700; font-size:14px;
+      cursor:pointer; box-shadow:0 4px 10px rgba(59,130,246,.3);
+    }
+    button:active { transform: translateY(1px); }
+
+    /* ===== 演示二：hover 综合过渡 ===== */
+    .hover-box {
+      width:160px; height:80px; border-radius:12px;
+      background:#10b981; color:#fff; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      /* transition 简写：property duration timing-function delay */
+      transition: all .4s ease;
+    }
+    .hover-box:hover {
+      background:#8b5cf6;              /* 变色 */
+      transform: scale(1.1) rotate(-3deg); /* 放大微转 */
+      box-shadow:0 12px 24px rgba(139,92,246,.4);
+      border-radius:24px;             /* 圆角变化 */
+    }
+
+    /* ===== 演示三：点击展开/收起（用 max-height 过渡高度）===== */
+    .panel {
+      background:#1e293b; color:#e2e8f0; border-radius:12px;
+      overflow:hidden;                /* 配合 max-height 裁剪内容 */
+      /* auto 高度不能过渡，故过渡 max-height */
+      max-height: 48px;
+      transition: max-height .5s ease, background .5s ease;
+    }
+    .panel .head {
+      height:48px; display:flex; align-items:center; padding:0 16px;
+      font-weight:700; cursor:pointer; background:#334155;
+    }
+    .panel .body { padding:14px 16px; line-height:1.7; font-size:14px; }
+    .panel.open {
+      max-height: 240px;              /* 展开到足够高 */
+      background:#0f172a;
+    }
+  </style>
+</head>
+<body>
+  <h1>CSS Transitions 过渡演示</h1>
+  <p class="desc">
+    Transition 让属性值变化时<strong>平滑动画</strong>而非瞬间跳变。核心四件套：
+    <code>transition-property</code> / <code>duration</code> / <code>timing-function</code> / <code>delay</code>。
+  </p>
+
+  <div class="card">
+    <h2>① timing-function 速度曲线对比</h2>
+    <p class="tip">点击按钮，五个小球同时出发但缓动不同：linear 匀速，ease 系两端慢，cubic-bezier 会回弹，steps 分段跳。</p>
+    <div class="demo1" id="demo1">
+      <div class="track"><span class="name">ease</span><div class="ball ease"></div></div>
+      <div class="track"><span class="name">linear</span><div class="ball linear"></div></div>
+      <div class="track"><span class="name">ease-in-out</span><div class="ball ease-in-out"></div></div>
+      <div class="track"><span class="name">cubic-bezier 回弹</span><div class="ball bezier"></div></div>
+      <div class="track"><span class="name">steps(4, end)</span><div class="ball steps"></div></div>
+    </div>
+    <button id="runBtn">▶ 播放 / 复位</button>
+  </div>
+
+  <div class="card">
+    <h2>② hover 综合过渡</h2>
+    <p class="tip">鼠标悬停盒子，<code>background / transform / box-shadow / border-radius</code> 同时平滑变化（过渡写在常态上，移开也平滑）。</p>
+    <div class="hover-box">悬停我</div>
+  </div>
+
+  <div class="card">
+    <h2>③ 点击展开 / 收起（max-height 技巧）</h2>
+    <p class="tip">高度 <code>auto</code> 无法过渡，改用 <code>max-height</code> 从 48px 过渡到 240px。</p>
+    <div class="panel" id="panel">
+      <div class="head" id="panelHead">点我展开 / 收起 ▼</div>
+      <div class="body">
+        这是面板内容。点击标题切换 <code>.open</code> 类，max-height 在 0.5s 内平滑变化，
+        配合 <code>overflow:hidden</code> 裁剪内容，营造「抽屉」展开效果。
+        背景色也同步过渡。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 演示一：切换 .run 类让所有小球一起出发 / 复位
+    const demo1 = document.getElementById('demo1');
+    document.getElementById('runBtn').addEventListener('click', () => {
+      demo1.classList.toggle('run');
+    });
+
+    // 演示三：点击标题切换展开状态
+    const panel = document.getElementById('panel');
+    document.getElementById('panelHead').addEventListener('click', () => {
+      panel.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

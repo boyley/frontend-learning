@@ -1,0 +1,27 @@
+html {
+  font-size: 16px;
+}
+
+.title {
+  font-size: 1.75rem;
+  margin-bottom: 16px;
+}
+
+.text {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.tag-light {
+  background: #ffe082;
+  color: #1c1b1f;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.tag-dark {
+  background: #4a148c;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 4px;
+}

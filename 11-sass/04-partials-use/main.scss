@@ -1,0 +1,46 @@
+// ============================================================
+// 04 · 模块化：@use / @forward / partials
+// ------------------------------------------------------------
+// 这是「入口文件」，只有它会被编译成 main.css。
+// 通过 @use 把 styles 文件夹（其 _index.scss）整体引进来。
+// ============================================================
+
+// @use 一个文件夹 → Sass 自动加载该文件夹下的 _index.scss。
+// 默认命名空间是文件夹名 styles，访问成员要写 styles.xxx
+@use "styles";
+
+// 也可以自定义命名空间，甚至用 as * 去掉命名空间（不推荐，易冲突）：
+// @use "styles" as s;        // 之后写 s.$primary
+// @use "styles" as *;        // 之后直接写 $primary（污染全局）
+
+body {
+  margin: 0;
+  padding: 40px;
+  background: styles.$bg; // 访问转发自 _colors 的变量
+  color: styles.$text;
+  font-family: styles.$font-stack;
+  font-size: styles.$base-size;
+}
+
+.title {
+  @include styles.heading; // 使用转发自 _typography 的 mixin
+  color: styles.$primary;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  color: #fff;
+  cursor: pointer;
+
+  &--primary {
+    background: styles.$primary;
+  }
+  &--success {
+    background: styles.$success;
+  }
+  &--danger {
+    background: styles.$danger;
+  }
+}

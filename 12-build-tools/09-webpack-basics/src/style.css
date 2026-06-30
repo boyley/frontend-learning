@@ -1,0 +1,14 @@
+/* src/style.css —— 会被 css-loader + style-loader 处理后注入页面 */
+body {
+  font-family: system-ui, "PingFang SC", sans-serif;
+  background: #fffbe6;
+  padding: 2rem;
+  color: #333;
+}
+.tag {
+  display: inline-block;
+  background: #2965f1;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 4px;
+}

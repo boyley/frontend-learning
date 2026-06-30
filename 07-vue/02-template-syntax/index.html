@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · 模板语法</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    a { color: #42b883; }
+    code { background: #f5f5f5; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>02 · 模板语法（插值 / 指令 / v-bind）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① 文本插值 {{ }}</h3>
+      <!-- 双大括号里可以写 JavaScript 表达式（不是语句） -->
+      <p>原始：{{ rawName }}</p>
+      <p>表达式：{{ rawName.toUpperCase() }}（{{ rawName.length }} 个字符）</p>
+      <p>三元：{{ count > 0 ? '正数' : '非正数' }}</p>
+    </div>
+
+    <div class="card">
+      <h3>② v-html 渲染 HTML</h3>
+      <!-- {{ }} 会把内容当纯文本；v-html 会当真正的 HTML 解析 -->
+      <p>用插值：{{ htmlSnippet }}</p>
+      <p>用 v-html：<span v-html="htmlSnippet"></span></p>
+    </div>
+
+    <div class="card">
+      <h3>③ v-bind 绑定属性（简写 :）</h3>
+      <!-- v-bind 把元素的“属性”绑定到数据上 -->
+      <a v-bind:href="url" target="_blank">完整写法 v-bind:href</a><br />
+      <a :href="url" target="_blank">简写 :href</a>
+      <!-- 动态绑定 class 和 style -->
+      <p :class="isActive ? 'active' : ''" :style="{ color: themeColor }">
+        这行字的颜色由数据 themeColor 控制
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>④ 指令带参数 / 动态参数</h3>
+      <!-- 指令冒号后面是“参数”，比如 :href 的 href 就是参数 -->
+      <!-- 参数也能用方括号变成动态的 -->
+      <button @click="attrName = attrName === 'title' ? 'data-tip' : 'title'">
+        切换动态属性名（当前：{{ attrName }}）
+      </button>
+      <p :[attrName]="'我是提示文本，鼠标悬停看 title'">悬停我看效果</p>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    createApp({
+      setup() {
+        const rawName = ref('vue');
+        const count = ref(3);
+        const htmlSnippet = ref('<b style="color:#e63946">加粗红字</b>');
+        const url = ref('https://cn.vuejs.org');
+        const isActive = ref(true);
+        const themeColor = ref('#42b883');
+        const attrName = ref('title'); // 动态参数：决定下面绑定到哪个属性
+        return { rawName, count, htmlSnippet, url, isActive, themeColor, attrName };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

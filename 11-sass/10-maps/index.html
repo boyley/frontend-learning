@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10 · 映射 Maps</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body { margin: 0; padding: 40px; font-family: system-ui, sans-serif; background: #f5f3fb; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+      .box { background:#fff; padding: 16px; }
+    </style>
+  </head>
+  <body>
+    <button class="btn">map.get 取主题色的按钮</button>
+    <div class="alert">@include bg("danger") — map.has-key 校验后取值</div>
+
+    <h3>@each 遍历 $theme 生成的 chip</h3>
+    <div class="row">
+      <span class="chip-primary">primary</span>
+      <span class="chip-secondary">secondary</span>
+      <span class="chip-success">success</span>
+      <span class="chip-danger">danger</span>
+    </div>
+
+    <h3>map.merge 合并配置（radius 被覆盖为 16px）</h3>
+    <div class="box">.box border-radius=16px</div>
+  </body>
+</html>

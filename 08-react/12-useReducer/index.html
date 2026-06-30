@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 · useReducer 待办列表</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    li { margin: 6px 0; }
+    .done { text-decoration: line-through; color: #999; }
+    button { margin-left: 6px; cursor: pointer; }
+    input { padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useReducer, useState } = React;
+
+    // 1) reducer：纯函数 (state, action) => newState。
+    //    它根据 action.type 决定如何从旧 state 计算出全新 state。
+    //    关键：永远「返回新对象/新数组」，不要直接改原 state。
+    function todoReducer(state, action) {
+      switch (action.type) {
+        case 'add':
+          // 复制旧数组再追加一项（不可变更新）
+          return [...state, { id: Date.now(), text: action.payload, done: false }];
+        case 'toggle':
+          return state.map(todo =>
+            todo.id === action.payload ? { ...todo, done: !todo.done } : todo
+          );
+        case 'remove':
+          return state.filter(todo => todo.id !== action.payload);
+        case 'edit':
+          return state.map(todo =>
+            todo.id === action.payload.id ? { ...todo, text: action.payload.text } : todo
+          );
+        default:
+          // 兜底分支：遇到未知 action 类型时原样返回，避免 state 变成 undefined
+          return state;
+      }
+    }
+
+    function App() {
+      // 2) useReducer(reducer, 初始state) 返回 [state, dispatch]
+      const [todos, dispatch] = useReducer(todoReducer, [
+        { id: 1, text: '学习 useReducer', done: false },
+      ]);
+      const [text, setText] = useState('');
+
+      const handleAdd = () => {
+        if (!text.trim()) return;
+        // 3) 通过 dispatch 派发一个 action（带 type 和 payload）
+        dispatch({ type: 'add', payload: text.trim() });
+        setText('');
+      };
+
+      return (
+        <div>
+          <h2>useReducer 待办列表 Demo</h2>
+          <input
+            value={text}
+            placeholder="输入待办事项"
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+          <button onClick={handleAdd}>添加</button>
+
+          <ul>
+            {todos.map(todo => (
+              <li key={todo.id}>
+                <span
+                  className={todo.done ? 'done' : ''}
+                  onClick={() => dispatch({ type: 'toggle', payload: todo.id })}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {todo.text}
+                </span>
+                <button onClick={() => {
+                  const next = prompt('修改内容', todo.text);
+                  if (next != null) dispatch({ type: 'edit', payload: { id: todo.id, text: next } });
+                }}>编辑</button>
+                <button onClick={() => dispatch({ type: 'remove', payload: todo.id })}>删除</button>
+              </li>
+            ))}
+          </ul>
+          <p style={{ color: '#888' }}>点击文字可切换完成状态。</p>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

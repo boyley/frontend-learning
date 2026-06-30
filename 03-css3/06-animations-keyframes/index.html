@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 关键帧动画 @keyframes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 32px 20px;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    header h1 { font-size: 28px; color: #fff; margin-bottom: 8px; }
+    header p { color: #c4b5fd; margin-bottom: 30px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      text-align: center;
+    }
+    .card h3 { font-size: 15px; color: #a78bfa; margin-bottom: 4px; }
+    .card .desc { font-size: 12px; color: #94a3b8; margin-bottom: 20px; min-height: 32px; }
+    .stage {
+      height: 120px; display: flex;
+      align-items: center; justify-content: center;
+    }
+
+    /* ===== 1. 脉冲呼吸 ===== */
+    .pulse {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #f472b6, #db2777);
+      /* 简写：name duration timing-function delay iteration-count direction */
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%   { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(244,114,182,0.7); }
+      70%  { transform: scale(1.1);  box-shadow: 0 0 0 22px rgba(244,114,182,0); }
+      100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(244,114,182,0); }
+    }
+
+    /* ===== 2. 加载 spinner ===== */
+    .spinner {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 7px solid rgba(255,255,255,0.12);
+      border-top-color: #38bdf8;
+      animation: spin 0.9s linear infinite;   /* infinite 无限循环 */
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 3. 弹跳 bounce ===== */
+    .bounce {
+      width: 60px; height: 60px; border-radius: 14px;
+      background: linear-gradient(135deg,#34d399,#059669);
+      /* alternate：来回往返；cubic-bezier 模拟重力 */
+      animation: bounce 1s cubic-bezier(.5,.05,.5,.95) infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: translateY(-28px); }
+      to   { transform: translateY(28px); }
+    }
+
+    /* ===== 4. steps() 打字机 ===== */
+    .typewriter {
+      font-family: "Courier New", monospace;
+      font-size: 17px; font-weight: 700; color: #fbbf24;
+      white-space: nowrap; overflow: hidden;
+      border-right: 3px solid #fbbf24;
+      width: 11ch;                              /* 目标宽度=字符数 */
+      /* steps(11) 逐字符显示；blink 让光标闪烁 */
+      animation: typing 3s steps(11) infinite, blink 0.7s steps(1) infinite;
+    }
+    @keyframes typing { from { width: 0; } to { width: 11ch; } }
+    @keyframes blink  { 50% { border-color: transparent; } }
+
+    /* 全局：被 paused 类暂停的元素 */
+    .grid.paused .pulse,
+    .grid.paused .spinner,
+    .grid.paused .bounce,
+    .grid.paused .typewriter {
+      animation-play-state: paused;
+    }
+
+    .controls { text-align: center; margin: 28px 0 10px; }
+    .controls button {
+      background: #7c3aed; color: #fff;
+      border: none; border-radius: 10px;
+      padding: 12px 28px; cursor: pointer;
+      font-size: 15px; font-weight: 600;
+      transition: background .2s;
+    }
+    .controls button:hover { background: #8b5cf6; }
+
+    .tip {
+      margin-top: 18px; padding: 16px 20px;
+      background: rgba(167,139,250,0.1);
+      border-left: 4px solid #a78bfa; border-radius: 8px;
+      font-size: 13px; color: #cbd5e1;
+    }
+    .tip code { background: #0f172a; padding: 2px 6px; border-radius: 4px; color: #f472b6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>06 · 关键帧动画 @keyframes</h1>
+      <p>用 @keyframes 定义多关键帧，配合 animation 各子属性，做出可循环、可往返、可逐帧的复杂动画。</p>
+    </header>
+
+    <div class="controls">
+      <button id="toggleBtn">⏸ 全部暂停（play-state）</button>
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="card">
+        <h3>① 脉冲呼吸 pulse</h3>
+        <p class="desc">scale + 扩散光圈，ease-in-out infinite</p>
+        <div class="stage"><div class="pulse"></div></div>
+      </div>
+
+      <div class="card">
+        <h3>② 加载 Spinner</h3>
+        <p class="desc">rotate 360°，linear infinite 匀速无限</p>
+        <div class="stage"><div class="spinner"></div></div>
+      </div>
+
+      <div class="card">
+        <h3>③ 弹跳 bounce</h3>
+        <p class="desc">translateY，infinite alternate 往返</p>
+        <div class="stage"><div class="bounce"></div></div>
+      </div>
+
+      <div class="card">
+        <h3>④ steps() 打字机</h3>
+        <p class="desc">steps(11) 逐字符 + 光标闪烁</p>
+        <div class="stage"><div class="typewriter">Hello World</div></div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>关键提示：</strong>
+      <code>@keyframes</code> 用 <code>from/to</code> 或百分比 <code>0% 50% 100%</code> 定义中间状态；
+      <code>animation</code> 简写顺序常记为 <code>name duration timing-function delay iteration-count direction fill-mode</code>；
+      <code>iteration-count: infinite</code> 无限循环；<code>direction: alternate</code> 往返；
+      <code>fill-mode: forwards</code> 让动画停在终态、<code>backwards</code> 进入第一帧前应用起始态；
+      <code>animation-play-state: paused</code> 可暂停；<code>steps(n)</code> 做逐帧/打字机效果；
+      与 transition 区别：动画可自动播放、循环、含多个关键帧，无需触发条件。
+    </div>
+  </div>
+
+  <script>
+    // 通过给 .grid 加 paused 类，统一切换所有动画的 play-state
+    const grid = document.getElementById('grid');
+    const btn = document.getElementById('toggleBtn');
+    btn.addEventListener('click', () => {
+      grid.classList.toggle('paused');
+      const paused = grid.classList.contains('paused');
+      btn.textContent = paused ? '▶ 全部继续（play-state）' : '⏸ 全部暂停（play-state）';
+    });
+  </script>
+</body>
+</html>

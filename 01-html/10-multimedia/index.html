@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 · 多媒体 audio / video Demo</title>
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 720px;
+      margin: 24px auto;
+      padding: 0 16px;
+      line-height: 1.6;
+      color: #222;
+    }
+    section { margin-bottom: 32px; }
+    h2 { border-left: 4px solid #2d6cdf; padding-left: 8px; }
+    video { width: 100%; background: #000; border-radius: 8px; }
+    audio { width: 100%; }
+    code { background: #f3f3f3; padding: 1px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>HTML 多媒体：video 与 audio</h1>
+
+  <section>
+    <h2>1. video + 多 source 回退 + track 字幕</h2>
+    <!--
+      video 关键属性：
+      controls：显示浏览器自带的播放控制条（必加，否则用户没法控制）
+      poster：视频未播放时显示的封面图
+      preload="metadata"：只预加载元数据（时长、尺寸），不预下整段视频，省流量
+      width：显示宽度（这里用 CSS 100% 覆盖）
+      muted：静音；autoplay：自动播放（多数浏览器要求同时 muted 才允许自动播放）
+      loop：循环播放
+      这里故意不加 autoplay，避免打开就响；演示 muted/loop 见注释
+    -->
+    <video controls preload="metadata"
+           poster="https://interactive-examples.mdn.mozilla.net/media/examples/flower.jpg">
+      <!--
+        浏览器按 source 从上到下逐个尝试，选第一个它能播放的格式。
+        type 属性帮浏览器提前判断能否解码，避免无谓下载。
+        把兼容性更好/更优的格式放前面。
+      -->
+      <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm" type="video/webm">
+      <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+
+      <!--
+        track：为视频提供字幕/说明文本（WebVTT 格式 .vtt 文件）
+        kind="subtitles" 字幕；srclabel 语言标签；label 菜单里显示的名字
+        default 表示默认开启这条字幕轨
+      -->
+      <track kind="subtitles"
+             src="https://interactive-examples.mdn.mozilla.net/media/examples/friday.vtt"
+             srclang="en" label="English" default>
+
+      <!-- 兜底：浏览器完全不支持 video 标签时显示这段文字 -->
+      您的浏览器不支持 video 标签，请<a href="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4">下载视频</a>。
+    </video>
+    <p>提示：点击播放器右下角的字幕按钮（CC）可开关 <code>track</code> 字幕。</p>
+  </section>
+
+  <section>
+    <h2>2. audio 音频播放</h2>
+    <!--
+      audio 用法与 video 类似，只是没有画面。
+      controls 同样必加。也可以用多个 source 做格式回退。
+    -->
+    <audio controls preload="none">
+      <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" type="audio/mpeg">
+      您的浏览器不支持 audio 标签。
+    </audio>
+    <p><code>preload="none"</code> 表示在用户点击前不预加载，最省流量。</p>
+  </section>
+
+  <section>
+    <h2>3. 自动播放的正确写法（静音循环）</h2>
+    <!--
+      想让视频打开页面就自动播放，必须同时满足：
+      autoplay + muted（绝大多数浏览器策略：非静音不允许自动播放）
+      常用于背景视频。playsinline 让 iOS 不强制全屏。
+    -->
+    <video autoplay muted loop playsinline preload="auto"
+           poster="https://interactive-examples.mdn.mozilla.net/media/examples/flower.jpg">
+      <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+    </video>
+    <p>这段视频 <code>autoplay muted loop</code>，会静音自动循环播放。</p>
+  </section>
+</body>
+</html>

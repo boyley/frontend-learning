@@ -1,0 +1,16 @@
+{
+  "name": "express-intro",
+  "version": "1.0.0",
+  "description": "Express 入门：路由、中间件、静态资源",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 · IntersectionObserver 交叉观察器</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; background: #f5f7fa; color: #2c3e50;
+    }
+    header {
+      background: linear-gradient(135deg, #f7971e, #ffd200);
+      color: #5a3e00; padding: 28px 24px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 22px; }
+    header p { margin: 0; opacity: .85; font-size: 14px; }
+    .wrap { max-width: 760px; margin: 24px auto; padding: 0 16px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 22px;
+    }
+    .card h2 { margin: 0 0 6px; font-size: 17px; color: #d68910; }
+    .card .sub { font-size: 13px; color: #888; margin: 0 0 14px; }
+    /* 滚动容器 */
+    .scroller {
+      height: 320px; overflow-y: auto; border: 2px dashed #f0c674;
+      border-radius: 10px; padding: 16px; background: #fffdf5;
+    }
+    .spacer {
+      text-align: center; color: #bbb; padding: 40px 0; font-size: 13px;
+    }
+    /* 懒加载图片块 */
+    .lazy {
+      height: 150px; border-radius: 10px; margin: 16px 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 14px; font-weight: 600;
+      background: #d5dbe0; /* 未加载时的占位灰 */
+      transition: background .6s ease; position: relative;
+    }
+    .lazy::after {
+      content: "⏳ 占位（未进入视口）"; position: absolute;
+      color: #888; font-weight: 400; font-size: 13px;
+    }
+    .lazy.loaded::after { content: ""; }
+    /* 曝光统计块 */
+    .expo {
+      height: 90px; border-radius: 10px; margin: 16px 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; color: #5a3e00; font-size: 14px;
+      background: #fff3cd; border: 2px solid #ffe08a;
+      transition: all .4s ease;
+    }
+    .expo.seen {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: #fff; border-color: transparent; transform: scale(1.02);
+    }
+    .stat {
+      display: inline-block; background: #fef5e7; color: #d68910;
+      border-radius: 999px; padding: 4px 14px; font-size: 14px;
+      font-family: ui-monospace, monospace; font-weight: 600;
+    }
+    .note { font-size: 12px; color: #888; margin-top: 10px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>12 · IntersectionObserver 交叉观察器</h1>
+    <p>异步监测元素是否进入视口，实现图片懒加载与曝光埋点（无需监听 scroll）</p>
+  </header>
+
+  <div class="wrap">
+    <!-- Demo 1：图片懒加载 -->
+    <div class="card">
+      <h2>① 图片懒加载（Lazy Load）</h2>
+      <p class="sub">下面方块用 data-src 存放「真图」颜色，滚动到可视区才加载并 unobserve。不联网也能看到效果。</p>
+      <div class="scroller" id="lazyScroller">
+        <div class="spacer">⬇️ 向下滚动，观察方块进入视口时才「加载」</div>
+        <!-- 这些块由 demo.js 动态生成 -->
+      </div>
+      <p class="note">真实项目中是把 <code>data-src</code> 指向图片 URL，进入视口时赋值给 <code>img.src</code> 触发真正的网络加载。</p>
+    </div>
+
+    <!-- Demo 2：曝光统计 -->
+    <div class="card">
+      <h2>② 曝光统计（Impression Tracking）</h2>
+      <p class="sub">元素进入视口（threshold=0.5，即露出一半）时高亮并计数，常用于广告/卡片曝光埋点。</p>
+      <div>已曝光元素数：<span class="stat" id="expoCount">0</span></div>
+      <div class="scroller" id="expoScroller" style="margin-top:12px;">
+        <div class="spacer">⬇️ 向下滚动，块露出一半即记一次曝光</div>
+        <!-- 由 demo.js 动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

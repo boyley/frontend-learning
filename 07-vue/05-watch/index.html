@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 侦听器</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    input { padding: 6px; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 6px; max-height: 160px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>05 · 侦听器（watch / watchEffect）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① watch：监听单个数据，拿到新值和旧值</h3>
+      <input v-model="keyword" placeholder="输入关键词（模拟搜索）" />
+      <p>状态：{{ status }}</p>
+      <small>停止输入约 500ms 后才“发请求”（防抖）</small>
+    </div>
+
+    <div class="card">
+      <h3>② watch 深度监听对象</h3>
+      <button @click="form.age++">age + 1（age={{ form.age }}）</button>
+      <input v-model="form.name" placeholder="改名字" />
+      <pre>{{ deepLog }}</pre>
+    </div>
+
+    <div class="card">
+      <h3>③ watchEffect：自动收集依赖，立即执行</h3>
+      <button @click="a++">a + 1（a={{ a }}）</button>
+      <button @click="b++">b + 1（b={{ b }}）</button>
+      <pre>{{ effectLog }}</pre>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, reactive, watch, watchEffect } = Vue;
+    createApp({
+      setup() {
+        // ① watch + 防抖
+        const keyword = ref('');
+        const status = ref('（未搜索）');
+        let timer = null;
+        watch(keyword, (newVal, oldVal) => {
+          status.value = `输入变化：「${oldVal}」→「${newVal}」，准备搜索...`;
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            status.value = newVal ? `✅ 已搜索「${newVal}」` : '（空）';
+          }, 500);
+        });
+
+        // ② 深度监听对象
+        const form = reactive({ name: '小明', age: 18 });
+        const deepLog = ref('（修改上面试试）');
+        watch(form, (newVal) => {
+          deepLog.value = `表单变化 → name=${newVal.name}, age=${newVal.age} ` +
+                          `@ ${new Date().toLocaleTimeString()}`;
+        }, { deep: true }); // reactive 对象默认深度，这里显式写出强调
+
+        // ③ watchEffect 自动追踪依赖
+        const a = ref(0), b = ref(0);
+        const effectLog = ref('');
+        watchEffect(() => {
+          // 这里用到了 a 和 b，它们任一变化都会重跑此函数（且初始化立即跑一次）
+          effectLog.value = `a + b = ${a.value + b.value}`;
+        });
+
+        return { keyword, status, form, deepLog, a, b, effectLog };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

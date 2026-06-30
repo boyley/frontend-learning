@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · 列表 Lists</title>
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.7;
+      color: #222;
+    }
+    h1, h2 { color: #2563eb; }
+    section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 20px;
+      margin: 16px 0;
+    }
+    dt { font-weight: bold; color: #0f766e; }
+    dd { margin: 0 0 8px 24px; color: #444; }
+  </style>
+</head>
+<body>
+  <h1>列表 Lists</h1>
+
+  <!-- ========== 无序列表 ul ========== -->
+  <section>
+    <h2>1. 无序列表 ul（项目之间无先后顺序）</h2>
+    <!-- <ul> = unordered list，每一项用 <li> = list item，默认前面是圆点 -->
+    <ul>
+      <li>HTML —— 负责结构</li>
+      <li>CSS —— 负责样式</li>
+      <li>JavaScript —— 负责行为</li>
+    </ul>
+  </section>
+
+  <!-- ========== 有序列表 ol + start/type/reversed ========== -->
+  <section>
+    <h2>2. 有序列表 ol（项目有先后顺序）</h2>
+    <!-- 默认从 1 开始的阿拉伯数字 -->
+    <ol>
+      <li>打开浏览器</li>
+      <li>输入网址</li>
+      <li>回车访问</li>
+    </ol>
+
+    <!-- type 改变序号样式：A/a 字母、I/i 罗马数字、1 数字 -->
+    <p>type="A"（大写字母）：</p>
+    <ol type="A">
+      <li>选项 A</li>
+      <li>选项 B</li>
+    </ol>
+
+    <!-- start 指定起始序号；这里从 5 开始 -->
+    <p>start="5"（从 5 开始计数）：</p>
+    <ol start="5">
+      <li>第五条</li>
+      <li>第六条</li>
+    </ol>
+
+    <!-- reversed 倒序：序号从大到小 -->
+    <p>reversed（倒序排名，如排行榜）：</p>
+    <ol reversed>
+      <li>季军</li>
+      <li>亚军</li>
+      <li>冠军</li>
+    </ol>
+  </section>
+
+  <!-- ========== 描述列表 dl / dt / dd ========== -->
+  <section>
+    <h2>3. 描述列表 dl（术语—解释 成对出现）</h2>
+    <!-- <dl> description list；<dt> 术语 term；<dd> 描述 description
+         一个 dt 可以配多个 dd，反之亦然 -->
+    <dl>
+      <dt>HTML</dt>
+      <dd>超文本标记语言，定义网页结构。</dd>
+
+      <dt>CSS</dt>
+      <dd>层叠样式表，定义网页外观。</dd>
+
+      <dt>JavaScript</dt>
+      <dd>脚本语言，定义网页交互行为。</dd>
+    </dl>
+  </section>
+
+  <!-- ========== 列表嵌套 ========== -->
+  <section>
+    <h2>4. 列表嵌套（子列表写在父级 li 内部）</h2>
+    <!-- 嵌套关键：子 <ul>/<ol> 要放在父级 <li> 的内部，而不是 li 之间 -->
+    <ul>
+      <li>前端
+        <ul>
+          <li>HTML</li>
+          <li>CSS</li>
+          <li>JavaScript
+            <ol>
+              <li>变量与类型</li>
+              <li>函数</li>
+              <li>DOM 操作</li>
+            </ol>
+          </li>
+        </ul>
+      </li>
+      <li>后端
+        <ul>
+          <li>数据库</li>
+          <li>接口</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+</body>
+</html>

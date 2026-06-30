@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 表单数据与 FormData</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 24px; background: #f5f6fa; color: #222;
+    }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .sub { color: #666; margin: 0 0 20px; font-size: 14px; }
+    .panel {
+      background: #fff; border-radius: 10px; padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-bottom: 18px;
+    }
+    .panel h2 { font-size: 15px; margin: 0 0 14px; color: #3742fa; }
+    label { display: inline-block; min-width: 70px; color: #444; font-size: 14px; }
+    .row { margin: 10px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    input[type=text], input[type=email], select {
+      padding: 8px 10px; font-size: 14px; border: 1px solid #ccd; border-radius: 6px;
+      min-width: 220px;
+    }
+    .opts { display: flex; gap: 16px; flex-wrap: wrap; }
+    .opts label { min-width: auto; cursor: pointer; }
+    button {
+      padding: 9px 16px; margin: 4px 6px 4px 0; font-size: 14px; cursor: pointer;
+      border: none; border-radius: 6px; background: #3742fa; color: #fff;
+      transition: background .15s;
+    }
+    button:hover { background: #2531d8; }
+    button.ghost { background: #eceefe; color: #3742fa; }
+    button.ghost:hover { background: #dde0fd; }
+    pre {
+      margin: 12px 0 0; padding: 12px 14px; background: #1e1e2e; color: #cdd6f4;
+      border-radius: 8px; font-size: 13px; line-height: 1.6; overflow-x: auto;
+      white-space: pre-wrap; word-break: break-all; min-height: 24px;
+    }
+    .hint { font-size: 12px; color: #e67e22; margin-left: 8px; }
+    code { background: #eee; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>07 · 表单数据与 FormData (FormData)</h1>
+  <p class="sub">填写下面表单后点「提交」。我们会用 <code>preventDefault()</code> 阻止页面跳转，再用 <code>FormData</code> 收集所有字段并以 JSON 显示在页面上。</p>
+
+  <div class="panel">
+    <h2>① 演示表单（注意：手机号那项故意没写 name，看看会不会被收集）</h2>
+    <!-- novalidate 关掉浏览器自带校验，方便演示；真实项目按需保留 -->
+    <form id="demoForm" novalidate>
+      <div class="row">
+        <label for="username">用户名</label>
+        <input id="username" name="username" type="text" placeholder="请输入用户名" value="小明" />
+      </div>
+
+      <div class="row">
+        <label for="email">邮箱</label>
+        <input id="email" name="email" type="email" placeholder="name@example.com" value="ming@example.com" />
+      </div>
+
+      <div class="row">
+        <label>性别</label>
+        <div class="opts">
+          <label><input type="radio" name="gender" value="male" checked /> 男</label>
+          <label><input type="radio" name="gender" value="female" /> 女</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>爱好</label>
+        <div class="opts">
+          <label><input type="checkbox" name="hobby" value="coding" checked /> 编程</label>
+          <label><input type="checkbox" name="hobby" value="music" checked /> 音乐</label>
+          <label><input type="checkbox" name="hobby" value="sports" /> 运动</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="city">城市</label>
+        <select id="city" name="city">
+          <option value="bj">北京</option>
+          <option value="sh" selected>上海</option>
+          <option value="gz">广州</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <!-- 这个 input 故意没有 name 属性，FormData 不会收集它 -->
+        <label for="phone">手机号</label>
+        <input id="phone" type="text" placeholder="这项没有 name 属性" value="13800000000" />
+        <span class="hint">← 没有 name，提交时不会被 FormData 收集</span>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <!-- type=submit 会触发 form 的 submit 事件 -->
+        <button type="submit">提交（FormData 收集）</button>
+        <button type="button" id="btnToQuery" class="ghost">转成 URLSearchParams (query string)</button>
+        <button type="reset" class="ghost">重置</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>② 收集结果</h2>
+    <pre id="output">提交表单后，这里会显示收集到的数据…</pre>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

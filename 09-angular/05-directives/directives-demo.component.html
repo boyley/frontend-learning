@@ -1,0 +1,41 @@
+<!-- ============ 1. 自定义属性型指令 appHighlight ============ -->
+<section>
+  <h3>自定义属性指令：鼠标悬停高亮</h3>
+
+  <!-- 不传值，使用默认色 yellow -->
+  <p appHighlight>把鼠标移到这行（默认黄色）</p>
+
+  <!-- 通过别名输入传入自定义颜色 -->
+  <p [appHighlight]="'lightgreen'">把鼠标移到这行（绿色）</p>
+</section>
+
+<!-- ============ 2. 内置属性指令 ngClass / ngStyle ============ -->
+<!--
+  说明：[class.xxx] 和 [style.xxx] 是模板原生绑定，无需引入任何模块，
+  通常优先使用它们。仅当需要动态对象/多类切换时才用 ngClass/ngStyle，
+  那时需要在组件 imports 里加入 CommonModule。这里演示原生绑定写法。
+-->
+<section>
+  <h3>属性绑定切换样式（原生 [class]/[style]）</h3>
+
+  <p
+    [class.is-active]="active()"
+    [style.color]="active() ? 'green' : 'gray'"
+  >
+    当前状态：{{ active() ? '激活' : '未激活' }}
+  </p>
+  <button (click)="toggle()">切换</button>
+</section>
+
+<!-- ============ 3. 结构型指令（现代推荐：内置控制流） ============ -->
+<section>
+  <h3>结构型指令：用 @for 渲染列表（取代 *ngFor）</h3>
+
+  <ul>
+    @for (fruit of fruits(); track fruit) {
+      <li appHighlight="orange">{{ fruit }}</li>
+    } @empty {
+      <li>没有水果</li>
+    }
+  </ul>
+</section>

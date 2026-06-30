@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- 声明 HTML5 文档类型，让浏览器以标准模式渲染 -->
+<html lang="zh-CN">
+<!-- lang="zh-CN" 告诉浏览器/搜索引擎/屏幕阅读器：本页主要语言是简体中文 -->
+<head>
+  <!-- charset 必须是 head 里第一个有意义的元数据，UTF-8 能正确显示中文和各种符号 -->
+  <meta charset="UTF-8" />
+  <!-- 让页面在手机上按设备宽度自适应缩放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML 实体字符 Demo</title>
+  <style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; margin: 24px; color: #222; line-height: 1.7; }
+    h1 { font-size: 22px; }
+    table { border-collapse: collapse; width: 100%; max-width: 640px; margin-top: 12px; }
+    caption { text-align: left; font-weight: 700; padding: 6px 0; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+    th { background: #f2f4f7; }
+    /* code 标签用等宽字体展示“源码写法” */
+    code { background: #f6f8fa; padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, Consolas, monospace; }
+    .result { font-size: 18px; }
+    .note { background: #fff8e6; border-left: 4px solid #f0b400; padding: 10px 14px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>HTML 实体字符（HTML Entities）</h1>
+
+  <p>
+    在 HTML 里，<code>&lt;</code>、<code>&gt;</code>、<code>&amp;</code> 是“保留字符”，
+    直接写会被浏览器当作标签或实体的开始。想把它们“当文字显示”，就必须用实体转义。
+  </p>
+
+  <table>
+    <caption>常用实体：左列是你在源码里写的内容，右列是浏览器渲染出来的样子</caption>
+    <thead>
+      <tr>
+        <th>实体代码（源码写法）</th>
+        <th>渲染结果</th>
+        <th>含义</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 注意：表格“源码写法”那一列，本身也要再转义一层才能显示出 & 符号 -->
+      <tr><td><code>&amp;lt;</code></td>   <td class="result">&lt;</td>   <td>小于号 less-than</td></tr>
+      <tr><td><code>&amp;gt;</code></td>   <td class="result">&gt;</td>   <td>大于号 greater-than</td></tr>
+      <tr><td><code>&amp;amp;</code></td>  <td class="result">&amp;</td>  <td>与号 ampersand</td></tr>
+      <tr><td><code>&amp;quot;</code></td> <td class="result">&quot;</td> <td>双引号 quotation</td></tr>
+      <tr><td><code>&amp;apos;</code></td> <td class="result">&apos;</td> <td>单引号 apostrophe</td></tr>
+      <tr><td><code>&amp;nbsp;</code></td> <td class="result">a&nbsp;&nbsp;&nbsp;b</td> <td>不换行空格（多个空格不会被合并）</td></tr>
+      <tr><td><code>&amp;copy;</code></td> <td class="result">&copy;</td> <td>版权符号 ©</td></tr>
+      <tr><td><code>&amp;reg;</code></td>  <td class="result">&reg;</td>  <td>注册商标 ®</td></tr>
+      <tr><td><code>&amp;trade;</code></td><td class="result">&trade;</td><td>商标 ™</td></tr>
+      <tr><td><code>&amp;#169;</code></td> <td class="result">&#169;</td> <td>十进制数字实体（= ©）</td></tr>
+      <tr><td><code>&amp;#x00A9;</code></td><td class="result">&#x00A9;</td><td>十六进制数字实体（= ©）</td></tr>
+      <tr><td><code>&amp;hearts;</code></td><td class="result">&hearts;</td><td>红心 ♥</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>对比小实验：</strong>
+    下面这行如果不转义，<code>&lt;b&gt;</code> 会被当成加粗标签；转义后才是纯文字。<br />
+    转义写法 <code>&amp;lt;b&amp;gt;粗体&amp;lt;/b&amp;gt;</code> 渲染为：
+    <strong>&lt;b&gt;粗体&lt;/b&gt;</strong>
+  </div>
+
+  <script>
+    // 用 JS 直接演示“转义”的本质：把字符串塞进 textContent，浏览器会自动转义
+    // 这样能避免 XSS（用户输入里的 <script> 不会被当成代码执行）
+    const demo = document.createElement('p');
+    const userInput = '<img src=x onerror=alert(1)>'; // 假设这是危险的用户输入
+    demo.textContent = '安全输出（textContent 自动转义）：' + userInput;
+    document.body.appendChild(demo);
+  </script>
+</body>
+</html>

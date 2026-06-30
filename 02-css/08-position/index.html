@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>08 · 定位 position</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 0 24px 80px; background: #f4f6fb; color: #2c3e50; line-height: 1.6;
+    }
+    h1 { font-size: 24px; margin: 24px 0 4px; }
+    .subtitle { color:#7f8c8d; margin-top:0; }
+    .card {
+      background:#fff; border-radius:12px; padding:20px 24px; margin-bottom:24px;
+      box-shadow:0 2px 12px rgba(0,0,0,.06);
+    }
+    .card h2 { font-size:18px; border-left:4px solid #5b8def; padding-left:10px; }
+    code { background:#eef2fb; padding:2px 6px; border-radius:4px; }
+
+    /* —— sticky 吸顶导航：滚动到顶部时粘住 —— */
+    .sticky-nav {
+      position: sticky;   /* 关键：粘性定位 */
+      top: 0;             /* 距视口顶部 0 时吸住 */
+      background:#5b8def; color:#fff; padding:12px 24px; margin:0 -24px 16px;
+      z-index: 100; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,.15);
+    }
+
+    /* —— relative：相对自身原位置偏移，仍占据原空间 —— */
+    .relative-demo { position: relative; background:#f8f9fc; padding:16px; border:1px dashed #aab; }
+    .rel-box {
+      position: relative; top:20px; left:40px;   /* 相对自身向下20、向右40偏移 */
+      background:#e67e22; color:#fff; padding:10px 16px; display:inline-block;
+      border:2px solid #b35e10;
+    }
+    .ghost { display:inline-block; padding:10px 16px; border:2px dashed #ccc; color:#999; }
+
+    /* —— absolute：脱离文档流，相对最近的非 static 祖先定位 —— */
+    .abs-parent {
+      position: relative;   /* 作为 absolute 子元素的"定位祖先"/包含块 */
+      height:160px; background:#eef9f1; border:1px dashed #9c9;
+    }
+    .abs-corner {
+      position: absolute; top:10px; right:10px;     /* 钉在父容器右上角 */
+      background:#27ae60; color:#fff; padding:6px 12px; border-radius:6px;
+    }
+    .abs-center {
+      position: absolute; top:50%; left:50%;        /* 绝对居中经典写法 */
+      transform: translate(-50%, -50%);
+      background:#27ae60; color:#fff; padding:12px 20px; border-radius:8px; font-weight:bold;
+    }
+
+    /* —— z-index 层叠 —— */
+    .stack { position:relative; height:120px; }
+    .layer { position:absolute; width:120px; height:80px; border-radius:8px; color:#fff;
+             display:flex; align-items:center; justify-content:center; font-weight:bold; }
+    .l1 { background:#e74c3c; left:20px;  top:10px; z-index:1; }
+    .l2 { background:#3498db; left:70px;  top:30px; z-index:2; }   /* z-index 大，盖在上面 */
+    .l3 { background:#9b59b6; left:120px; top:50px; z-index:3; }
+
+    /* —— fixed：相对视口固定，回到顶部按钮 —— */
+    .to-top {
+      position: fixed; right:24px; bottom:24px; z-index:200;
+      background:#34495e; color:#fff; border:none; border-radius:50%;
+      width:52px; height:52px; cursor:pointer; font-size:20px;
+      box-shadow:0 4px 12px rgba(0,0,0,.25);
+    }
+    .filler { height:600px; background:linear-gradient(#fafbff,#e8eefb);
+              border-radius:8px; display:flex; align-items:center; justify-content:center;
+              color:#9aa; font-size:14px; }
+    table { border-collapse:collapse; width:100%; margin-top:8px; }
+    th,td { border:1px solid #d6dbe6; padding:8px 12px; text-align:center; }
+    th { background:#eef2fb; }
+  </style>
+</head>
+<body>
+  <!-- sticky 吸顶导航：向下滚动时它会粘在顶部 -->
+  <div class="sticky-nav">📌 sticky 吸顶导航 —— 向下滚动我会粘在顶部</div>
+
+  <h1>08 · 定位 <code>position</code></h1>
+  <p class="subtitle">static / relative / absolute / fixed / sticky 五种定位详解</p>
+
+  <!-- static & relative -->
+  <div class="card">
+    <h2>relative（相对定位）</h2>
+    <p><code>relative</code> 相对元素<strong>自身原位置</strong>偏移，<strong>原空间仍被占据</strong>（虚线框是它本来的位置）。</p>
+    <div class="relative-demo">
+      <span class="ghost">原始位置占位</span>
+      <span class="rel-box">我被 top:20px; left:40px 推开了</span>
+    </div>
+  </div>
+
+  <!-- absolute -->
+  <div class="card">
+    <h2>absolute（绝对定位）</h2>
+    <p><code>absolute</code> <strong>脱离文档流</strong>，相对<strong>最近的非 static 祖先</strong>（这里父级设了 <code>position:relative</code>）定位。</p>
+    <div class="abs-parent">
+      <span class="abs-corner">钉在右上角</span>
+      <span class="abs-center">绝对居中（top/left 50% + translate -50%）</span>
+    </div>
+  </div>
+
+  <!-- z-index -->
+  <div class="card">
+    <h2>z-index（层叠顺序）</h2>
+    <p>定位元素重叠时，<code>z-index</code> 越大越靠上。</p>
+    <div class="stack">
+      <div class="layer l1">z-index:1</div>
+      <div class="layer l2">z-index:2</div>
+      <div class="layer l3">z-index:3</div>
+    </div>
+  </div>
+
+  <!-- 五种值对比表 -->
+  <div class="card">
+    <h2>五种 position 值对比</h2>
+    <table>
+      <tr><th>值</th><th>是否脱离文档流</th><th>定位参照物</th><th>top/left 等是否生效</th></tr>
+      <tr><td>static（默认）</td><td>否</td><td>正常文档流</td><td>否</td></tr>
+      <tr><td>relative</td><td>否（仍占位）</td><td>自身原位置</td><td>是</td></tr>
+      <tr><td>absolute</td><td>是</td><td>最近非 static 祖先</td><td>是</td></tr>
+      <tr><td>fixed</td><td>是</td><td>视口 viewport</td><td>是</td></tr>
+      <tr><td>sticky</td><td>否</td><td>滚动容器（阈值前后切换）</td><td>是（作为吸附阈值）</td></tr>
+    </table>
+  </div>
+
+  <!-- 占位区，便于体验 fixed 与 sticky 的滚动效果 -->
+  <div class="card">
+    <h2>向下滚动体验 fixed 与 sticky</h2>
+    <div class="filler">这是一大块占位内容，向下滚动观察右下角 fixed 按钮始终固定、顶部 sticky 导航被粘住</div>
+  </div>
+
+  <!-- fixed 回到顶部按钮：始终固定在视口右下角 -->
+  <button class="to-top" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+</body>
+</html>

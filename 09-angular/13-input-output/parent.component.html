@@ -1,0 +1,25 @@
+<!--
+  独立的父组件模板（可替代 parent.component.ts 中的内联 template）。
+  使用时把 @Component 的 template 改为 templateUrl: './parent.component.html'。
+-->
+<div class="card">
+  <h2>父组件 Parent</h2>
+
+  <!--
+    [title]       属性绑定 -> input()
+    [userName]    必填 input
+    [(count)]     双向绑定 model() == [count] + (countChange)
+    (messageSent) 监听子组件 output，$event 为 emit 载荷
+  -->
+  <app-child
+    [title]="pageTitle()"
+    [userName]="'Alice'"
+    [(count)]="counter"
+    (messageSent)="onMessage($event)"
+  />
+
+  <hr />
+  <p>父组件里的 counter（被子组件回写）：{{ counter() }}</p>
+  <p>收到子组件消息：{{ lastMessage() }}</p>
+  <button (click)="counter.set(0)">父组件重置 counter</button>
+</div>

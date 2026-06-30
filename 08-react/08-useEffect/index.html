@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · useEffect 副作用与执行时机</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; line-height: 1.6; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ① 计时器：演示「[] 只挂载一次 + return 清理函数」
+    function Timer() {
+      const [seconds, setSeconds] = useState(0);
+      const [running, setRunning] = useState(true);
+
+      useEffect(() => {
+        // 依赖是 [running]：running 变化时，先跑上一次的清理，再重新建立 effect
+        if (!running) return; // 暂停时不建立计时器
+        console.log('[Timer] 建立 setInterval');
+        const id = setInterval(() => {
+          // 用函数式更新，避免闭包拿到旧的 seconds
+          setSeconds((s) => s + 1);
+        }, 1000);
+
+        // 清理函数：在「下次 effect 运行前」和「组件卸载时」执行
+        // —— 必须清掉 interval，否则会泄漏、计时叠加越跑越快
+        return () => {
+          console.log('[Timer] 清理 setInterval');
+          clearInterval(id);
+        };
+      }, [running]); // 依赖数组：只有 running 改变才重建
+
+      return (
+        <div className="box">
+          <h3>⏱️ 计时器：已运行 {seconds} 秒</h3>
+          <button onClick={() => setRunning((r) => !r)}>
+            {running ? '暂停' : '继续'}
+          </button>
+          <button onClick={() => setSeconds(0)}>归零</button>
+          <p><small>打开控制台看「建立 / 清理」日志（StrictMode 下挂载会成对出现两次）</small></p>
+        </div>
+      );
+    }
+
+    // ② 监听窗口尺寸：演示「订阅外部事件 + 卸载时取消订阅」
+    function WindowSize() {
+      const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+
+      useEffect(() => {
+        const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
+        console.log('[WindowSize] addEventListener resize');
+        window.addEventListener('resize', onResize);
+
+        // 清理：移除监听，防止组件卸载后回调仍触发 setState（内存泄漏/报错）
+        return () => {
+          console.log('[WindowSize] removeEventListener resize');
+          window.removeEventListener('resize', onResize);
+        };
+      }, []); // [] 空依赖：只在挂载时订阅一次，卸载时清理
+
+      return (
+        <div className="box">
+          <h3>📐 窗口尺寸</h3>
+          <p>宽 {size.w} × 高 {size.h}（拖动浏览器边缘试试）</p>
+        </div>
+      );
+    }
+
+    // ③ 每次渲染都跑（无依赖数组）—— 仅作对比演示，慎用
+    function RenderLogger() {
+      const [n, setN] = useState(0);
+      useEffect(() => {
+        // 没有第二个参数：每次渲染提交后都会执行
+        console.log('[RenderLogger] 组件渲染了一次, n =', n);
+      }); // 注意：没有依赖数组
+      return (
+        <div className="box">
+          <h3>🔁 无依赖 effect（每次渲染都跑）</h3>
+          <button onClick={() => setN((v) => v + 1)}>n = {n}，点我 +1</button>
+        </div>
+      );
+    }
+
+    function App() {
+      // 用一个开关控制 Timer 的挂载/卸载，方便观察「卸载时的清理」
+      const [showTimer, setShowTimer] = useState(true);
+      return (
+        <div>
+          <h1>08 · useEffect</h1>
+          <button onClick={() => setShowTimer((s) => !s)}>
+            {showTimer ? '卸载计时器（看清理日志）' : '挂载计时器'}
+          </button>
+          {showTimer && <Timer />}
+          <WindowSize />
+          <RenderLogger />
+        </div>
+      );
+    }
+
+    // StrictMode：开发环境会故意「挂载→卸载→再挂载」，让你发现没写清理的副作用
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  </script>
+</body>
+</html>

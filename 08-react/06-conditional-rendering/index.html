@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 条件渲染 Conditional Rendering</title>
+  <!-- React 18 核心库（开发版，带友好报错） -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <!-- ReactDOM：负责把 React 元素渲染进真实 DOM -->
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel standalone：在浏览器里实时把 JSX 编译成 JS，免构建 -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; line-height: 1.6; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    .empty { color: #999; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- type="text/babel" 告诉 Babel：这段需要先编译再执行 -->
+  <script type="text/babel">
+    const { useState } = React; // 本模块只用到 useState
+
+    // ① 登录态切换：用 if/else 提前 return 不同 JSX —— 最直观的条件渲染
+    function LoginPanel() {
+      const [logged, setLogged] = useState(false);
+
+      // 早返回（early return）：根据条件返回完全不同的界面
+      if (logged) {
+        return (
+          <div className="box">
+            <p>✅ 欢迎回来，用户已登录</p>
+            <button onClick={() => setLogged(false)}>退出登录</button>
+          </div>
+        );
+      }
+      return (
+        <div className="box">
+          <p>🔒 你尚未登录</p>
+          <button onClick={() => setLogged(true)}>点击登录</button>
+        </div>
+      );
+    }
+
+    // ② 加载中状态：用三元运算符 ? : 在一段 JSX 内部二选一
+    function LoadingDemo() {
+      const [loading, setLoading] = useState(false);
+      return (
+        <div className="box">
+          {/* 三元：条件 ? 真分支 : 假分支，两边都必须给出 */}
+          {loading ? <p>⏳ 加载中…</p> : <p>📦 数据已就绪</p>}
+          <button onClick={() => setLoading((v) => !v)}>切换加载态</button>
+        </div>
+      );
+    }
+
+    // ③ 列表为空提示 + && 的正确/错误用法
+    function ListDemo() {
+      const [items, setItems] = useState(['苹果', '香蕉']);
+
+      return (
+        <div className="box">
+          <button onClick={() => setItems([...items, '新水果' + items.length])}>加一项</button>
+          <button onClick={() => setItems([])}>清空</button>
+
+          {/*
+            ⚠️ 经典坑：{items.length && <ul>...}
+            当 length 为 0 时，0 是假值，但 && 会“返回 0”，React 会把数字 0 渲染到页面上！
+            正确做法：把左侧强制转成布尔，或直接用三元。
+          */}
+          {items.length > 0 ? (
+            <ul>
+              {items.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
+            </ul>
+          ) : (
+            // 列表为空时给出友好提示
+            <p className="empty">暂无数据，点击「加一项」试试</p>
+          )}
+
+          {/* 逻辑 && 的安全用法：左侧是真正的布尔表达式 */}
+          {items.length > 3 && <p>🎉 你已经添加了超过 3 项！</p>}
+
+          {/* null 不渲染任何东西：返回 null 是“什么都不显示”的标准方式 */}
+          {items.length === 0 ? null : <small>共 {items.length} 项</small>}
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h1>06 · 条件渲染</h1>
+          <LoginPanel />
+          <LoadingDemo />
+          <ListDemo />
+        </div>
+      );
+    }
+
+    // React 18 标准挂载方式：createRoot + render
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "hmr-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "12-build-tools · 07 · 热模块替换 HMR 原理",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

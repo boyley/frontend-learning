@@ -1,0 +1,43 @@
+<!-- binding-demo.component.html —— 四种绑定 + class/style 绑定演示 -->
+
+<section>
+  <!-- ① 插值 Interpolation：把组件数据渲染进文本 -->
+  <h2>① 插值 {{ '{{}}' }}</h2>
+  <p>你好，{{ name() }}！名字长度：{{ name().length }}</p>
+
+  <!-- ② 属性绑定 Property Binding：[prop]="表达式"，把数据写进 DOM 属性 -->
+  <h2>② 属性绑定 [prop]</h2>
+  <!-- [disabled] 绑定到 disabled() signal；true 时按钮不可点 -->
+  <button [disabled]="disabled()">我是否禁用：{{ disabled() }}</button>
+  <button (click)="toggleDisabled()">切换禁用状态</button>
+
+  <!-- ③ 事件绑定 Event Binding：(event)="处理方法()"，把用户操作传回组件 -->
+  <h2>③ 事件绑定 (event)</h2>
+  <button (click)="onClick()">点我 +1</button>
+  <p>已点击 {{ clicks() }} 次</p>
+
+  <!-- ④ 双向绑定 Two-way Binding：[(ngModel)]，输入框与 name() 双向同步 -->
+  <h2>④ 双向绑定 [(ngModel)]</h2>
+  <!-- 输入框改值 → name 更新 → 上面插值同步变化 -->
+  <input [(ngModel)]="name" placeholder="输入名字" />
+  <p>实时同步：{{ name() }}</p>
+
+  <!-- ⑤ class / style 绑定 -->
+  <h2>⑤ class / style 绑定</h2>
+  <!-- [class.xxx]="布尔"：为 true 时添加该 class；[style.xxx]：直接设内联样式 -->
+  <p
+    [class.highlight]="active()"
+    [style.color]="active() ? 'crimson' : 'gray'"
+  >
+    active = {{ active() }}（true 时变红并加 highlight 类）
+  </p>
+  <button (click)="toggleActive()">切换高亮</button>
+</section>
+
+<!-- 内联演示样式：highlight 类的效果 -->
+<style>
+  .highlight {
+    font-weight: bold;
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 · CSS 计算函数 calc / min / max / clamp</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    :root {
+      /* CSS 变量：后面用 calc 与它们配合做实时布局 */
+      --gap: 16px;          /* 间距，会被 range 滑块改写 */
+      --cols: 3;            /* 列数，会被 range 滑块改写 */
+      --accent: #6366f1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 24px;
+    }
+
+    /* ===== 标题区 ===== */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: #4338ca;
+    }
+    header p { margin: 0; color: #64748b; }
+
+    /* ===== 卡片容器统一外观 ===== */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+      padding: 24px;
+      margin: 0 auto 24px;
+      max-width: 920px;
+    }
+    .card h2 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+      color: #4338ca;
+    }
+    .desc { color: #64748b; font-size: .92rem; margin: 0 0 18px; }
+
+    /* ===== 演示 1：calc(100% - 40px) 容器宽度 ===== */
+    /* 父盒子宽度 = 父级 100% 再减去固定 40px，左右各留 20px 视觉边距 */
+    .calc-box {
+      width: calc(100% - 40px);   /* 关键：- 两侧必须有空格！ */
+      margin: 0 auto;
+      padding: 18px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #818cf8, #c084fc);
+      color: #fff;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* ===== 演示 2：clamp 流式字号 ===== */
+    /* 字号永远在 1rem(下限) 与 2rem(上限) 之间，理想值随视口宽度 2.5vw 平滑变化 */
+    .fluid-text {
+      font-size: clamp(1rem, 2.5vw + 0.5rem, 2rem);
+      font-weight: 700;
+      color: var(--accent);
+      padding: 16px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      text-align: center;
+      transition: font-size .05s linear;
+    }
+    .readout {
+      margin-top: 10px;
+      font-size: .85rem;
+      color: #64748b;
+      text-align: center;
+    }
+    .readout b { color: #4338ca; }
+
+    /* ===== 演示 3：range 滑块 + 变量 + calc 实时布局 ===== */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+    .controls label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: .85rem;
+      color: #475569;
+      font-weight: 600;
+    }
+    input[type="range"] { width: 200px; accent-color: var(--accent); }
+
+    /* 网格：列宽用 calc 把总宽减去所有间距后均分 */
+    .grid {
+      display: grid;
+      gap: var(--gap);
+      /* 每列宽 = (100% - (列数-1)个间距) / 列数 */
+      grid-template-columns: repeat(var(--cols), 1fr);
+    }
+    .grid .tile {
+      height: 70px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #34d399, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, .25);
+    }
+
+    /* ===== 演示 4：min() / max() 语义对比 ===== */
+    .minmax-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .minmax-row > div {
+      flex: 1 1 200px;
+      padding: 14px;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 600;
+      font-size: .9rem;
+    }
+    /* min(90%, 320px)：宽度取两者较小者 → 相当于"最大不超过 320px" */
+    .use-min { width: min(90%, 320px); background: #f59e0b; }
+    /* max(50%, 200px)：宽度取两者较大者 → 相当于"最小不低于 200px" */
+    .use-max { width: max(50%, 200px); background: #ef4444; }
+
+    code {
+      background: #ede9fe;
+      color: #6d28d9;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: .85em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CSS 计算函数 calc / min / max / clamp</h1>
+    <p>用数学表达式让尺寸"会算"，做出真正响应式的布局与字号</p>
+  </header>
+
+  <!-- 演示 1 -->
+  <section class="card">
+    <h2>① calc(100% - 40px) ——混合单位运算</h2>
+    <p class="desc">容器宽度 = 父级 <code>100%</code> 减去固定 <code>40px</code>。百分比和像素两种单位只有 calc 能混合相减。</p>
+    <div class="calc-box">我的宽度 = calc(100% - 40px)，缩放窗口我会一直留 40px 余量</div>
+  </section>
+
+  <!-- 演示 2 -->
+  <section class="card">
+    <h2>② clamp(MIN, 理想值, MAX) ——流式字号</h2>
+    <p class="desc">字号 = <code>clamp(1rem, 2.5vw + 0.5rem, 2rem)</code>。拖动浏览器窗口宽度，下面文字会在 16px~32px 之间平滑变化，到边界自动卡住。</p>
+    <div class="fluid-text" id="fluidText">我会随窗口宽度平滑缩放的标题</div>
+    <p class="readout">当前窗口宽度：<b id="winW">-</b>px ｜ 实际渲染字号：<b id="fontPx">-</b>px（被锁在 16~32 之间）</p>
+  </section>
+
+  <!-- 演示 3 -->
+  <section class="card">
+    <h2>③ range 滑块 + var() + calc ——实时改布局</h2>
+    <p class="desc">滑块修改 CSS 变量 <code>--cols</code> 与 <code>--gap</code>，网格通过 calc/repeat 立即重排。</p>
+    <div class="controls">
+      <label>列数 --cols：<span id="colsVal">3</span>
+        <input type="range" id="colsRange" min="1" max="6" value="3" />
+      </label>
+      <label>间距 --gap：<span id="gapVal">16</span>px
+        <input type="range" id="gapRange" min="0" max="40" value="16" />
+      </label>
+    </div>
+    <div class="grid" id="grid">
+      <div class="tile">1</div><div class="tile">2</div><div class="tile">3</div>
+      <div class="tile">4</div><div class="tile">5</div><div class="tile">6</div>
+    </div>
+  </section>
+
+  <!-- 演示 4 -->
+  <section class="card">
+    <h2>④ min() 与 max() ——语义反直觉对比</h2>
+    <p class="desc"><code>min()</code> 取较小值当"上限"，<code>max()</code> 取较大值当"下限"。缩放窗口观察两条的宽度变化。</p>
+    <div class="minmax-row">
+      <div class="use-min">width: min(90%, 320px) → 最宽 320px</div>
+      <div class="use-max">width: max(50%, 200px) → 最窄 200px</div>
+    </div>
+  </section>
+
+  <script>
+    /* —— 演示 2：实时读取窗口宽度与计算后的真实字号 —— */
+    const fluidText = document.getElementById('fluidText');
+    const winW = document.getElementById('winW');
+    const fontPx = document.getElementById('fontPx');
+    function updateReadout() {
+      winW.textContent = window.innerWidth;
+      // getComputedStyle 拿到的是 clamp 计算后的最终像素值
+      fontPx.textContent = parseFloat(getComputedStyle(fluidText).fontSize).toFixed(1);
+    }
+    window.addEventListener('resize', updateReadout);
+    updateReadout();
+
+    /* —— 演示 3：滑块写 CSS 变量 —— */
+    const root = document.documentElement;
+    const colsRange = document.getElementById('colsRange');
+    const gapRange = document.getElementById('gapRange');
+    const colsVal = document.getElementById('colsVal');
+    const gapVal = document.getElementById('gapVal');
+    colsRange.addEventListener('input', e => {
+      root.style.setProperty('--cols', e.target.value);
+      colsVal.textContent = e.target.value;
+    });
+    gapRange.addEventListener('input', e => {
+      root.style.setProperty('--gap', e.target.value + 'px');
+      gapVal.textContent = e.target.value;
+    });
+  </script>
+</body>
+</html>

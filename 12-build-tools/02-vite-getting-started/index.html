@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · 我的第一个 Vite 项目</title>
+</head>
+<body>
+  <!--
+    ⭐ 关键认知：在 Vite 项目里，index.html 是「真正的入口」，不是被生成出来的。
+    Vite 把 index.html 当作源码图（source graph）的一部分来处理：
+    它会扫描下面这个 <script type="module">，顺藤摸瓜找到所有依赖。
+  -->
+  <div id="app"></div>
+
+  <!--
+    type="module" 让浏览器以 ES Module 方式加载；
+    src 用「/」开头表示相对于项目根目录（index.html 所在目录）。
+    开发时 Vite 直接把源码按需吐给浏览器，不打包；构建时才会打包成带 hash 的文件。
+  -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · 链接与锚点 Links & Anchors</title>
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.8;
+      color: #222;
+    }
+    h1, h2 { color: #2563eb; }
+    section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 20px;
+      margin: 16px 0;
+    }
+    /* 给锚点目标加一点上间距，跳转后标题不会贴着窗口顶部 */
+    :target { background: #fef9c3; scroll-margin-top: 16px; }
+    nav a { margin-right: 12px; }
+    /* 占位用的高块，制造可滚动空间，方便演示页内锚点跳转 */
+    .spacer { height: 400px; background: #f8fafc; color: #94a3b8;
+              display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <h1 id="top">链接与锚点 Links &amp; Anchors</h1>
+
+  <!-- ========== 页内导航：锚点目录 ========== -->
+  <nav>
+    <!-- href="#id" 跳转到本页中 id 等于该值的元素 -->
+    <strong>本页目录：</strong>
+    <a href="#external">外部链接</a>
+    <a href="#download">下载链接</a>
+    <a href="#contact">联系方式</a>
+  </nav>
+
+  <!-- ========== 外部链接 + target + rel ========== -->
+  <section id="external">
+    <h2>1. 外部链接（绝对路径） / target / rel</h2>
+    <!-- href 是绝对 URL（带 https://），指向外站 -->
+    <p>
+      <a href="https://developer.mozilla.org/zh-CN/">普通外链：MDN 中文（当前标签页打开）</a>
+    </p>
+    <!-- target="_blank" 在新标签页打开；
+         务必配 rel="noopener"：防止新页面通过 window.opener 操纵原页面（安全），
+         noreferrer 还会同时隐藏来源信息 -->
+    <p>
+      <a href="https://developer.mozilla.org/zh-CN/"
+         target="_blank"
+         rel="noopener noreferrer">
+        新标签页打开 MDN（target=_blank + rel=noopener noreferrer）
+      </a>
+    </p>
+    <!-- 相对路径示例：指向同一工程里的上一个模块（不一定真实存在，仅演示写法） -->
+    <p>
+      <a href="../03-lists/index.html">相对路径：上一节「列表」（相对当前文件定位）</a>
+    </p>
+  </section>
+
+  <!-- ========== 下载链接 download ========== -->
+  <section id="download">
+    <h2>2. 下载链接 download</h2>
+    <!-- download 属性：点击时下载而非在浏览器打开；
+         可给一个值作为「另存为」的默认文件名。
+         这里用 data: URL 现造一个文本文件，无需任何外部资源即可演示下载 -->
+    <p>
+      <a href="data:text/plain;charset=utf-8,Hello%20from%20frontend-learning!"
+         download="hello.txt">
+        点我下载 hello.txt（download 属性，data URL 现场生成）
+      </a>
+    </p>
+  </section>
+
+  <!-- ========== mailto / tel ========== -->
+  <section id="contact">
+    <h2>3. mailto / tel 协议链接</h2>
+    <!-- mailto: 唤起邮件客户端；tel: 在手机上唤起拨号 -->
+    <p><a href="mailto:hello@example.com">发邮件给 hello@example.com（mailto:）</a></p>
+    <p><a href="tel:+8613800138000">拨打 +86 138 0013 8000（tel: 手机上点击可拨号）</a></p>
+  </section>
+
+  <!-- 占位空白，制造滚动距离，方便体验「回到顶部」锚点 -->
+  <div class="spacer">↓ 向下滚动，再点下面的「回到顶部」体验页内锚点 ↓</div>
+
+  <!-- 回到顶部：跳到 id="top" 的 h1 -->
+  <p><a href="#top">↑ 回到顶部（#top 页内锚点）</a></p>
+</body>
+</html>

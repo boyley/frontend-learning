@@ -1,0 +1,54 @@
+.btn {
+  background: #6750a4;
+  padding: 16px;
+  color: #fff;
+}
+
+.alert {
+  background: #b3261e;
+  color: #fff;
+  padding: 8px 16px;
+}
+
+.chip-primary {
+  background: #6750a4;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.chip-secondary {
+  background: #625b71;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.chip-success {
+  background: #21a366;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.chip-danger {
+  background: #b3261e;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.box {
+  border-radius: 16px;
+  border: 1px solid #ccc;
+}
+
+.container {
+  width: 100%;
+}
+@media (min-width: 900px) {
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+}

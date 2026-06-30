@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 3D 变换 3D Transforms</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at 30% 20%, #312e81 0%, #0f172a 60%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 32px 20px;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    header h1 { font-size: 28px; color: #fff; margin-bottom: 8px; }
+    header p { color: #a5b4fc; margin-bottom: 32px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .card h3 { font-size: 17px; color: #818cf8; margin-bottom: 6px; }
+    .card .desc { font-size: 13px; color: #94a3b8; margin-bottom: 22px; }
+
+    /* ===== 1. 翻转卡片 ===== */
+    /* 关键：perspective 必须设在「父容器」上，才能产生近大远小的透视 */
+    .flip-scene {
+      perspective: 900px;          /* 透视距离，值越小透视越夸张 */
+      width: 200px; height: 260px;
+      margin: 0 auto 18px;
+    }
+    .flip-card {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;  /* 让子元素保留在 3D 空间 */
+      transition: transform 0.7s cubic-bezier(.2,.8,.3,1);
+    }
+    /* hover 时整张卡绕 Y 轴翻 180 度 */
+    .flip-scene:hover .flip-card { transform: rotateY(180deg); }
+    .flip-face {
+      position: absolute; inset: 0;
+      border-radius: 16px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #fff;
+      backface-visibility: hidden;   /* 背面朝向我们时隐藏，避免镜像穿帮 */
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .flip-front { background: linear-gradient(135deg,#06b6d4,#0ea5e9); }
+    .flip-back {
+      background: linear-gradient(135deg,#ec4899,#8b5cf6);
+      transform: rotateY(180deg);    /* 背面预先翻转，翻过来才是正的 */
+    }
+    .flip-face small { font-weight: 400; font-size: 13px; opacity: .85; margin-top: 8px; }
+
+    /* ===== 2. 3D 立方体 ===== */
+    .cube-scene {
+      perspective: 800px;
+      width: 160px; height: 160px;
+      margin: 30px auto;
+    }
+    .cube {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;   /* 必须，否则 6 个面会被压平 */
+      animation: rotateCube 12s linear infinite;
+    }
+    .cube.paused { animation-play-state: paused; }
+    .face {
+      position: absolute;
+      width: 160px; height: 160px;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; font-weight: 800; color: #fff;
+      opacity: 0.88;
+    }
+    /* 6 个面：先旋转到对应朝向，再沿 Z 轴推出半个边长(80px) */
+    .front  { transform: rotateY(0deg)    translateZ(80px); background:#ef4444; }
+    .back   { transform: rotateY(180deg)  translateZ(80px); background:#f59e0b; }
+    .right  { transform: rotateY(90deg)   translateZ(80px); background:#10b981; }
+    .left   { transform: rotateY(-90deg)  translateZ(80px); background:#3b82f6; }
+    .top    { transform: rotateX(90deg)   translateZ(80px); background:#8b5cf6; }
+    .bottom { transform: rotateX(-90deg)  translateZ(80px); background:#ec4899; }
+    @keyframes rotateCube {
+      from { transform: rotateX(-20deg) rotateY(0deg); }
+      to   { transform: rotateX(-20deg) rotateY(360deg); }
+    }
+
+    button {
+      display: block; margin: 0 auto;
+      background: #6366f1; color: #fff;
+      border: none; border-radius: 10px;
+      padding: 10px 22px; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      transition: background .2s;
+    }
+    button:hover { background: #818cf8; }
+
+    .tip {
+      margin-top: 28px; padding: 16px 20px;
+      background: rgba(129,140,248,0.1);
+      border-left: 4px solid #818cf8; border-radius: 8px;
+      font-size: 13px; color: #cbd5e1;
+    }
+    .tip code { background: #0f172a; padding: 2px 6px; border-radius: 4px; color: #f472b6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>05 · 3D 变换 3D Transforms</h1>
+      <p>perspective 透视、preserve-3d 三维空间、backface-visibility 背面隐藏 —— 把平面元素带进立体世界。</p>
+    </header>
+
+    <div class="grid">
+      <!-- 翻转卡片 -->
+      <div class="card">
+        <h3>可翻转 3D 卡片</h3>
+        <p class="desc">鼠标悬停卡片，整张卡绕 Y 轴旋转 180°，正反两面用 backface-visibility:hidden 防止穿帮。</p>
+        <div class="flip-scene">
+          <div class="flip-card">
+            <div class="flip-face flip-front">
+              正面 FRONT
+              <small>把鼠标移上来 →</small>
+            </div>
+            <div class="flip-face flip-back">
+              背面 BACK
+              <small>rotateY(180deg) 翻过来了</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D 立方体 -->
+      <div class="card">
+        <h3>preserve-3d 立方体</h3>
+        <p class="desc">6 个面用 rotateX/Y + translateZ(80px) 拼成立方体，父级开启 preserve-3d 缓慢自转。</p>
+        <div class="cube-scene">
+          <div class="cube" id="cube">
+            <div class="face front">前</div>
+            <div class="face back">后</div>
+            <div class="face right">右</div>
+            <div class="face left">左</div>
+            <div class="face top">上</div>
+            <div class="face bottom">下</div>
+          </div>
+        </div>
+        <button id="toggleBtn">⏸ 暂停旋转</button>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>关键提示：</strong>
+      <code>perspective</code> 必须设在<strong>父容器</strong>上（作为属性），子元素自己用 <code>perspective()</code> 函数也行但场景不统一；
+      <code>transform-style: preserve-3d</code> 让子元素保留在三维空间，否则会被压扁成平面；
+      <code>preserve-3d</code> 与 <code>overflow: hidden</code> 不能共存（overflow 会强制扁平化）；
+      <code>backface-visibility: hidden</code> 在背面朝向观察者时隐藏元素；
+      perspective 值越<strong>小</strong>，透视越<strong>强</strong>（近大远小越夸张）。
+    </div>
+  </div>
+
+  <script>
+    // 控制立方体动画 play-state 暂停/继续
+    const cube = document.getElementById('cube');
+    const btn = document.getElementById('toggleBtn');
+    btn.addEventListener('click', () => {
+      cube.classList.toggle('paused');
+      const paused = cube.classList.contains('paused');
+      btn.textContent = paused ? '▶ 继续旋转' : '⏸ 暂停旋转';
+    });
+  </script>
+</body>
+</html>

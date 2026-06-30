@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 列表与 Key（Lists & Keys）</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; line-height: 1.6; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    li { margin: 6px 0; }
+    button { cursor: pointer; }
+    input { padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // 用一个自增 id 生成器，保证每条数据有“稳定且唯一”的标识
+    // —— 这是正确做 key 的关键：id 跟着数据走，不随渲染/排序变化
+    let nextId = 3;
+
+    function TodoApp() {
+      const [todos, setTodos] = useState([
+        { id: 1, text: '学习 map 渲染列表' },
+        { id: 2, text: '理解 key 的作用' },
+      ]);
+      const [text, setText] = useState('');
+
+      // 新增：用 nextId++ 作为稳定唯一 id
+      function add() {
+        if (!text.trim()) return;
+        setTodos([...todos, { id: nextId++, text }]);
+        setText('');
+      }
+
+      // 删除：按 id 过滤，剩余项的 id 不变，React 能精准复用未变动的节点
+      function remove(id) {
+        setTodos(todos.filter((t) => t.id !== id));
+      }
+
+      // 上移：演示“顺序变动”——此时若用 index 当 key 就会错乱
+      function moveUp(i) {
+        if (i === 0) return;
+        const next = [...todos];
+        [next[i - 1], next[i]] = [next[i], next[i - 1]];
+        setTodos(next);
+      }
+
+      return (
+        <div className="box">
+          <h3>待办列表（删除 / 上移 都能正确复用节点）</h3>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="输入待办，回车添加"
+            onKeyDown={(e) => e.key === 'Enter' && add()}
+          />
+          <button onClick={add}>添加</button>
+
+          {/*
+            array.map() 把每条数据映射成一个 <li>。
+            ✅ key={t.id}：用稳定唯一的 id，React diff 时据此判断“哪个节点是同一个”，
+               从而复用 DOM、保留输入框焦点/动画状态，避免无谓重建。
+            ❌ 不要写 key={index}：列表顺序一变（上移），index 和数据就对不上了。
+            ❌ 不要写 key={Math.random()}：每次渲染都变，等于告诉 React 全删全建。
+          */}
+          <ul>
+            {todos.map((t, i) => (
+              <li key={t.id}>
+                {t.text}
+                <button onClick={() => moveUp(i)} style={{ marginLeft: 8 }}>↑ 上移</button>
+                <button onClick={() => remove(t.id)} style={{ marginLeft: 4 }}>删除</button>
+              </li>
+            ))}
+          </ul>
+
+          {todos.length === 0 && <p style={{ color: '#999' }}>列表为空</p>}
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h1>07 · 列表与 Key</h1>
+          <TodoApp />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

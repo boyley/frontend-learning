@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 · 表单输入绑定</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    label { display: inline-block; margin: 4px 10px 4px 0; }
+    input, select, textarea { padding: 5px; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>09 · 表单输入绑定（v-model）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① 文本 / 多行文本</h3>
+      <input v-model="text" placeholder="单行文本" />
+      <textarea v-model="message" placeholder="多行文本"></textarea>
+    </div>
+
+    <div class="card">
+      <h3>② 复选框（单个布尔 / 多个数组）</h3>
+      <label><input type="checkbox" v-model="agree" /> 我同意（布尔：{{ agree }}）</label>
+      <hr />
+      <label><input type="checkbox" value="Vue" v-model="frameworks" /> Vue</label>
+      <label><input type="checkbox" value="React" v-model="frameworks" /> React</label>
+      <label><input type="checkbox" value="Angular" v-model="frameworks" /> Angular</label>
+    </div>
+
+    <div class="card">
+      <h3>③ 单选 / 下拉选择</h3>
+      <label><input type="radio" value="男" v-model="gender" /> 男</label>
+      <label><input type="radio" value="女" v-model="gender" /> 女</label>
+      <hr />
+      <select v-model="city">
+        <option disabled value="">请选择城市</option>
+        <option>北京</option><option>上海</option><option>广州</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h3>④ 修饰符 .lazy / .number / .trim</h3>
+      <!-- .number 自动转数字；.trim 自动去首尾空格；.lazy 改为 change 事件同步 -->
+      <label>年龄(.number)：<input type="text" v-model.number="age" /></label>
+      <p>typeof age = {{ typeof age }}，age + 1 = {{ age + 1 }}</p>
+      <label>用户名(.trim)：<input v-model.trim="username" placeholder="前后空格会被去掉" /></label>
+    </div>
+
+    <div class="card">
+      <h3>实时结果</h3>
+      <pre>{{ result }}</pre>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, computed } = Vue;
+    createApp({
+      setup() {
+        const text = ref('');
+        const message = ref('');
+        const agree = ref(false);
+        const frameworks = ref([]);   // 多复选框绑数组
+        const gender = ref('男');
+        const city = ref('');
+        const age = ref(18);
+        const username = ref('');
+
+        const result = computed(() => JSON.stringify({
+          text: text.value, message: message.value, agree: agree.value,
+          frameworks: frameworks.value, gender: gender.value, city: city.value,
+          age: age.value, username: username.value,
+        }, null, 2));
+
+        return { text, message, agree, frameworks, gender, city, age, username, result };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

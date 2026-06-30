@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11 · 定时器与动画帧</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; background: #f5f7fa; color: #2c3e50;
+    }
+    header {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: #fff; padding: 28px 24px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 22px; }
+    header p { margin: 0; opacity: .92; font-size: 14px; }
+    .wrap { max-width: 880px; margin: 24px auto; padding: 0 16px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 22px;
+    }
+    .card h2 { margin: 0 0 14px; font-size: 17px; color: #11998e; }
+    button {
+      cursor: pointer; border: none; border-radius: 8px;
+      padding: 9px 18px; font-size: 14px; color: #fff;
+      background: #11998e; transition: opacity .2s; margin: 4px 6px 4px 0;
+    }
+    button:hover { opacity: .85; }
+    button.gray { background: #95a5a6; }
+    button.warn { background: #e67e22; }
+    /* 秒表显示 */
+    .clock {
+      font-family: ui-monospace, Menlo, monospace; font-size: 40px;
+      font-weight: 700; color: #2c3e50; margin: 10px 0; letter-spacing: 2px;
+    }
+    .clock small { font-size: 16px; color: #888; }
+    /* 进度条 */
+    .track {
+      width: 100%; height: 26px; background: #e9ecef; border-radius: 13px;
+      overflow: hidden; margin: 14px 0;
+    }
+    .bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #11998e, #38ef7d);
+      border-radius: 13px; transition: none;
+    }
+    /* 小球动画对比区 */
+    .stage {
+      position: relative; height: 60px; background: #f0f2f5;
+      border-radius: 10px; margin: 10px 0; overflow: hidden;
+    }
+    .ball {
+      position: absolute; top: 14px; left: 0;
+      width: 32px; height: 32px; border-radius: 50%;
+    }
+    .ball.raf { background: #11998e; }
+    .ball.interval { background: #e67e22; }
+    .label { font-size: 12px; color: #888; }
+    .fps {
+      display: inline-block; background: #eef; color: #11998e;
+      border-radius: 999px; padding: 2px 12px; font-size: 13px;
+      font-family: ui-monospace, monospace;
+    }
+    .note { font-size: 12px; color: #888; margin-top: 8px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>11 · 定时器与动画帧（Timers & requestAnimationFrame）</h1>
+    <p>setTimeout / setInterval / requestAnimationFrame 实战与卡顿对比</p>
+  </header>
+
+  <div class="wrap">
+    <!-- Demo 1：秒表 / 倒计时 -->
+    <div class="card">
+      <h2>① 秒表（setInterval + clearInterval）</h2>
+      <div class="clock" id="clock">00:00.<small>00</small></div>
+      <button id="swStart">开始</button>
+      <button id="swPause" class="gray">暂停</button>
+      <button id="swReset" class="warn">复位</button>
+      <p class="note">注意：这里用 <code>Date.now()</code> 计算真实经过时间，而不是简单累加，避免 setInterval 的「累积漂移」误差。</p>
+    </div>
+
+    <!-- Demo 2：requestAnimationFrame 驱动进度条 + 小球 -->
+    <div class="card">
+      <h2>② requestAnimationFrame 平滑动画（可开始/暂停）</h2>
+      <div class="track"><div class="bar" id="bar"></div></div>
+      <div class="stage"><div class="ball raf" id="ballRaf"></div></div>
+      <button id="rafStart">开始动画</button>
+      <button id="rafPause" class="gray">暂停</button>
+      <button id="rafReset" class="warn">复位</button>
+      <span class="fps" id="fps">FPS: --</span>
+      <p class="note">rAF 与屏幕刷新率同步（通常 60Hz≈16.7ms 一帧），动画在浏览器重绘前执行，天生流畅；标签页切到后台时自动暂停，省电。</p>
+    </div>
+
+    <!-- Demo 3：setInterval 做动画的卡顿对比 -->
+    <div class="card">
+      <h2>③ 对比：setInterval 做动画（容易卡顿/掉帧）</h2>
+      <div class="stage"><div class="ball interval" id="ballInterval"></div></div>
+      <button id="cmpStart">用 setInterval(8ms) 跑同样的小球</button>
+      <button id="cmpStop" class="gray">停止</button>
+      <p class="note">setInterval 的间隔与屏幕刷新不同步，且回调排队、最小延迟受限，容易出现忽快忽慢、掉帧。把两个小球一起跑，肉眼可见橙色球更「抖」。</p>
+    </div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

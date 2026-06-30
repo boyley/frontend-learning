@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>无障碍 a11y 与 ARIA Demo</title>
+  <style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; margin: 24px; color: #1f2937; line-height: 1.7; }
+    h1 { font-size: 22px; }
+    section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    h2 { font-size: 16px; margin-top: 0; }
+    label { display: block; margin: 8px 0 4px; font-weight: 600; }
+    input { padding: 6px 8px; border: 1px solid #9ca3af; border-radius: 6px; }
+
+    /* 自定义“按钮”——用 div 模拟，必须自己补 role/tabindex/键盘事件才无障碍 */
+    .switch {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border: 1px solid #6b7280; border-radius: 999px;
+      cursor: pointer; user-select: none;
+    }
+    .switch[aria-pressed="true"] { background: #10b981; color: #fff; border-color: #10b981; }
+    /* 键盘聚焦时给明显的轮廓——可访问性关键，别用 outline:none 去掉它 */
+    .switch:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+
+    /* 视觉隐藏但屏幕阅读器仍可读的工具类（屏幕外定位法） */
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    nav a { margin-right: 14px; }
+    .status { margin-top: 10px; color: #0a7; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <!-- 用语义化地标标签：屏幕阅读器可直接跳转到 nav / main 区域 -->
+  <header>
+    <h1>无障碍（Accessibility / a11y）与 ARIA</h1>
+  </header>
+
+  <!-- 1. 语义化导航 + aria-label 命名地标 -->
+  <nav aria-label="主导航">
+    <h2 class="visually-hidden">站点导航</h2>
+    <a href="#form">表单示例</a>
+    <a href="#switch">自定义按钮</a>
+    <a href="#img">图片替代文本</a>
+  </nav>
+
+  <main>
+    <!-- 2. 表单：label 与 input 用 for/id 关联，点 label 即可聚焦输入框，读屏会念出标签 -->
+    <section id="form">
+      <h2>1. 表单 label 关联</h2>
+      <label for="username">用户名</label>
+      <!-- aria-describedby 把提示文字关联给输入框，读屏会附带念出 -->
+      <input id="username" type="text" aria-describedby="nameHint" />
+      <p id="nameHint" style="color:#6b7280;font-size:13px;margin:4px 0 0;">
+        提示：2-16 个字符。这段提示通过 aria-describedby 关联给输入框。
+      </p>
+    </section>
+
+    <!-- 3. 自定义“开关按钮”：用 div 模拟，补齐 role/tabindex/aria-pressed/键盘 -->
+    <section id="switch">
+      <h2>2. 无障碍自定义按钮（开关）</h2>
+      <!--
+        role="button"     告诉辅助技术这是按钮
+        tabindex="0"      让它能被 Tab 聚焦
+        aria-pressed      表示开关的按下状态（true/false），读屏会念“已选中/未选中”
+        aria-label        给它一个可访问名称
+      -->
+      <div class="switch" id="darkSwitch"
+           role="button" tabindex="0"
+           aria-pressed="false"
+           aria-label="夜间模式开关">
+        <span aria-hidden="true">🌙</span>
+        <span>夜间模式</span>
+      </div>
+      <!-- aria-live 区域：内容变化时读屏会自动播报 -->
+      <p class="status" id="switchStatus" aria-live="polite">当前：关闭</p>
+    </section>
+
+    <!-- 4. 图片替代文本 alt -->
+    <section id="img">
+      <h2>3. 图片 alt 替代文本</h2>
+      <!-- 有信息的图片：alt 写清楚内容；用内联 SVG 当“图片”避免外部依赖 -->
+      <svg width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="一个黄色的笑脸图标">
+        <circle cx="40" cy="40" r="38" fill="#fde047" stroke="#ca8a04"/>
+        <circle cx="28" cy="32" r="5" fill="#000"/>
+        <circle cx="52" cy="32" r="5" fill="#000"/>
+        <path d="M26 50 Q40 64 54 50" stroke="#000" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </svg>
+      <p style="font-size:13px;color:#6b7280;">
+        上面的图形用 <code>role="img"</code> + <code>aria-label</code> 提供替代文本；
+        若是 &lt;img&gt; 则用 <code>alt</code> 属性。装饰性图片应写 <code>alt=""</code>。
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const sw = document.getElementById('darkSwitch');
+    const status = document.getElementById('switchStatus');
+
+    // 切换函数：同步更新 aria-pressed 与可见状态文字
+    function toggle() {
+      const pressed = sw.getAttribute('aria-pressed') === 'true';
+      sw.setAttribute('aria-pressed', String(!pressed));
+      status.textContent = '当前：' + (!pressed ? '开启' : '关闭');
+      // 简单的视觉反馈：切换页面背景
+      document.body.style.background = !pressed ? '#111827' : '';
+      document.body.style.color = !pressed ? '#e5e7eb' : '';
+    }
+
+    // 鼠标点击
+    sw.addEventListener('click', toggle);
+    // 键盘可达：原生 button 会自动响应 Enter/Space，自定义按钮必须手动补上
+    sw.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault(); // 阻止空格滚动页面
+        toggle();
+      }
+    });
+  </script>
+</body>
+</html>

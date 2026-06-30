@@ -1,0 +1,22 @@
+{
+  "name": "frontend-learning-typescript",
+  "version": "1.0.0",
+  "description": "前端学习合集 · TypeScript 教学工程（对照官方 Handbook）",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "demo": "ts-node"
+  },
+  "keywords": [
+    "typescript",
+    "learning",
+    "handbook"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.11.0"
+  }
+}

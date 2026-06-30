@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 事件处理</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .box { border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; max-width: 380px; margin-bottom: 16px; }
+    button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    input { padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function App() {
+      const [msg, setMsg] = useState('（还没点击）');
+      const [text, setText] = useState('');
+      const [submitted, setSubmitted] = useState('');
+
+      // 普通事件处理函数：接收合成事件对象 e
+      function handleClick() {
+        setMsg('按钮被点击了 ✅ ' + new Date().toLocaleTimeString());
+      }
+
+      // 带参数的处理函数：在 JSX 里用箭头函数包一层来传参
+      function greet(name) {
+        setMsg('你好，' + name + '！');
+      }
+
+      // 输入框变化：从 e.target.value 取最新输入值
+      function handleChange(e) {
+        setText(e.target.value); // onChange 实时触发，输入即更新
+      }
+
+      // 表单提交：e.preventDefault() 阻止浏览器默认刷新页面
+      function handleSubmit(e) {
+        e.preventDefault();           // 关键！不写页面会刷新，state 丢失
+        setSubmitted(text || '(空)');
+      }
+
+      return (
+        <div>
+          <div className="box">
+            <h3>① 点击事件</h3>
+            {/* ✅ 传「函数引用」，不要加括号 */}
+            <button onClick={handleClick}>点我</button>
+            {/* ✅ 需要传参时用箭头函数包一层 */}
+            <button onClick={() => greet('小明')}>跟小明打招呼</button>
+            <p>{msg}</p>
+          </div>
+
+          <div className="box">
+            <h3>② onChange 实时显示</h3>
+            <input value={text} onChange={handleChange} placeholder="随便输入点什么" />
+            <p>你输入了：<strong>{text}</strong></p>
+          </div>
+
+          <div className="box">
+            <h3>③ 表单 submit 阻止默认刷新</h3>
+            {/* 在 form 上监听 onSubmit，按钮 type=submit 或回车都会触发 */}
+            <form onSubmit={handleSubmit}>
+              <input value={text} onChange={handleChange} placeholder="输入后点提交" />
+              <button type="submit">提交</button>
+            </form>
+            <p>已提交内容：<strong>{submitted}</strong></p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

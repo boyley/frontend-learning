@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 表格演示</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; line-height: 1.6; color: #222; }
+    h1 { font-size: 22px; }
+    /* border-collapse 让相邻单元格边框合并为一条，表格更整洁 */
+    table { border-collapse: collapse; width: 100%; }
+    caption { caption-side: top; font-weight: 600; margin-bottom: 8px; text-align: left; color: #2563eb; }
+    th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+    /* thead/tfoot 通过元素选择器即可统一加样式，体现语义分区价值 */
+    thead th { background: #eff6ff; }
+    tfoot td { background: #f8fafc; font-weight: 600; }
+    /* 列表头（scope=col）与行表头（scope=row）可用不同底色区分 */
+    tbody th { background: #f1f5f9; font-weight: 500; }
+    tr:nth-child(even) td { background: #fcfcfd; }
+  </style>
+</head>
+<body>
+  <h1>表格：表头 / 合并单元格 / 表尾合计</h1>
+
+  <!--
+    一个完整语义表格的骨架：
+    <table>
+      <caption> 表格标题
+      <thead>   表头区（列标题）
+      <tbody>   主体数据区
+      <tfoot>   表尾区（合计等汇总）
+    th 是表头单元格，td 是数据单元格
+  -->
+  <table>
+    <!-- caption 是表格的标题，应作为 table 的第一个子元素 -->
+    <caption>2024 年各区域季度销量（单位：台）</caption>
+
+    <thead>
+      <tr>
+        <!-- scope="col" 声明该 th 是“这一列”的表头，利于屏幕阅读器关联 -->
+        <th scope="col">区域</th>
+        <th scope="col">Q1</th>
+        <th scope="col">Q2</th>
+        <th scope="col">小计</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <!-- scope="row" 声明该 th 是“这一行”的表头 -->
+        <th scope="row">华东</th>
+        <td>120</td>
+        <td>150</td>
+        <td>270</td>
+      </tr>
+      <tr>
+        <th scope="row">华南</th>
+        <td>90</td>
+        <td>110</td>
+        <td>200</td>
+      </tr>
+      <tr>
+        <!--
+          rowspan="2"：该单元格纵向占据 2 行（华北、西北共用“北方大区”标签）
+          注意：被合并占用的那一行就不要再写这个单元格了
+        -->
+        <th scope="row" rowspan="2">北方大区</th>
+        <td>60</td>
+        <td>70</td>
+        <td>130</td>
+      </tr>
+      <tr>
+        <!-- 这一行少了第一个单元格，因为上面 rowspan 已经占住 -->
+        <td>40</td>
+        <td>55</td>
+        <td>95</td>
+      </tr>
+    </tbody>
+
+    <tfoot>
+      <tr>
+        <!--
+          colspan="3"：该单元格横向跨越 3 列（区域+Q1+Q2 合并成“总计”标签）
+          scope="row" 让它作为该汇总行的行表头
+        -->
+        <th scope="row" colspan="3">总计</th>
+        <td>695</td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>

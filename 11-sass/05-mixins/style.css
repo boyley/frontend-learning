@@ -1,0 +1,40 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 56px;
+  background: #6750a4;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: #1c1b1f;
+}
+
+.note {
+  background: #fff3cd;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.fancy {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(103, 80, 164, 0.3);
+  width: 200px;
+  height: 100px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.headline {
+  font-size: 28px;
+}
+@media (max-width: 600px) {
+  .headline {
+    font-size: 20px;
+  }
+}

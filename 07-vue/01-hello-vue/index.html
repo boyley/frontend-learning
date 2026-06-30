@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · Hello Vue（声明式渲染）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 12px 0; }
+    button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    .count { color: #42b883; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>01 · Hello Vue</h1>
+
+  <!-- ① 这个 div 就是 Vue 的“挂载点”，app.mount('#app') 会接管这块 DOM -->
+  <div id="app">
+    <div class="card">
+      <!-- ② 双大括号 {{ }} 叫“文本插值”，会显示数据 message 的值 -->
+      <p>{{ message }}</p>
+
+      <!-- ③ v-model 把输入框和数据 message 做了双向绑定，边打字边看上面变化 -->
+      <input v-model="message" placeholder="改我试试" />
+    </div>
+
+    <div class="card">
+      <!-- ④ 声明式：我们只描述“界面长什么样”，不手动操作 DOM -->
+      <p>当前计数：<span class="count">{{ count }}</span></p>
+      <!-- @click 是 v-on:click 的简写，点击时调用 increment 方法 -->
+      <button @click="count++">+1</button>
+      <button @click="count = 0">重置</button>
+    </div>
+  </div>
+
+  <!-- ⑤ 用 CDN 引入 Vue 3 的浏览器全局构建版本，无需任何打包工具 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    // 从全局对象 Vue 中解构出 createApp 和 ref
+    const { createApp, ref } = Vue;
+
+    createApp({
+      // setup() 是组合式 API 的入口，返回的内容可在模板里直接使用
+      setup() {
+        // ref() 创建一个“响应式”数据：值变了，界面自动跟着变
+        const message = ref('你好，Vue！');
+        const count = ref(0);
+
+        // 必须 return 出去，模板才能访问到这些变量
+        return { message, count };
+      }
+    }).mount('#app'); // 把这个应用挂载到 id 为 app 的元素上
+  </script>
+</body>
+</html>

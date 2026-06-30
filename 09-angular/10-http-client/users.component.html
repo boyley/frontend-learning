@@ -1,0 +1,25 @@
+<h2>用户列表</h2>
+
+<!--
+  async pipe（users$ | async）做了三件事：
+  1. 自动 subscribe 这个 Observable（此刻 HTTP 请求才真正发出）；
+  2. 把每次发出的值解包给模板里的 users 变量；
+  3. 组件销毁时自动 unsubscribe，防止内存泄漏——这是它最大的好处。
+  @if 的 as 语法把解包后的值赋给 users 局部变量。
+-->
+@if (users$ | async; as users) {
+  <!-- @for 是 Angular 17+ 的新控制流，替代旧的 *ngFor。track 必填，用于高效 DOM diff。 -->
+  <ul>
+    @for (user of users; track user.id) {
+      <li>{{ user.name }} — {{ user.email }}</li>
+    } @empty {
+      <!-- @empty 块在列表为空时渲染（比如请求失败被 catchError 降级成 []）。 -->
+      <li>暂无用户数据</li>
+    }
+  </ul>
+}
+
+<!-- loading 是 signal，模板里以函数调用方式读取：loading() -->
+@if (loading()) {
+  <p>加载中……</p>
+}

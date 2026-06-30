@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07 · 显示类型 display</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f6fb;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .subtitle { color: #7f8c8d; margin-top: 0; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .card h2 { font-size: 18px; border-left: 4px solid #5b8def; padding-left: 10px; }
+
+    /* 演示用的盒子统一外观，方便对比不同 display 的排布差异 */
+    .box {
+      background: #5b8def;
+      color: #fff;
+      padding: 10px 16px;
+      margin: 6px;          /* 注意：inline 元素的上下 margin 实际不会撑开行高 */
+      border: 2px solid #2b5fc4;
+      width: 120px;         /* 注意：inline 元素会忽略这个宽度 */
+      height: 50px;         /* 注意：inline 元素会忽略这个高度 */
+      text-align: center;
+    }
+
+    /* —— 四种基础 display 值 —— */
+    .demo-block .box   { display: block; }        /* 独占一行，可设宽高与上下 margin */
+    .demo-inline .box  { display: inline; background:#e67e22; border-color:#b35e10; } /* 不独占行，忽略宽高 */
+    .demo-iblock .box  { display: inline-block; background:#27ae60; border-color:#1c8049; } /* 同行排列且可设宽高 */
+    .demo-none .box.hidden { display: none; }     /* 完全消失，不占位 */
+
+    /* 对比 none / hidden / opacity 三种"隐藏" */
+    .visibility-row { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+    .visibility-row .box { width:140px; height:60px; margin:0; }
+    .v-none      { display: none; }
+    .v-hidden    { visibility: hidden; }   /* 隐藏但仍占位、不可交互 */
+    .v-opacity   { opacity: 0; }           /* 透明但占位、仍可点击 */
+
+    /* inline 元素之间的空白间隙演示 */
+    .gap-demo span {
+      display: inline-block;
+      background:#9b59b6; color:#fff; padding:8px 14px; border:1px solid #7d3c98;
+    }
+    .gap-fix { font-size: 0; }             /* 父级字号置 0 消除 inline 间隙 */
+    .gap-fix span { font-size: 14px; }
+
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+    th, td { border: 1px solid #d6dbe6; padding: 8px 12px; text-align: center; }
+    th { background: #eef2fb; }
+    .tip { background:#fff8e1; border-left:4px solid #f1c40f; padding:10px 14px; border-radius:6px; }
+    button {
+      background:#5b8def; color:#fff; border:none; padding:8px 16px;
+      border-radius:6px; cursor:pointer; font-size:14px;
+    }
+    code { background:#eef2fb; padding:2px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <!-- 页面标题 -->
+  <h1>07 · 显示类型 <code>display</code></h1>
+  <p class="subtitle">对比 block / inline / inline-block / none 四种基础值的排布差异</p>
+
+  <!-- 模块一：block 演示 -->
+  <div class="card demo-block">
+    <h2>display: block（块级）</h2>
+    <p>每个元素<strong>独占一行</strong>，宽高、上下 margin 都生效。</p>
+    <span class="box">盒子 A</span>
+    <span class="box">盒子 B</span>
+    <span class="box">盒子 C</span>
+  </div>
+
+  <!-- 模块二：inline 演示 -->
+  <div class="card demo-inline">
+    <h2>display: inline（行内）</h2>
+    <p>多个元素<strong>排在同一行</strong>，<strong>忽略 width/height 与上下 margin</strong>（盒子被内容撑开）。</p>
+    <span class="box">盒子 A</span>
+    <span class="box">盒子 B</span>
+    <span class="box">盒子 C</span>
+  </div>
+
+  <!-- 模块三：inline-block 演示 -->
+  <div class="card demo-iblock">
+    <h2>display: inline-block（行内块）</h2>
+    <p>既能<strong>同行排列</strong>，又能像块级一样<strong>设置宽高与上下 margin</strong>。</p>
+    <span class="box">盒子 A</span>
+    <span class="box">盒子 B</span>
+    <span class="box">盒子 C</span>
+  </div>
+
+  <!-- 模块四：none 演示（可切换） -->
+  <div class="card demo-none">
+    <h2>display: none（不渲染）</h2>
+    <p>元素被<strong>彻底移除</strong>，不占据任何空间。点击按钮切换中间盒子的显隐。</p>
+    <span class="box">盒子 A</span>
+    <span class="box" id="toggleBox">盒子 B</span>
+    <span class="box">盒子 C</span>
+    <br>
+    <button onclick="document.getElementById('toggleBox').classList.toggle('hidden')">切换盒子 B 的 display:none</button>
+  </div>
+
+  <!-- 模块五：三种隐藏方式对比 -->
+  <div class="card">
+    <h2>none / visibility:hidden / opacity:0 区别</h2>
+    <div class="visibility-row">
+      <span class="box v-none">display:none<br>（不占位）</span>
+      <span class="box v-hidden">visibility:hidden<br>（占位·不可点）</span>
+      <span class="box v-opacity" onclick="alert('opacity:0 仍可点击！')">opacity:0<br>（占位·可点）</span>
+      <span class="box" style="background:#34495e;border-color:#2c3e50;">正常显示<br>作参照</span>
+    </div>
+    <p class="tip">第一个盒子 <code>display:none</code> 完全消失；第二个 <code>visibility:hidden</code> 留下空白占位；第三个 <code>opacity:0</code> 透明但<strong>仍能点击</strong>（试着点它左侧透明区域会弹窗）。</p>
+  </div>
+
+  <!-- 模块六：inline 间隙问题 -->
+  <div class="card">
+    <h2>inline / inline-block 间隙问题</h2>
+    <p>HTML 源码中的换行/空格会被渲染成空白，导致行内块之间出现缝隙：</p>
+    <p>有间隙（默认）：</p>
+    <div class="gap-demo">
+      <span>菜单一</span>
+      <span>菜单二</span>
+      <span>菜单三</span>
+    </div>
+    <p>父级 <code>font-size:0</code> 消除间隙：</p>
+    <div class="gap-demo gap-fix">
+      <span>菜单一</span>
+      <span>菜单二</span>
+      <span>菜单三</span>
+    </div>
+  </div>
+
+  <!-- 模块七：特性对比表 -->
+  <div class="card">
+    <h2>四种 display 特性对比</h2>
+    <table>
+      <tr><th>display 值</th><th>独占一行</th><th>可设宽高</th><th>上下 margin</th><th>参与文档流</th></tr>
+      <tr><td>block</td><td>是</td><td>是</td><td>生效</td><td>是</td></tr>
+      <tr><td>inline</td><td>否</td><td>否</td><td>不生效</td><td>是</td></tr>
+      <tr><td>inline-block</td><td>否</td><td>是</td><td>生效</td><td>是</td></tr>
+      <tr><td>none</td><td>—</td><td>—</td><td>—</td><td>否（不渲染）</td></tr>
+    </table>
+  </div>
+</body>
+</html>

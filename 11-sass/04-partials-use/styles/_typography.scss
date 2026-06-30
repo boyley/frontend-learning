@@ -1,0 +1,19 @@
+// ============================================================
+// 局部文件 partial：_typography.scss
+// ------------------------------------------------------------
+// 演示「模块内可以再 @use 别的模块」：本文件用到了颜色模块。
+// ============================================================
+
+// 一个模块可以依赖另一个模块。@use 写在文件顶部。
+@use "colors"; // 引入同目录的 _colors.scss
+
+$font-stack: system-ui, -apple-system, "Segoe UI", sans-serif;
+$base-size: 16px;
+
+// 提供一个 mixin（详见 05 模块），跨模块复用
+@mixin heading {
+  font-family: $font-stack;
+  font-weight: 700;
+  color: colors.$text; // 带命名空间访问 colors 模块的变量
+  line-height: 1.3;
+}

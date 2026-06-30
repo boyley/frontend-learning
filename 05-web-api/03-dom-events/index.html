@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · DOM 事件基础</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 24px; background: #f5f6fa; color: #222;
+    }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .sub { color: #666; margin: 0 0 20px; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .panel {
+      background: #fff; border-radius: 10px; padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .panel h2 { font-size: 15px; margin: 0 0 12px; color: #e1701a; }
+    input[type=text] {
+      width: 100%; padding: 9px 12px; font-size: 14px;
+      border: 1px solid #ccd; border-radius: 6px;
+    }
+    button {
+      padding: 9px 16px; margin: 4px 6px 4px 0; font-size: 14px; cursor: pointer;
+      border: none; border-radius: 6px; background: #e1701a; color: #fff;
+    }
+    button:hover { background: #c75f12; }
+    button.ghost { background: #fdeede; color: #c75f12; }
+    .out {
+      margin-top: 10px; padding: 10px 12px; background: #fff8f0;
+      border-left: 4px solid #e1701a; border-radius: 4px; font-size: 14px;
+      min-height: 22px; white-space: pre-wrap; word-break: break-all;
+    }
+    #mouseArea {
+      height: 110px; border: 2px dashed #e1701a; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #c75f12; background: #fff8f0; user-select: none;
+    }
+    .key {
+      display: inline-block; min-width: 28px; padding: 4px 8px; margin: 2px;
+      background: #333; color: #fff; border-radius: 5px; font-family: monospace;
+    }
+    a.demo-link { color: #3742fa; }
+    code { background: #eee; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+    .big { font-size: 28px; font-weight: 700; color: #e1701a; }
+  </style>
+</head>
+<body>
+  <h1>03 · DOM 事件基础 (DOM Events)</h1>
+  <p class="sub">addEventListener 监听各种事件，理解 event 对象、冒泡、preventDefault、once、removeEventListener。</p>
+
+  <div class="grid">
+    <!-- click 计数 -->
+    <div class="panel">
+      <h2>① click —— 点击计数</h2>
+      <button id="countBtn">点我 +1</button>
+      <button id="onceBtn" class="ghost">只能点一次 (once)</button>
+      <div class="out" id="countOut">点击次数：<span class="big" id="countNum">0</span></div>
+    </div>
+
+    <!-- input 实时回显 -->
+    <div class="panel">
+      <h2>② input —— 实时回显</h2>
+      <input id="echoInput" type="text" placeholder="边打字边看下面同步更新" />
+      <div class="out" id="echoOut">你输入的内容会实时出现在这里…</div>
+    </div>
+
+    <!-- keydown -->
+    <div class="panel">
+      <h2>③ keydown —— 显示按键</h2>
+      <input id="keyInput" type="text" placeholder="点这里然后按键盘任意键" />
+      <div class="out" id="keyOut">按下的键会显示在这里…</div>
+    </div>
+
+    <!-- mousemove -->
+    <div class="panel">
+      <h2>④ mousemove —— 鼠标坐标</h2>
+      <div id="mouseArea">在这个框里移动鼠标</div>
+      <div class="out" id="mouseOut">坐标：—</div>
+    </div>
+
+    <!-- preventDefault -->
+    <div class="panel">
+      <h2>⑤ preventDefault —— 阻止默认行为</h2>
+      <a class="demo-link" id="normalLink" href="https://developer.mozilla.org" target="_blank">普通链接（会跳转）</a><br/><br/>
+      <a class="demo-link" id="preventLink" href="https://developer.mozilla.org">被 preventDefault 拦住的链接（不跳转）</a>
+      <div class="out" id="pdOut">点上面两个链接对比效果</div>
+    </div>
+
+    <!-- 冒泡 + stopPropagation + removeEventListener -->
+    <div class="panel">
+      <h2>⑥ 冒泡 / stopPropagation / removeEventListener</h2>
+      <div id="outer" style="padding:16px;background:#fde;border-radius:8px;cursor:pointer;">
+        outer（父）
+        <div id="inner" style="padding:14px;margin-top:8px;background:#ddf;border-radius:6px;">
+          inner（子）点我看冒泡
+        </div>
+      </div>
+      <label style="font-size:13px;"><input type="checkbox" id="stopChk" /> 勾选后子元素 stopPropagation（阻止冒泡）</label>
+      <div style="margin-top:8px;">
+        <button id="removeBtn" class="ghost">移除 outer 的监听器</button>
+      </div>
+      <div class="out" id="bubbleOut">点击 outer / inner 观察冒泡顺序</div>
+    </div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

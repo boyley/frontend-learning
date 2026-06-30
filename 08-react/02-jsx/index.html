@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · JSX 语法</title>
+  <!-- React 18 UMD 开发版 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel：浏览器直接编译 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .user-card {
+      border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px;
+      max-width: 320px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    label { display: block; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function UserCard() {
+      // 普通 JS 变量，可在 JSX 里用 {} 插值
+      const user = { name: '李雷', age: 28, vip: true, avatar: '🧑‍💻' };
+
+      // ① style 必须是「JS 对象」，属性名用驼峰（背景色 backgroundColor 而非 background-color）
+      const badgeStyle = {
+        backgroundColor: user.vip ? '#f5a623' : '#bbb',
+        color: '#fff',
+        padding: '2px 8px',
+        borderRadius: '10px',
+        fontSize: '12px',
+      };
+
+      return (
+        // ② 必须单根节点：这里用 Fragment <></> 包裹，它不会生成多余 DOM
+        <>
+          {/* ③ 这就是 JSX 注释的写法：花括号包 JS 块注释 */}
+          <div className="user-card">  {/* class 要写成 className */}
+            {/* {} 里放任意 JS 表达式：字符串拼接 */}
+            <h2>{user.avatar} {user.name}</h2>
+
+            {/* 三元表达式做条件渲染 */}
+            <p>身份：<span style={badgeStyle}>{user.vip ? 'VIP 会员' : '普通用户'}</span></p>
+
+            {/* {} 里可做运算 */}
+            <p>年龄：{user.age} 岁（明年 {user.age + 1} 岁）</p>
+
+            {/* ④ label 的 for 要写成 htmlFor（for 是 JS 关键字） */}
+            <label htmlFor="nick">昵称：</label>
+            <input id="nick" defaultValue={user.name} />
+
+            {/* ⑤ 自闭合标签必须有斜杠：<br />、<img />、<input /> */}
+            <br />
+            <small>JSX 本质是 React.createElement 的语法糖</small>
+          </div>
+        </>
+      );
+    }
+
+    function App() {
+      return <UserCard />;
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

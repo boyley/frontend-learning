@@ -1,0 +1,26 @@
+@charset "UTF-8";
+.box {
+  padding: 24px;
+}
+
+.app-banner {
+  border-left: 4px solid #6750a4;
+  content: "主题：dark";
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1c1b1f;
+}
+
+.btn {
+  background: #6750a4;
+  color: #fff;
+  font-size: 16px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(103, 80, 164, 0.4);
+}

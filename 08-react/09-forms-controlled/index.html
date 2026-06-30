@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 · 受控表单 Controlled Forms</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; line-height: 1.6; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    label { display: block; margin: 10px 0; }
+    input, select { padding: 4px 8px; margin-left: 8px; }
+    pre { background: #f4f4f4; padding: 12px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function RegisterForm() {
+      // 多字段用「一个对象」管理，避免一堆零散 useState
+      const [form, setForm] = useState({
+        username: '',     // 文本框
+        gender: 'male',   // 下拉 select
+        agree: false,     // 复选框 checkbox
+        role: 'user',     // 单选 radio
+      });
+
+      // 通用 onChange：根据 input 类型取 checked 还是 value
+      // 用 name 属性定位是哪个字段，用计算属性名 [name] 更新对应字段
+      function handleChange(e) {
+        const { name, type, value, checked } = e.target;
+        setForm((prev) => ({
+          ...prev,                                  // 保留其它字段
+          [name]: type === 'checkbox' ? checked : value, // checkbox 用 checked
+        }));
+      }
+
+      function handleSubmit(e) {
+        e.preventDefault(); // 阻止表单默认提交（整页刷新）
+        alert('提交的数据：\n' + JSON.stringify(form, null, 2));
+      }
+
+      return (
+        <form className="box" onSubmit={handleSubmit}>
+          <h3>注册表单（受控）</h3>
+
+          {/* 文本框：value 绑 state + onChange 回写，构成受控 */}
+          <label>
+            用户名：
+            <input
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="请输入用户名"
+            />
+          </label>
+
+          {/* 下拉 select：受控用 value（不是给 option 加 selected） */}
+          <label>
+            性别：
+            <select name="gender" value={form.gender} onChange={handleChange}>
+              <option value="male">男</option>
+              <option value="female">女</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+
+          {/* 单选 radio：同 name 一组，靠 checked={当前值===该选项} 受控 */}
+          <label>角色：</label>
+          <label>
+            <input
+              type="radio"
+              name="role"
+              value="user"
+              checked={form.role === 'user'}
+              onChange={handleChange}
+            />
+            普通用户
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="role"
+              value="admin"
+              checked={form.role === 'admin'}
+              onChange={handleChange}
+            />
+            管理员
+          </label>
+
+          {/* 复选框 checkbox：受控用 checked（布尔），不是 value */}
+          <label>
+            <input
+              type="checkbox"
+              name="agree"
+              checked={form.agree}
+              onChange={handleChange}
+            />
+            我已阅读并同意用户协议
+          </label>
+
+          <button type="submit" disabled={!form.agree}>提交</button>
+
+          {/* 实时回显 state：输入时这里同步变化，证明“单一数据源” */}
+          <h4>实时 state：</h4>
+          <pre>{JSON.stringify(form, null, 2)}</pre>
+        </form>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h1>09 · 受控表单</h1>
+          <RegisterForm />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

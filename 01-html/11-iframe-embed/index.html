@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>11 · iframe 内嵌与安全 Demo</title>
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 760px;
+      margin: 24px auto;
+      padding: 0 16px;
+      line-height: 1.6;
+      color: #222;
+    }
+    section { margin-bottom: 36px; }
+    h2 { border-left: 4px solid #2d6cdf; padding-left: 8px; }
+    iframe { border: 1px solid #ccc; border-radius: 8px; }
+    code { background: #f3f3f3; padding: 1px 4px; border-radius: 3px; }
+    .note { background: #fff7ea; border-left: 4px solid #e0a800; padding: 8px 12px; }
+  </style>
+</head>
+<body>
+  <h1>iframe 内嵌外部页面与安全</h1>
+
+  <section>
+    <h2>1. 内嵌一张 OpenStreetMap 地图</h2>
+    <!--
+      iframe 常用属性：
+      src：要嵌入的页面地址
+      width/height：iframe 视口尺寸（也可用 CSS 控制）
+      title：必填，描述内容，供屏幕阅读器朗读（无障碍要求）
+      loading="lazy"：懒加载，进入视口附近才加载，提升首屏性能
+      allow：特性策略，控制嵌入页能用哪些能力（地理位置、摄像头等）
+    -->
+    <iframe
+      src="https://www.openstreetmap.org/export/embed.html?bbox=116.38,39.90,116.42,39.92&layer=mapnik"
+      width="100%" height="320"
+      title="北京中心区域地图（OpenStreetMap 内嵌）"
+      loading="lazy"
+      allow="fullscreen">
+    </iframe>
+    <p>这是用 OpenStreetMap 官方 embed 接口嵌入的真实可交互地图。</p>
+  </section>
+
+  <section>
+    <h2>2. 用 sandbox 隔离不可信内容</h2>
+    <!--
+      sandbox：给 iframe 套上安全沙箱，默认情况下会禁用一切（脚本、表单、弹窗、同源等）。
+      然后通过空格分隔的 token 按需"放行"：
+        allow-scripts：允许运行脚本
+        allow-same-origin：允许把内容当作同源（谨慎！与 allow-scripts 同开有逃逸风险）
+        allow-forms：允许提交表单
+        allow-popups：允许弹出新窗口
+      下面这个 sandbox 只放行了脚本，没放行 same-origin，
+      所以里面的脚本无法读取父页面 Cookie / localStorage。
+    -->
+    <iframe
+      sandbox="allow-scripts"
+      width="100%" height="120"
+      title="sandbox 隔离演示"
+      srcdoc="<!DOCTYPE html><html><body style='font-family:sans-serif'>
+        <p>我是被 sandbox 隔离的内嵌页面。</p>
+        <button onclick='this.textContent=&quot;脚本可运行（allow-scripts 已放行）&quot;'>点我</button>
+      </body></html>">
+    </iframe>
+    <p class="note">
+      <code>srcdoc</code> 直接用字符串写内嵌页面内容，无需单独文件。
+      该 iframe 仅 <code>allow-scripts</code>，脚本能跑但拿不到父页面数据。
+    </p>
+  </section>
+
+  <section>
+    <h2>3. 完全空白且最严格的沙箱</h2>
+    <!--
+      sandbox 不带任何值 = 最严格：禁用脚本、表单、弹窗、同源、自动播放等所有能力。
+      about:blank 是一个内置空白页，可安全演示。
+    -->
+    <iframe
+      src="about:blank"
+      sandbox
+      width="100%" height="80"
+      title="空白严格沙箱">
+    </iframe>
+    <p>这个 iframe 用裸 <code>sandbox</code>（不带任何 token），是最严格的隔离。</p>
+  </section>
+
+  <section>
+    <h2>4. embed / object 简介</h2>
+    <!--
+      embed 与 object 是更早期的"嵌入外部资源/插件内容"的标签，
+      现在多被 iframe / video / img 取代，仅在嵌入 PDF 等场景偶尔用到。
+    -->
+    <p><code>&lt;embed&gt;</code> 与 <code>&lt;object&gt;</code> 是更老的嵌入标签：</p>
+    <ul>
+      <li><code>&lt;embed type="application/pdf" src="..."&gt;</code> 可嵌 PDF 等外部资源（自闭合，无回退内容）。</li>
+      <li><code>&lt;object data="..." type="..."&gt;回退内容&lt;/object&gt;</code> 类似但支持标签内写回退内容。</li>
+      <li>现代开发优先用 <code>iframe</code>（嵌网页）、<code>img</code>（图片）、<code>video</code>（视频）。</li>
+    </ul>
+  </section>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 · 生命周期</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    .child { background: #eef; padding: 12px; border-radius: 6px; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 6px; max-height: 220px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>13 · 生命周期（Lifecycle Hooks）</h1>
+  <div id="app">
+    <div class="card">
+      <button @click="show = !show">{{ show ? '卸载' : '挂载' }}子组件</button>
+      <button @click="tick++">改变子组件数据（tick={{ tick }}）</button>
+      <!-- 切换 show 触发子组件的挂载/卸载；改 tick 触发更新 -->
+      <clock v-if="show" :tick="tick"></clock>
+
+      <h3>生命周期日志</h3>
+      <pre>{{ logText }}</pre>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, reactive,
+            onBeforeMount, onMounted, onBeforeUpdate, onUpdated,
+            onBeforeUnmount, onUnmounted } = Vue;
+
+    // 用一个全局数组收集日志，方便页面展示
+    const logs = reactive([]);
+    const log = (msg) => logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+
+    const app = createApp({
+      setup() {
+        const show = ref(false);
+        const tick = ref(0);
+        const logText = Vue.computed(() => logs.join('\n') || '（点上面按钮观察）');
+        return { show, tick, logText };
+      }
+    });
+
+    app.component('Clock', {
+      props: { tick: Number },
+      setup(props) {
+        const now = ref(new Date().toLocaleTimeString());
+        let timer = null;
+
+        // 注意：组合式 API 里 setup 本身就相当于 beforeCreate/created 阶段
+        onBeforeMount(() => log('① onBeforeMount —— DOM 还没生成'));
+        onMounted(() => {
+          log('② onMounted —— DOM 已就绪，可访问真实元素 / 发请求 / 启定时器');
+          timer = setInterval(() => (now.value = new Date().toLocaleTimeString()), 1000);
+        });
+        onBeforeUpdate(() => log('③ onBeforeUpdate —— 数据变了，DOM 即将更新'));
+        onUpdated(() => log('④ onUpdated —— DOM 已根据新数据更新完'));
+        onBeforeUnmount(() => log('⑤ onBeforeUnmount —— 组件即将卸载'));
+        onUnmounted(() => {
+          clearInterval(timer); // 清理定时器，避免内存泄漏
+          log('⑥ onUnmounted —— 已卸载，定时器已清理');
+        });
+
+        return { now, props };
+      },
+      template: `<div class="child">
+        <p>⏰ 子组件实时时钟：{{ now }}</p>
+        <p>收到父组件 tick = {{ props.tick }}</p>
+      </div>`
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

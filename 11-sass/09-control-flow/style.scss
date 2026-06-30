@@ -1,0 +1,84 @@
+// ============================================================
+// 09 · 控制流（Control Flow）：@if / @else / @each / @for / @while
+// ------------------------------------------------------------
+// 这些「流程控制」让 Sass 像编程语言一样批量生成 CSS：
+// 主题判断、循环造工具类、按列表/区间生成规则。
+// ============================================================
+
+@use "sass:math";
+@use "sass:color";
+
+// ---------- 1) @if / @else if / @else：条件分支 ----------
+@mixin theme($mode) {
+  @if $mode == dark {
+    background: #1c1b1f;
+    color: #e6e1e5;
+  } @else if $mode == light {
+    background: #ffffff;
+    color: #1c1b1f;
+  } @else {
+    // 兜底：报错提醒传错了值
+    @error "未知主题：#{$mode}，只支持 dark / light";
+  }
+}
+
+.card-dark {
+  @include theme(dark);
+}
+.card-light {
+  @include theme(light);
+}
+
+// ---------- 2) @each：遍历列表 / map，批量生成类 ----------
+// 遍历列表
+$sizes: small, medium, large;
+@each $size in $sizes {
+  .text-#{$size} {
+    // 用插值把循环变量拼进选择器名
+    @if $size == small {
+      font-size: 12px;
+    } @else if $size == medium {
+      font-size: 16px;
+    } @else {
+      font-size: 22px;
+    }
+  }
+}
+
+// 遍历 map（解构 key, value）—— 一次造出一组主题色工具类
+$colors: (
+  "primary": #6750a4,
+  "success": #21a366,
+  "danger": #b3261e,
+);
+@each $name, $color in $colors {
+  .bg-#{$name} {
+    background: $color;
+    color: #fff;
+  }
+  .text-#{$name} {
+    color: $color;
+  }
+}
+
+// ---------- 3) @for：数值区间循环（造栅格/间距阶梯）----------
+// through 含末尾(1..5)，to 不含末尾(1..4)
+@for $i from 1 through 5 {
+  .m-#{$i} {
+    margin: 4px * $i; // m-1=4px ... m-5=20px
+  }
+  // 生成 12 栅格里的宽度也是同理
+  .col-#{$i} {
+    width: math.percentage(math.div($i, 5));
+  }
+}
+
+// ---------- 4) @while：条件循环（少用，能用 @for 就别用 while）----------
+$i: 1;
+$base: 100%;
+@while $i <= 3 {
+  .opacity-#{$i} {
+    opacity: math.div($i, 3); // 0.33 / 0.66 / 1
+  }
+  $i: $i + 1; // 别忘了自增，否则死循环！
+}

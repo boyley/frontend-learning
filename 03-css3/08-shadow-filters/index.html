@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · 阴影与滤镜 Shadow & Filter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      /* 彩色渐变背景，用于衬托毛玻璃 backdrop-filter */
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
+      min-height: 100vh;
+      color: #1e293b;
+      line-height: 1.7;
+      padding: 32px 20px 64px;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 32px; color: #fff; }
+    header h1 {
+      font-size: 30px;
+      /* 文字阴影，让白字在彩色背景上更清晰 */
+      text-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+    header p { margin-top: 8px; font-size: 15px; opacity: .92; }
+
+    section {
+      background: rgba(255,255,255,.92);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 26px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.18);
+    }
+    section h2 { font-size: 19px; margin-bottom: 6px; }
+    .desc { color: #64748b; font-size: 14px; margin-bottom: 18px; }
+    code { background:#f1f5f9; padding:1px 6px; border-radius:5px; color:#db2777; font-size:13px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 18px;
+    }
+
+    /* ===== 1. box-shadow ===== */
+    .box {
+      height: 110px;
+      border-radius: 14px;
+      background: #fff;
+      display: grid; place-items: center;
+      font-size: 13px; color: #475569;
+      text-align: center;
+    }
+    .bs-basic  { box-shadow: 0 6px 14px rgba(0,0,0,.25); }          /* offset + blur */
+    .bs-spread { box-shadow: 0 0 0 6px rgba(99,102,241,.4); }        /* spread 扩张 */
+    .bs-inset  { box-shadow: inset 0 4px 12px rgba(0,0,0,.35); }     /* 内阴影 */
+    .bs-multi  {                                                      /* 多层叠加更柔和 */
+      box-shadow:
+        0 2px 4px rgba(0,0,0,.12),
+        0 8px 16px rgba(0,0,0,.12),
+        0 16px 32px rgba(0,0,0,.12);
+    }
+
+    /* 悬浮卡片：hover 改变阴影 + 位移 */
+    .hover-card {
+      height: 130px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      color: #fff; font-weight: 600;
+      display: grid; place-items: center;
+      box-shadow: 0 6px 16px rgba(99,102,241,.4);
+      transition: transform .25s ease, box-shadow .25s ease;
+      cursor: pointer;
+    }
+    .hover-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(99,102,241,.55);
+    }
+
+    /* ===== 2. text-shadow ===== */
+    .ts-demo { display:flex; gap:24px; flex-wrap:wrap; }
+    .ts {
+      font-size: 40px; font-weight: 800;
+      padding: 10px 6px;
+    }
+    .ts-soft  { color:#334155; text-shadow: 0 3px 6px rgba(0,0,0,.3); }
+    .ts-neon  {
+      color:#fff;
+      text-shadow: 0 0 6px #22d3ee, 0 0 14px #22d3ee, 0 0 28px #0ea5e9;
+    }
+    .ts-3d {
+      color:#f59e0b;
+      text-shadow: 1px 1px 0 #b45309, 2px 2px 0 #92400e, 3px 3px 0 #78350f, 4px 4px 6px rgba(0,0,0,.4);
+    }
+
+    /* ===== 3. filter 对比 ===== */
+    .swatch {
+      height: 120px;
+      border-radius: 12px;
+      /* 用一张 CSS 画出来的「图片」便于对比滤镜 */
+      background:
+        radial-gradient(circle at 30% 30%, #fde68a 0 18%, transparent 19%),
+        linear-gradient(135deg, #f43f5e, #8b5cf6 60%, #06b6d4);
+      display:flex; align-items:flex-end; padding:8px;
+      font-size:12px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5);
+      font-family: monospace;
+    }
+    .f-blur      { filter: blur(3px); }
+    .f-bright    { filter: brightness(1.6); }
+    .f-contrast  { filter: contrast(1.8); }
+    .f-gray      { filter: grayscale(1); }
+    .f-sepia     { filter: sepia(.9); }
+    .f-hue       { filter: hue-rotate(120deg); }
+    .f-invert    { filter: invert(1); }
+    .f-saturate  { filter: saturate(2.5); }
+
+    /* ===== 4. drop-shadow vs box-shadow ===== */
+    .ds-row { display:flex; gap:40px; flex-wrap:wrap; align-items:center; }
+    .star {
+      width: 120px; height: 120px;
+      background: #f59e0b;
+      /* 用 clip-path 切成五角星（不规则透明形状） */
+      clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+    }
+    .star-box   { box-shadow: 8px 8px 10px rgba(0,0,0,.5); }   /* 只描矩形外框，星形得不到贴合阴影 */
+    .star-drop  { filter: drop-shadow(8px 8px 6px rgba(0,0,0,.5)); } /* 贴合星形轮廓 */
+    .tag { text-align:center; font-size:13px; color:#475569; }
+
+    /* ===== 5. backdrop-filter 毛玻璃 ===== */
+    .glass-stage {
+      position: relative;
+      height: 240px;
+      border-radius: 16px;
+      overflow: hidden;
+      /* 五彩斑点背景 */
+      background:
+        radial-gradient(circle at 20% 30%, #f472b6 0 80px, transparent 81px),
+        radial-gradient(circle at 75% 25%, #38bdf8 0 90px, transparent 91px),
+        radial-gradient(circle at 50% 80%, #fbbf24 0 100px, transparent 101px),
+        #1e293b;
+    }
+    .glass {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px; padding: 26px;
+      border-radius: 18px;
+      /* 关键：半透明背景 + backdrop-filter 模糊背后内容 */
+      background: rgba(255,255,255,.18);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+      backdrop-filter: blur(12px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.4);
+      box-shadow: 0 8px 32px rgba(0,0,0,.3);
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+    .glass h3 { font-size: 18px; margin-bottom: 6px; }
+    .glass p { font-size: 13px; opacity: .95; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>阴影与滤镜 Shadow &amp; Filter</h1>
+      <p>box-shadow · text-shadow · filter · backdrop-filter（毛玻璃）</p>
+    </header>
+
+    <!-- box-shadow -->
+    <section>
+      <h2>1. box-shadow 盒阴影</h2>
+      <p class="desc">语法 <code>offset-x offset-y blur spread color</code>，加 <code>inset</code> 变内阴影；逗号可叠多层。</p>
+      <div class="grid">
+        <div class="box bs-basic">基础<br>offset+blur</div>
+        <div class="box bs-spread">spread<br>扩张描边</div>
+        <div class="box bs-inset">inset<br>内阴影</div>
+        <div class="box bs-multi">多层叠加<br>更柔和</div>
+      </div>
+      <p class="desc" style="margin:18px 0 10px;">悬浮卡片：hover 时阴影变大 + 上移（把鼠标移上去）</p>
+      <div class="grid">
+        <div class="hover-card">Hover Me</div>
+        <div class="hover-card">悬浮我</div>
+        <div class="hover-card">试试看</div>
+      </div>
+    </section>
+
+    <!-- text-shadow -->
+    <section>
+      <h2>2. text-shadow 文字阴影</h2>
+      <p class="desc">同样是 <code>x y blur color</code>，多层叠加可做霓虹与 3D 立体字。</p>
+      <div class="ts-demo">
+        <span class="ts ts-soft">柔光</span>
+        <span class="ts ts-neon">霓虹</span>
+        <span class="ts ts-3d">立体</span>
+      </div>
+    </section>
+
+    <!-- filter -->
+    <section>
+      <h2>3. filter 滤镜对比</h2>
+      <p class="desc">同一张「图」应用不同滤镜函数，直观对比效果。</p>
+      <div class="grid">
+        <div class="swatch f-blur">blur(3px)</div>
+        <div class="swatch f-bright">brightness(1.6)</div>
+        <div class="swatch f-contrast">contrast(1.8)</div>
+        <div class="swatch f-gray">grayscale(1)</div>
+        <div class="swatch f-sepia">sepia(.9)</div>
+        <div class="swatch f-hue">hue-rotate(120deg)</div>
+        <div class="swatch f-invert">invert(1)</div>
+        <div class="swatch f-saturate">saturate(2.5)</div>
+      </div>
+    </section>
+
+    <!-- drop-shadow vs box-shadow -->
+    <section>
+      <h2>4. drop-shadow vs box-shadow</h2>
+      <p class="desc">对不规则/透明形状，<code>box-shadow</code> 只描矩形外框，而 <code>filter: drop-shadow()</code> 能贴合真实轮廓。</p>
+      <div class="ds-row">
+        <div>
+          <div class="star star-box"></div>
+          <p class="tag">box-shadow<br>（描矩形）</p>
+        </div>
+        <div>
+          <div class="star star-drop"></div>
+          <p class="tag">drop-shadow<br>（贴合星形）</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- backdrop-filter -->
+    <section>
+      <h2>5. backdrop-filter 毛玻璃</h2>
+      <p class="desc">对元素「背后」的内容做模糊。必须配合<strong>半透明背景</strong>才能看到背后内容透出。</p>
+      <div class="glass-stage">
+        <div class="glass">
+          <h3>毛玻璃卡片 Glassmorphism</h3>
+          <p>background: rgba(255,255,255,.18) + backdrop-filter: blur(12px)，背后彩色斑点被模糊透出。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

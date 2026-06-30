@@ -1,0 +1,42 @@
+.btn-ghost, .btn-primary {
+  display: inline-block;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-primary {
+  background: #6750a4;
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #6750a4;
+  box-shadow: inset 0 0 0 2px #6750a4;
+}
+
+.message, .message-error, .message-success {
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.message-success {
+  border-color: #21a366;
+  background: #e6f4ea;
+}
+
+.message-error {
+  border-color: #b3261e;
+  background: #fce8e6;
+}
+
+.row::after {
+  content: "";
+  display: block;
+  clear: both;
+}

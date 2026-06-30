@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · 组件与 Props</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .list { display: flex; gap: 16px; flex-wrap: wrap; }
+    .card {
+      border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px 20px;
+      width: 200px; box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    }
+    .card h3 { margin: 0 0 8px; }
+    .tag { font-size: 12px; color: #fff; background: #4a90e2; padding: 2px 8px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ① 可复用的 Card 组件
+    //    props 是父组件传进来的「只读参数对象」，这里用解构直接取出字段
+    //    level = '普通' 是「默认值」：父组件没传 level 时用它
+    function Card({ title, desc, level = '普通', children }) {
+      return (
+        <div className="card">
+          <h3>{title} <span className="tag">{level}</span></h3>
+          <p>{desc}</p>
+          {/* ② children 是「标签之间的内容」，由父组件以嵌套形式传入 */}
+          <div>{children}</div>
+        </div>
+      );
+    }
+
+    // ③ 父组件：用不同 props 复用同一个 Card，渲染多张卡片（props 单向：父 → 子）
+    function App() {
+      return (
+        <div className="list">
+          {/* 通过属性传 props；level 用默认值「普通」 */}
+          <Card title="HTML" desc="网页结构骨架">
+            {/* 标签之间的内容会作为 children 传入 */}
+            <small>👉 学习第 1 站</small>
+          </Card>
+
+          {/* 显式传 level，覆盖默认值 */}
+          <Card title="React" desc="构建用户界面的库" level="进阶">
+            <small>👉 你正在这里</small>
+          </Card>
+
+          {/* 不传 children 时，子组件里的 {children} 渲染为空 */}
+          <Card title="TypeScript" desc="带类型的 JS" level="进阶" />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

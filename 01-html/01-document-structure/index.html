@@ -1,0 +1,80 @@
+<!-- ============================================================
+     文档类型声明：告诉浏览器用「标准模式」解析本页面
+     必须写在文件第一行，不区分大小写，HTML5 中固定就这一句
+     ============================================================ -->
+<!DOCTYPE html>
+
+<!-- <html> 是整个文档的根元素（document root），所有内容都在它里面
+     lang="zh-CN" 声明页面主语言为简体中文：
+       1. 帮助屏幕阅读器用正确的语音朗读
+       2. 帮助搜索引擎判断语言
+       3. 影响浏览器拼写检查、自动翻译提示 -->
+<html lang="zh-CN">
+
+<!-- <head> 头部：放「给浏览器/搜索引擎看的元信息」，不会直接显示在页面上 -->
+<head>
+  <!-- 字符编码声明，必须是 head 里前 1024 字节内的第一个有意义标签，
+       否则中文等非 ASCII 字符可能乱码。UTF-8 是现代网页的标准编码 -->
+  <meta charset="UTF-8" />
+
+  <!-- 视口设置：移动端适配的关键
+       width=device-width  让页面宽度等于设备屏幕宽度
+       initial-scale=1.0   初始缩放比例为 1（不放大也不缩小）
+       没有它，手机上会按 980px 的桌面宽度渲染再整体缩小，字会很小 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 页面标题：显示在浏览器标签页、收藏夹、搜索结果标题处 -->
+  <title>01 · 文档骨架 Document Structure</title>
+
+  <!-- 内嵌样式，仅为了让演示效果直观，不依赖任何外部文件 -->
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.7;
+      color: #222;
+    }
+    h1 { color: #2563eb; }
+    .box {
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 12px 0;
+    }
+    .head { background: #eff6ff; }
+    .body { background: #f0fdf4; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+
+<!-- <body> 主体：放「真正显示给用户看」的所有内容
+     一个 HTML 文档有且只有一个 body -->
+<body>
+  <h1>文档骨架 Document Structure</h1>
+
+  <p>
+    一个 HTML5 页面由三部分构成：
+    <code>&lt;!DOCTYPE html&gt;</code> +
+    <code>&lt;html&gt;</code>（根元素）+
+    内部的 <code>&lt;head&gt;</code> 和 <code>&lt;body&gt;</code>。
+  </p>
+
+  <div class="box head">
+    <strong>head（头部）</strong>：本页 head 里写了
+    <code>charset</code>、<code>viewport</code>、<code>title</code>。
+    这些信息你在页面正文里看不到，但浏览器需要它们来正确渲染。
+  </div>
+
+  <div class="box body">
+    <strong>body（主体）</strong>：你现在看到的标题、段落、这两个方框，
+    全都写在 body 里，它们才是用户可见的内容。
+  </div>
+
+  <p>
+    打开浏览器「开发者工具 → 元素/Elements」面板，
+    就能看到这棵以 <code>html</code> 为根的「文档树」。
+  </p>
+</body>
+</html>

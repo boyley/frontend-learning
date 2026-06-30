@@ -1,0 +1,80 @@
+// ============================================================
+// 05 · 混入（Mixins）：@mixin / @include
+// ------------------------------------------------------------
+// mixin = 可复用的「样式片段」，用 @mixin 定义、@include 调用，
+// 支持参数、默认值、关键字参数、可变参数，以及 @content 内容块。
+// ============================================================
+
+@use "sass:color"; // 引入内置颜色模块，用于参数计算
+
+// ---------- 1) 无参数 mixin ----------
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ---------- 2) 带参数 + 默认值 ----------
+// $radius 有默认值 8px，调用时可不传
+@mixin card($bg, $radius: 8px, $pad: 16px) {
+  background: $bg;
+  border-radius: $radius;
+  padding: $pad;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+// ---------- 3) 可变参数 ...（arglist）----------
+// 把任意数量的实参打包成一个列表，常用于透传 CSS 简写
+@mixin shadow($shadows...) {
+  box-shadow: $shadows;
+}
+
+// ---------- 4) @content：把调用处的样式块「注入」进 mixin ----------
+// 典型用途：封装媒体查询断点
+@mixin respond($breakpoint) {
+  @if $breakpoint == mobile {
+    @media (max-width: 600px) {
+      @content; // 调用时 {} 里的内容会塞到这里
+    }
+  } @else if $breakpoint == tablet {
+    @media (max-width: 900px) {
+      @content;
+    }
+  }
+}
+
+// ---------- 5) 实际调用 ----------
+.toolbar {
+  @include flex-center; // 无参，无括号
+  gap: 12px;
+  height: 56px;
+  background: #6750a4;
+}
+
+.panel {
+  // 关键字参数：可乱序、可只传想改的
+  @include card($bg: #fff, $pad: 24px);
+  color: #1c1b1f;
+}
+
+.note {
+  // 只传必填参数，其余用默认值
+  @include card(#fff3cd);
+}
+
+.fancy {
+  // 传多个阴影给可变参数
+  @include shadow(0 1px 2px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(103, 80, 164, 0.3));
+  width: 200px;
+  height: 100px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.headline {
+  font-size: 28px;
+  // @content：把这个 {} 块注入到 mobile 媒体查询里
+  @include respond(mobile) {
+    font-size: 20px; // 小屏时字号变小
+  }
+}

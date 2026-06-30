@@ -1,0 +1,21 @@
+{
+  "name": "npm-package-demo",
+  "version": "1.0.0",
+  "description": "演示 package.json 字段、scripts 脚本、依赖管理",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "hello": "node index.js hello",
+    "show-env": "node -e \"console.log('NODE_ENV =', process.env.NODE_ENV)\"",
+    "prestart": "echo '👉 start 之前会自动跑 prestart（生命周期钩子）'"
+  },
+  "keywords": ["node", "npm", "package", "demo"],
+  "author": "frontend-learning",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>18 · 组件组合（Component Composition）</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; max-width: 640px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .card-title { background: #f9fafb; padding: 12px 16px; font-weight: 600; border-bottom: 1px solid #e5e7eb; }
+    .card-body { padding: 16px; }
+    .card-footer { padding: 12px 16px; background: #f9fafb; border-top: 1px solid #e5e7eb; text-align: right; }
+    button { font-size: 14px; padding: 6px 14px; border-radius: 8px; border: 1px solid #2563eb;
+             background: #2563eb; color: #fff; cursor: pointer; }
+    .danger { background: #fff; color: #b91c1c; border-color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ===== 通用容器组件 Card =====
+    // 关键点 1：children 是一个“特殊 prop”，
+    //   <Card>这里的内容</Card> 中间的内容会自动变成 props.children。
+    // 关键点 2：title / footer 是“具名插槽”——把 JSX 作为普通 prop 传进来，
+    //   实现类似 slot 的能力（一个组件接收多块内容并各放各位）。
+    function Card({ title, children, footer }) {
+      return (
+        <div className="card">
+          {/* 具名插槽：title 作为 JSX prop */}
+          {title && <div className="card-title">{title}</div>}
+          {/* 默认插槽：children 填充主体内容 */}
+          <div className="card-body">{children}</div>
+          {/* 具名插槽：footer 作为 JSX prop */}
+          {footer && <div className="card-footer">{footer}</div>}
+        </div>
+      );
+    }
+
+    // ===== 特例化组件 =====
+    // 通过“组合”而非“继承”来定制：WarningCard 复用 Card，
+    // 只是预设了 title 和样式化的 footer。
+    function WarningCard({ children, onConfirm }) {
+      return (
+        <Card
+          title={<span style={{ color: '#b91c1c' }}>⚠️ 危险操作</span>}
+          footer={<button className="danger" onClick={onConfirm}>我已知晓，确认</button>}
+        >
+          {children}
+        </Card>
+      );
+    }
+
+    function App() {
+      const [count, setCount] = useState(0);
+
+      return (
+        <div>
+          <h1>🧩 组件组合（children 与具名插槽）</h1>
+
+          {/* 用法一：只用默认插槽 children */}
+          <Card title="📌 什么是组合？">
+            <p>组合（composition）= 把组件像积木一样拼起来。</p>
+            <p>容器组件不需要预先知道里面放什么，<b>children</b> 帮你把任意内容塞进它的"洞"里。</p>
+          </Card>
+
+          {/* 用法二：同时用 title / children / footer 三个插槽 */}
+          <Card
+            title="🔢 计数器（footer 具名插槽）"
+            footer={<button onClick={() => setCount(c => c + 1)}>点我 +1</button>}
+          >
+            <p>当前计数：<b>{count}</b></p>
+            <p className="card-body" style={{ padding: 0, color: '#6b7280' }}>
+              footer 里的按钮也能操作上层状态——因为它只是作为 JSX prop 传进来的普通内容。
+            </p>
+          </Card>
+
+          {/* 用法三：特例化组件 = 用组合复用 Card，而不是继承 */}
+          <WarningCard onConfirm={() => alert('已确认！')}>
+            <p>删除后不可恢复，请谨慎操作。</p>
+          </WarningCard>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

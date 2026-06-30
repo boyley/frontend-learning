@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · 事件委托 + 冒泡/捕获</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f5f6fa;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; margin-top: 32px; border-left: 4px solid #4a69bd; padding-left: 10px; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      margin-top: 14px;
+    }
+    button {
+      background: #4a69bd;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 4px 4px 4px 0;
+    }
+    button:hover { background: #3b539b; }
+    ul#todo-list { list-style: none; padding: 0; }
+    ul#todo-list li {
+      padding: 10px 14px;
+      margin: 6px 0;
+      background: #eef1fb;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: .2s;
+    }
+    ul#todo-list li:hover { background: #dfe4fb; }
+    ul#todo-list li.active {
+      background: #4a69bd;
+      color: #fff;
+      font-weight: bold;
+    }
+    .log {
+      background: #2c3e50;
+      color: #ecf0f1;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 13px;
+      min-height: 40px;
+      margin-top: 10px;
+    }
+    /* 嵌套盒子 */
+    #outer { background: #ffeaa7; padding: 28px; border-radius: 8px; text-align: center; }
+    #middle { background: #fab1a0; padding: 28px; border-radius: 8px; margin-top: 8px; }
+    #inner { background: #ff7675; padding: 28px; border-radius: 8px; color: #fff; cursor: pointer; }
+    #flow-log { max-height: 220px; overflow-y: auto; }
+    .flow-line { padding: 2px 0; }
+    .flow-line.capture { color: #74b9ff; }
+    .flow-line.bubble { color: #55efc4; }
+    /* stopPropagation 盒子 */
+    #stop-outer { background: #dff9fb; padding: 28px; border-radius: 8px; text-align: center; }
+    #stop-inner { background: #7ed6df; padding: 24px; border-radius: 8px; cursor: pointer; }
+    label.switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .tip { font-size: 13px; color: #7f8c8d; }
+  </style>
+</head>
+<body>
+  <h1>04 · 事件委托 + 冒泡 / 捕获</h1>
+  <p class="tip">演示事件流三阶段、event.target vs currentTarget、stopPropagation 与事件委托。</p>
+
+  <h2>① 事件委托：点击任意待办项高亮（监听器只加在 ul 上）</h2>
+  <div class="card">
+    <button id="add-item">➕ 动态新增一个 li</button>
+    <ul id="todo-list">
+      <li>学习 HTML 基础</li>
+      <li>掌握 CSS 布局</li>
+      <li>理解 JavaScript 事件</li>
+      <li>练习 DOM 操作</li>
+    </ul>
+    <div class="log" id="delegate-log">点击上面任意一项试试（即使是动态新增的项也能被处理）。</div>
+  </div>
+
+  <h2>② 事件流顺序：捕获阶段 vs 冒泡阶段</h2>
+  <div class="card">
+    <p class="tip">点击最里层的红色盒子，观察完整顺序：捕获自外向内，冒泡自内向外。</p>
+    <div id="outer">outer（最外层）
+      <div id="middle">middle（中间层）
+        <div id="inner">inner（点我！最内层）</div>
+      </div>
+    </div>
+    <button id="clear-flow" style="margin-top:10px;">🧹 清空日志</button>
+    <div class="log" id="flow-log"></div>
+  </div>
+
+  <h2>③ stopPropagation：阻止冒泡</h2>
+  <div class="card">
+    <label class="switch">
+      <input type="checkbox" id="stop-toggle" /> 勾选后内层点击将调用 stopPropagation（阻止冒泡到外层）
+    </label>
+    <div id="stop-outer" style="margin-top:10px;">外层盒子
+      <div id="stop-inner">内层盒子（点我）</div>
+    </div>
+    <div class="log" id="stop-log"></div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

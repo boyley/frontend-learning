@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · 事件处理</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    .outer { background: #eef; padding: 20px; border-radius: 6px; }
+    .inner { background: #42b883; color: #fff; padding: 14px; border-radius: 6px; }
+    input { padding: 6px; }
+  </style>
+</head>
+<body>
+  <h1>08 · 事件处理（v-on / 修饰符）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① 内联表达式 vs 方法处理器</h3>
+      <!-- 内联：直接写表达式 -->
+      <button @click="count++">内联 +1</button>
+      <!-- 方法：传方法名，自动接收原生事件对象 -->
+      <button @click="add">方法 +1</button>
+      <!-- 传参 + 取原生事件 $event -->
+      <button @click="addN(5, $event)">+5（带 $event）</button>
+      <p>count = {{ count }}，最近事件：{{ lastEvent }}</p>
+    </div>
+
+    <div class="card">
+      <h3>② 事件修饰符 .stop / .prevent</h3>
+      <div class="outer" @click="log('点了外层')">
+        外层（点我会冒泡触发外层）
+        <!-- .stop 阻止冒泡：点内层不会触发外层 -->
+        <div class="inner" @click.stop="log('点了内层（已 .stop 阻止冒泡）')">
+          内层（.stop）
+        </div>
+      </div>
+      <!-- .prevent 阻止默认行为：链接不跳转 -->
+      <a href="https://cn.vuejs.org" @click.prevent="log('链接默认跳转已被 .prevent 阻止')">
+        点我（.prevent，不会跳转）
+      </a>
+      <p>日志：{{ msg }}</p>
+    </div>
+
+    <div class="card">
+      <h3>③ 按键修饰符</h3>
+      <!-- .enter 只在按下回车时触发 -->
+      <input @keyup.enter="submit" v-model="text" placeholder="输入后按回车提交" />
+      <p>已提交：{{ submitted }}</p>
+    </div>
+
+    <div class="card">
+      <h3>④ .once 只触发一次</h3>
+      <button @click.once="onceCount++">只第一次有效（onceCount={{ onceCount }}）</button>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    createApp({
+      setup() {
+        const count = ref(0);
+        const lastEvent = ref('');
+        const add = (e) => { count.value++; lastEvent.value = e.type; };
+        const addN = (n, e) => { count.value += n; lastEvent.value = e.type + '（+' + n + '）'; };
+
+        const msg = ref('（点上面试试）');
+        const log = (t) => (msg.value = t);
+
+        const text = ref('');
+        const submitted = ref('（无）');
+        const submit = () => { submitted.value = text.value || '（空）'; text.value = ''; };
+
+        const onceCount = ref(0);
+
+        return { count, lastEvent, add, addN, msg, log, text, submitted, submit, onceCount };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

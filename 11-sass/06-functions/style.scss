@@ -1,0 +1,64 @@
+// ============================================================
+// 06 · 自定义函数（Functions）：@function / @return
+// ------------------------------------------------------------
+// @function 定义「返回一个值」的函数（区别于 mixin 返回一段样式）。
+// 配合内置模块（sass:math 等）能做单位换算、计算等纯逻辑。
+// ============================================================
+
+@use "sass:math"; // 数学模块：div() / percentage() 等
+@use "sass:color"; // 颜色模块
+
+// ---------- 1) 基础函数：px → rem ----------
+// 设计稿基准 16px，把 px 数值换算成 rem
+$root-size: 16px;
+@function rem($px) {
+  // math.div 做除法（Sass 已弃用 / 号做除法，必须用 math.div）
+  // 用插值 #{} 拼上 rem 单位（先把单位去掉再拼，避免单位错误）
+  @return math.div($px, $root-size) * 1rem;
+}
+
+// ---------- 2) 多参数 + 默认值 ----------
+// 按比例缩放间距：base * factor
+@function spacing($factor: 1) {
+  @return 8px * $factor;
+}
+
+// ---------- 3) 函数里用条件判断（控制流见 09）----------
+// 根据背景色明暗，自动返回黑或白文字色，保证可读性
+@function contrast-color($bg) {
+  // color.lightness 取颜色的 HSL 亮度；亮背景配深字，暗背景配浅字
+  @if color.lightness($bg) > 60% {
+    @return #1c1b1f; // 深色文字
+  } @else {
+    @return #ffffff; // 浅色文字
+  }
+}
+
+// ---------- 4) 实际使用 ----------
+html {
+  font-size: $root-size;
+}
+
+.title {
+  font-size: rem(28px); // → 1.75rem
+  margin-bottom: spacing(2); // → 16px
+}
+
+.text {
+  font-size: rem(16px); // → 1rem
+  margin-bottom: spacing(); // → 8px（默认 factor=1）
+}
+
+.tag-light {
+  background: #ffe082;
+  color: contrast-color(#ffe082); // 亮底 → 深字
+  padding: spacing() spacing(2);
+  border-radius: 4px;
+}
+
+.tag-dark {
+  background: #4a148c;
+  color: contrast-color(#4a148c); // 暗底 → 白字
+  padding: spacing() spacing(2);
+  border-radius: 4px;
+}

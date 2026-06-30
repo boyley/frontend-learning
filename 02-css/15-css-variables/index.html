@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15 · CSS 自定义属性 / 变量</title>
+  <style>
+    /* ===== 在 :root 定义全局变量（作用于整个文档） ===== */
+    :root {
+      --brand: #4361ee;          /* 主题色 */
+      --brand-soft: #eaefff;     /* 主题浅色 */
+      --bg: #f5f7fa;             /* 页面背景 */
+      --surface: #ffffff;        /* 卡片背景 */
+      --text: #222222;           /* 主文字 */
+      --text-muted: #667085;     /* 次要文字 */
+      --radius: 14px;            /* 圆角 */
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+
+    /* ===== 暗色主题：给 <html> 加 .dark 时，覆盖同名变量 ===== */
+    /* 因为变量遵循层叠与继承，这里重新定义会向下覆盖整页 */
+    html.dark {
+      --brand-soft: #2a2f45;
+      --bg: #14161f;
+      --surface: #1e2230;
+      --text: #f0f2f8;
+      --text-muted: #9aa3b8;
+      --shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      /* 使用变量；var() 第二参数是回退值，万一变量未定义就用它 */
+      background: var(--bg, #fff);
+      color: var(--text, #000);
+      line-height: 1.6;
+      transition: background .3s, color .3s;  /* 切主题时平滑过渡 */
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 36px 20px 64px; }
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .subtitle { color: var(--text-muted); margin-top: 0; }
+
+    /* ===== 卡片：所有外观都由变量驱动 ===== */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin: 22px 0;
+      transition: background .3s, box-shadow .3s;
+    }
+    .card .tag {
+      display: inline-block;
+      background: var(--brand-soft);
+      color: var(--brand);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .card h3 { margin: 12px 0 8px; }
+    .price { font-size: 30px; color: var(--brand); font-weight: 700; }
+
+    /* 按钮主色用变量 —— 改变量即改主题色 */
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      background: var(--brand);
+      color: #fff;
+      transition: filter .15s, background .3s;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn.ghost { background: var(--brand-soft); color: var(--brand); }
+
+    /* ===== 控制区 ===== */
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 18px 0; }
+    .swatches { display: flex; gap: 10px; }
+    .swatch {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 2px solid var(--surface);
+      box-shadow: 0 0 0 1px #d0d4dc;
+      cursor: pointer;
+    }
+    .label { color: var(--text-muted); font-size: 14px; }
+    code { font-family: monospace; background: #2b2d42; color: #ffd166; padding: 2px 7px; border-radius: 5px; }
+
+    /* 局部变量演示：仅在该元素及其后代生效 */
+    .local-scope {
+      --brand: #e76f51;   /* 局部覆盖主题色，仅影响本卡片内部 */
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>15 · CSS 自定义属性 / 变量（CSS Variables）</h1>
+    <p class="subtitle">用 <code>--name</code> 定义、<code>var(--name, 回退值)</code> 使用；它们遵循继承与层叠，可被 JS 实时修改实现主题切换。</p>
+
+    <!-- 控制区：切换明暗 + 切换主题色（纯原生 JS 改变量） -->
+    <div class="controls">
+      <button class="btn" id="toggleTheme">切换 明 / 暗 主题</button>
+      <span class="label">主题色：</span>
+      <div class="swatches" id="swatches">
+        <!-- data-color 即将写入 --brand 的颜色 -->
+        <div class="swatch" style="background:#4361ee" data-color="#4361ee"></div>
+        <div class="swatch" style="background:#2a9d8f" data-color="#2a9d8f"></div>
+        <div class="swatch" style="background:#e63946" data-color="#e63946"></div>
+        <div class="swatch" style="background:#9b5de5" data-color="#9b5de5"></div>
+      </div>
+    </div>
+
+    <!-- 卡片1：使用全局变量 -->
+    <div class="card">
+      <span class="tag">全局变量</span>
+      <h3>专业版套餐</h3>
+      <p class="price">¥ 199 / 月</p>
+      <p class="label">这张卡片的标签、价格、按钮颜色全部来自 <code>:root</code> 里的 <code>--brand</code>。点上面色块或切暗色，整页联动。</p>
+      <button class="btn">立即购买</button>
+      <button class="btn ghost">了解更多</button>
+    </div>
+
+    <!-- 卡片2：局部变量覆盖 -->
+    <div class="card local-scope">
+      <span class="tag">局部变量覆盖</span>
+      <h3>限定版套餐</h3>
+      <p class="price">¥ 99 / 月</p>
+      <p class="label">这张卡片自身定义了 <code>--brand: #e76f51</code>，只影响它内部，<strong>不</strong>受上方色块切换影响——演示变量的作用域与就近覆盖。</p>
+      <button class="btn">立即购买</button>
+    </div>
+
+    <p class="label">当前 <code>--brand</code> 实时值：<code id="currentVar">#4361ee</code></p>
+  </div>
+
+  <script>
+    const root = document.documentElement; // <html>，:root 对应元素
+
+    // ===== 切换明暗：仅切换 <html> 的 .dark，由 CSS 覆盖变量 =====
+    document.getElementById('toggleTheme').addEventListener('click', () => {
+      root.classList.toggle('dark');
+    });
+
+    // ===== 切换主题色：用 JS 直接改 --brand 变量（style.setProperty） =====
+    const currentVar = document.getElementById('currentVar');
+    document.getElementById('swatches').addEventListener('click', (e) => {
+      const sw = e.target.closest('.swatch');
+      if (!sw) return;
+      const color = sw.dataset.color;
+      root.style.setProperty('--brand', color); // 写入内联变量，覆盖 :root 定义
+      // 读取计算后的变量值并显示（getComputedStyle）
+      const real = getComputedStyle(root).getPropertyValue('--brand').trim();
+      currentVar.textContent = real;
+    });
+  </script>
+</body>
+</html>

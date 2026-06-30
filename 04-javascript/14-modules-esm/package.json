@@ -1,0 +1,7 @@
+{
+  "name": "14-modules-esm",
+  "version": "1.0.0",
+  "description": "ES Module 演示：设置 type=module 后 node demo.js 即按 ESM 运行",
+  "type": "module",
+  "private": true
+}

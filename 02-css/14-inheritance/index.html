@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>14 · 继承与控制</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f7fa;
+      color: #222;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .subtitle { color: #666; margin-top: 0; }
+    h2 { font-size: 19px; margin-top: 36px; border-left: 4px solid #2a9d8f; padding-left: 10px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+      margin: 16px 0;
+    }
+
+    /* ===== 演示1：父元素设置文本属性，子元素默认继承 ===== */
+    /* 父级 .parent 设定了一系列“可继承”的文本属性 */
+    .parent {
+      color: #e63946;            /* 可继承：文字颜色 */
+      font-family: Georgia, serif; /* 可继承：字体 */
+      font-style: italic;        /* 可继承 */
+      line-height: 2;            /* 可继承：行高 */
+      text-align: center;        /* 可继承：文本对齐 */
+      /* 下面这些是“不可继承”的盒模型/背景属性，不会传给子元素 */
+      border: 2px solid #e63946; /* 不继承 */
+      padding: 16px;             /* 不继承 */
+      background: #fff5f5;       /* 不继承 */
+    }
+    /* 子元素没有写任何样式，文本类属性全部来自继承 */
+    .child-default {
+      border: 1px dashed #aaa;   /* 自己写的，证明 border 没被父级继承 */
+      padding: 10px;
+      margin-top: 10px;
+      background: #fff;          /* 自己写的，证明 background 没被父级继承 */
+    }
+
+    /* ===== 演示2：四个关键字显式控制继承 ===== */
+    .kw-demo { color: #1d3557; font-size: 18px; border: 2px solid #1d3557; padding: 16px; border-radius: 8px; }
+    .kw-demo span { display: inline-block; padding: 4px 10px; margin: 4px; border-radius: 6px; background: #edf2fb; }
+    .kw-inherit  { color: inherit; }   /* 强制继承父值 -> 蓝色 #1d3557 */
+    .kw-initial  { color: initial; }   /* 重置为属性初始值 -> 黑色 */
+    .kw-unset    { color: unset; }     /* color 可继承，故等价 inherit -> 蓝色 */
+    .kw-unset-bd { border: unset; }    /* border 不可继承，故等价 initial -> 无边框 */
+
+    /* ===== 演示3：currentColor 跟随 color 继承 ===== */
+    .cc-box { color: #2a9d8f; border: 3px solid currentColor; padding: 14px; border-radius: 8px; }
+    .cc-box svg { display: block; }
+    .cc-box .dot { width: 14px; height: 14px; border-radius: 50%; background: currentColor; display: inline-block; vertical-align: middle; }
+
+    code { font-family: monospace; background: #2b2d42; color: #ffd166; padding: 2px 7px; border-radius: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #e6e8ee; padding: 9px 12px; text-align: left; font-size: 14px; }
+    th { background: #2a9d8f; color: #fff; }
+    .yes { color: #2a9d8f; font-weight: bold; }
+    .no { color: #e63946; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>14 · 继承与控制（Inheritance）</h1>
+    <p class="subtitle">某些属性会自动从父元素传给子元素；用 inherit / initial / unset / revert 可以精确控制这一行为。</p>
+
+    <h2>演示 1 · 默认继承：文本属性传，盒模型不传</h2>
+    <div class="card">
+      <!-- 父元素设置了多种属性，但只有“文本相关”的会传给子元素 -->
+      <div class="parent">
+        我是父元素：color / font / line-height / text-align 都设在我身上。
+        <div class="child-default">
+          我是子元素，<b>没有写任何文字样式</b>，但红色、斜体、衬线字体、居中、大行高全是<strong>继承</strong>来的；
+          而父元素的红色边框、内边距、浅红背景<strong>没有</strong>传给我（盒模型与背景不继承）。
+        </div>
+      </div>
+    </div>
+
+    <h2>演示 2 · 四个关键字显式控制继承</h2>
+    <div class="card">
+      <div class="kw-demo">
+        父元素 color 为深蓝 <code>#1d3557</code>：
+        <span class="kw-inherit">inherit → 深蓝（强制继承）</span>
+        <span class="kw-initial">initial → 黑色（重置为初始值）</span>
+        <span class="kw-unset">unset(color) → 深蓝（可继承属性=inherit）</span>
+        <span class="kw-unset-bd">unset(border) → 无边框（不可继承属性=initial）</span>
+      </div>
+      <p style="font-size:13px;color:#666;margin-top:12px;">
+        <code>revert</code> 则回退到浏览器默认样式表的值（本页未单独演示，规则与上面类似但参照 UA 样式）。
+      </p>
+    </div>
+
+    <h2>演示 3 · currentColor：让其它属性跟随继承来的 color</h2>
+    <div class="card">
+      <div class="cc-box">
+        本盒子只设了 <code>color: #2a9d8f</code>。边框用 <code>currentColor</code>、下面的小圆点 background 也用 <code>currentColor</code>，
+        它们都自动变成同一种青色。<span class="dot"></span>
+        <p style="color:inherit;">这行文字用 color:inherit，同样是青色。</p>
+      </div>
+    </div>
+
+    <h2>属性是否默认继承（对照）</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>属性</th><th>是否默认继承</th><th>类别</th></tr></thead>
+        <tbody>
+          <tr><td>color</td><td class="yes">继承</td><td>文本</td></tr>
+          <tr><td>font-family / font-size / font-style</td><td class="yes">继承</td><td>字体</td></tr>
+          <tr><td>line-height / letter-spacing</td><td class="yes">继承</td><td>文本排版</td></tr>
+          <tr><td>text-align / white-space</td><td class="yes">继承</td><td>文本</td></tr>
+          <tr><td>visibility / cursor</td><td class="yes">继承</td><td>交互/可见</td></tr>
+          <tr><td>margin / padding / border</td><td class="no">不继承</td><td>盒模型</td></tr>
+          <tr><td>width / height</td><td class="no">不继承</td><td>盒模型</td></tr>
+          <tr><td>background</td><td class="no">不继承</td><td>背景</td></tr>
+          <tr><td>position / display / float</td><td class="no">不继承</td><td>布局</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

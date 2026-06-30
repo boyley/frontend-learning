@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <!-- 关键：viewport meta，让移动端按设备宽度渲染而非默认 980px -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 · 媒体查询与响应式 Media Queries</title>
+  <style>
+    /* ===== 移动优先：先写小屏基础样式，再用 min-width 逐级增强 ===== */
+    :root {
+      --bp-name: "手机 Mobile";   /* 当前断点名，由媒体查询覆盖 */
+      --bp-color: #ef4444;
+      --cols: 1;                  /* 卡片列数 */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.7;
+      padding: 28px 18px 60px;
+      /* 支持暗色模式偏好：默认深色，浅色偏好时切换 */
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 26px; }
+    header h1 { font-size: 28px; color: #f8fafc; }
+    header p { color: #94a3b8; margin-top: 8px; font-size: 14px; }
+
+    /* 当前断点指示牌：文字与颜色由 CSS 变量控制 */
+    .badge {
+      margin: 18px auto 30px;
+      max-width: 520px;
+      text-align: center;
+      padding: 18px;
+      border-radius: 16px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--bp-color);
+      transition: background .3s ease;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    }
+    .badge::after {
+      content: "当前断点：" var(--bp-name);
+    }
+    .badge small {
+      display:block; font-weight:400; font-size:13px; opacity:.9; margin-top:6px;
+    }
+
+    /* 响应式卡片布局：用 grid，列数由 --cols 控制 */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), 1fr);
+      gap: 16px;
+    }
+    .item {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 22px 18px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.3);
+    }
+    .item h3 { color:#f8fafc; font-size:16px; margin-bottom:6px; }
+    .item p { color:#94a3b8; font-size:13px; }
+    .item .dot {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--bp-color); margin-bottom: 12px;
+      transition: background .3s ease;
+    }
+
+    section.note {
+      margin-top: 34px;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 22px;
+    }
+    section.note h2 { font-size:18px; color:#f8fafc; margin-bottom:10px; }
+    section.note ul { padding-left: 20px; }
+    section.note li { color:#cbd5e1; font-size:14px; margin:6px 0; }
+    code { background:#0f172a; padding:1px 6px; border-radius:5px; color:#fbbf24; font-size:13px; }
+    .hint { text-align:center; color:#64748b; font-size:13px; margin-bottom:20px; }
+
+    /* ============ 断点（移动优先 min-width） ============ */
+    /* 平板：>=600px，两列 */
+    @media (min-width: 600px) {
+      :root {
+        --bp-name: "平板 Tablet";
+        --bp-color: #f59e0b;
+        --cols: 2;
+      }
+    }
+    /* 笔记本：>=900px，三列 */
+    @media (min-width: 900px) {
+      :root {
+        --bp-name: "笔记本 Laptop";
+        --bp-color: #22c55e;
+        --cols: 3;
+      }
+    }
+    /* 桌面大屏：>=1200px，四列 */
+    @media (min-width: 1200px) {
+      :root {
+        --bp-name: "桌面大屏 Desktop";
+        --bp-color: #3b82f6;
+        --cols: 4;
+      }
+    }
+
+    /* ============ 用户偏好查询 ============ */
+    /* 浅色模式偏好：整体切到浅色主题 */
+    @media (prefers-color-scheme: light) {
+      body { background: #f1f5f9; color: #1e293b; }
+      header h1 { color:#0f172a; }
+      header p, .hint { color:#64748b; }
+      .item { background:#fff; box-shadow:0 6px 16px rgba(0,0,0,.08); }
+      .item h3 { color:#0f172a; }
+      section.note { background:#fff; }
+      section.note h2 { color:#0f172a; }
+      section.note li { color:#334155; }
+      code { background:#e2e8f0; color:#be123c; }
+    }
+    /* 减少动效偏好：关闭过渡，照顾前庭敏感用户 */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>媒体查询与响应式 Media Queries</h1>
+      <p>缩放浏览器窗口宽度，观察指示牌文字 / 颜色与卡片列数随断点切换。</p>
+    </header>
+
+    <p class="hint">👉 拖动窗口边缘改变宽度：手机(1列) → 平板(2列) → 笔记本(3列) → 桌面(4列)</p>
+
+    <div class="badge">
+      <small>纯 CSS 驱动：媒体查询改写 CSS 变量，无 JavaScript</small>
+    </div>
+
+    <div class="cards">
+      <div class="item"><div class="dot"></div><h3>移动优先</h3><p>先写小屏基础样式，用 min-width 逐级增强。</p></div>
+      <div class="item"><div class="dot"></div><h3>断点设计</h3><p>按内容换行的「逻辑断点」，不绑定具体设备。</p></div>
+      <div class="item"><div class="dot"></div><h3>弹性布局</h3><p>配合 grid / flex / 百分比 / rem 自适应。</p></div>
+      <div class="item"><div class="dot"></div><h3>viewport</h3><p>必须有 meta viewport 才能正确缩放。</p></div>
+      <div class="item"><div class="dot"></div><h3>暗色模式</h3><p>prefers-color-scheme 跟随系统主题。</p></div>
+      <div class="item"><div class="dot"></div><h3>减少动效</h3><p>prefers-reduced-motion 关闭过渡。</p></div>
+      <div class="item"><div class="dot"></div><h3>指针能力</h3><p>hover / pointer 区分触屏与鼠标。</p></div>
+      <div class="item"><div class="dot"></div><h3>方向</h3><p>orientation 判断横竖屏。</p></div>
+    </div>
+
+    <section class="note">
+      <h2>本页用到的媒体查询</h2>
+      <ul>
+        <li><code>@media (min-width: 600px)</code> → 平板，两列</li>
+        <li><code>@media (min-width: 900px)</code> → 笔记本，三列</li>
+        <li><code>@media (min-width: 1200px)</code> → 桌面，四列</li>
+        <li><code>@media (prefers-color-scheme: light)</code> → 跟随系统切换浅色主题（改系统外观试试）</li>
+        <li><code>@media (prefers-reduced-motion: reduce)</code> → 关闭所有过渡动画</li>
+      </ul>
+      <p style="margin-top:12px; color:inherit; font-size:13px;">
+        现代浏览器也支持范围语法：<code>@media (width &gt;= 600px)</code> 等价于 <code>min-width: 600px</code>。
+      </p>
+    </section>
+  </div>
+</body>
+</html>

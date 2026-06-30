@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>01 · 没有模块化（全局变量污染）</title>
+</head>
+<body>
+  <h1>传统多 script + 全局变量（请打开控制台 F12）</h1>
+  <p>两个文件都定义了全局变量 <code>name</code>，后加载的把先加载的覆盖了——这就是「全局污染」。</p>
+
+  <!-- ① 第一个脚本：定义全局变量 name = '工具A' -->
+  <script>
+    // 没有模块作用域，var/直接赋值都挂到了 window 上
+    var name = '工具A 想用的名字';
+    function greet() {
+      // 这里读到的 name 是「全局」的，谁最后改谁说了算
+      console.log('greet() 读到的 name =', name);
+    }
+  </script>
+
+  <!-- ② 第二个脚本：不小心也用了同名全局变量，把上面的覆盖了 -->
+  <script>
+    // 团队另一个人写的代码，也叫 name —— 直接覆盖，互不知情
+    var name = '工具B 想用的名字';
+  </script>
+
+  <!-- ③ 调用：本想用「工具A」的名字，结果被「工具B」污染 -->
+  <script>
+    greet(); // 期望输出「工具A...」，实际输出「工具B...」——典型的全局变量 Bug
+    console.warn('⚠️ 全局变量被覆盖：window.name 已变成 →', window.name);
+  </script>
+</body>
+</html>

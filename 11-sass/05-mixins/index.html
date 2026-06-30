@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>05 · 混入 Mixins</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; background: #f5f3fb; }
+      .wrap { padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar"><span style="color:#fff;">@include flex-center 居中工具栏</span></div>
+    <div class="wrap">
+      <h1 class="headline">缩小浏览器宽度，标题字号会变化（@content 媒体查询）</h1>
+      <div class="panel">.panel — @include card 带关键字参数</div>
+      <div class="note">.note — @include card 只传 1 个参数，其余用默认值</div>
+      <div class="fancy">.fancy — 多重阴影（可变参数 ...）</div>
+    </div>
+  </body>
+</html>

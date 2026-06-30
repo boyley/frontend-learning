@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 · 图片适配 object-fit & object-position</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e9eef5 100%);
+      color: #2c3e50;
+      line-height: 1.7;
+      padding: 32px 20px 64px;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    header h1 { font-size: 28px; margin: 0 0 8px; }
+    header p { color: #5a6b7b; margin: 0 0 24px; }
+
+    .section {
+      background: #fff;
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 28px;
+      box-shadow: 0 8px 28px rgba(60, 90, 130, 0.10);
+    }
+    .section h2 { margin: 0 0 4px; font-size: 19px; }
+    .section .desc { color: #6b7a8c; font-size: 14px; margin: 0 0 20px; }
+
+    /* ===== 五种 object-fit 并排对比 ===== */
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .item { text-align: center; }
+    .item .label { font-size: 13px; color: #5a6b7b; margin-top: 8px; }
+    .item .label code { color: #e17055; font-weight: 600; }
+
+    /* 统一的固定尺寸容器：用 aspect-ratio 锁定 3:2 比例 */
+    .frame {
+      width: 170px;
+      aspect-ratio: 3 / 2;       /* 固定宽高比，配合 object-fit 才有意义 */
+      border: 2px solid #dfe6e9;
+      border-radius: 10px;
+      overflow: hidden;
+      background:
+        repeating-conic-gradient(#eef2f6 0 25%, #fff 0 50%) 0 0 / 20px 20px; /* 棋盘底，露白时可见 */
+    }
+    .frame img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 五种取值 */
+    .fit-fill       img { object-fit: fill; }        /* 拉伸填满，可能变形 */
+    .fit-contain    img { object-fit: contain; }     /* 完整显示，可能留白 */
+    .fit-cover      img { object-fit: cover; }        /* 填满裁剪，不变形 */
+    .fit-none       img { object-fit: none; }         /* 原始尺寸，居中裁剪 */
+    .fit-scaledown  img { object-fit: scale-down; }   /* none 与 contain 取较小 */
+
+    /* ===== object-position 焦点控制（基于 cover） ===== */
+    .pos-frame {
+      width: 220px;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #dfe6e9;
+    }
+    .pos-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: object-position 0.3s ease;
+    }
+
+    .controls { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .controls label { font-size: 13px; color: #5a6b7b; }
+    code.inline { background:#2d3436; color:#dfe6e9; padding:3px 9px; border-radius:6px; font-size:13px; }
+
+    .note {
+      font-size: 13px; color: #8a6d3b; background: #fcf8e3;
+      border: 1px solid #faebcc; border-radius: 8px; padding: 10px 14px; margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>12 · 图片适配 object-fit &amp; object-position</h1>
+      <p>同一张图放进相同尺寸容器，用 object-fit 控制「填满/留白/裁剪」，用 object-position 控制裁剪时显示的焦点区域。</p>
+    </header>
+
+    <!-- 1. 五种 object-fit 对比 -->
+    <section class="section">
+      <h2>① object-fit 五种取值并排对比</h2>
+      <p class="desc">五个容器尺寸完全相同（3:2 比例），放同一张图。注意 fill 会变形、contain 会留白（露出棋盘底）、cover 会裁剪填满。</p>
+      <div class="grid">
+        <div class="item fit-fill">
+          <div class="frame"><img src="https://picsum.photos/id/1015/600/600" alt="demo" /></div>
+          <div class="label"><code>fill</code><br />拉伸填满·会变形</div>
+        </div>
+        <div class="item fit-contain">
+          <div class="frame"><img src="https://picsum.photos/id/1015/600/600" alt="demo" /></div>
+          <div class="label"><code>contain</code><br />完整显示·会留白</div>
+        </div>
+        <div class="item fit-cover">
+          <div class="frame"><img src="https://picsum.photos/id/1015/600/600" alt="demo" /></div>
+          <div class="label"><code>cover</code><br />裁剪填满·不变形</div>
+        </div>
+        <div class="item fit-none">
+          <div class="frame"><img src="https://picsum.photos/id/1015/600/600" alt="demo" /></div>
+          <div class="label"><code>none</code><br />原始尺寸·居中裁</div>
+        </div>
+        <div class="item fit-scaledown">
+          <div class="frame"><img src="https://picsum.photos/id/1015/600/600" alt="demo" /></div>
+          <div class="label"><code>scale-down</code><br />取 none/contain 较小</div>
+        </div>
+      </div>
+      <div class="note">离线提示：本演示使用 https://picsum.photos 在线占位图。若无网络，图片不显示属正常现象，容器边框与棋盘底仍可看出布局效果。</div>
+    </section>
+
+    <!-- 2. object-position 焦点控制 -->
+    <section class="section">
+      <h2>② object-position 控制 cover 的焦点</h2>
+      <p class="desc">cover 会裁掉溢出部分，object-position 决定「保留哪一块」。拖动两个滑块，改变水平/垂直焦点位置。</p>
+      <div class="grid">
+        <div class="item">
+          <div class="pos-frame"><img id="posImg" src="https://picsum.photos/id/1011/800/500" alt="demo" /></div>
+        </div>
+      </div>
+      <div class="controls">
+        <label>水平 X</label>
+        <input type="range" id="posX" min="0" max="100" value="50" />
+        <label>垂直 Y</label>
+        <input type="range" id="posY" min="0" max="100" value="50" />
+        <code class="inline" id="posVal">object-position: 50% 50%</code>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // object-position 双滑块联动
+    const img = document.getElementById('posImg');
+    const x = document.getElementById('posX');
+    const y = document.getElementById('posY');
+    const val = document.getElementById('posVal');
+    function update() {
+      const pos = `${x.value}% ${y.value}%`;
+      img.style.objectPosition = pos;
+      val.textContent = `object-position: ${pos}`;
+    }
+    x.addEventListener('input', update);
+    y.addEventListener('input', update);
+  </script>
+</body>
+</html>

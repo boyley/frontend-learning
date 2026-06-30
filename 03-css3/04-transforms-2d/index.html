@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · 2D 变换 Transforms</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 32px 20px;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    header h1 { font-size: 28px; color: #fff; margin-bottom: 8px; }
+    header p { color: #94a3b8; margin-bottom: 28px; }
+
+    /* 卡片容器：放控制面板和演示盒子 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card h3 { font-size: 16px; margin-bottom: 14px; color: #38bdf8; }
+
+    /* 演示舞台：固定高度，盒子在中间 */
+    .stage {
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: repeating-linear-gradient(45deg, #ffffff08 0 10px, transparent 10px 20px);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    /* 被变换的彩色盒子 */
+    .box {
+      width: 80px; height: 80px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #fff;
+      /* transition 让滑块拖动更顺滑（这里是演示，真实可去掉） */
+      transition: transform 0.05s linear;
+    }
+    .b1 { background: linear-gradient(135deg,#f472b6,#db2777); }
+    .b2 { background: linear-gradient(135deg,#34d399,#059669); }
+    .b3 { background: linear-gradient(135deg,#60a5fa,#2563eb); }
+    .b4 { background: linear-gradient(135deg,#fbbf24,#d97706); }
+
+    label { display: block; font-size: 13px; color: #cbd5e1; margin: 10px 0 4px; }
+    input[type=range] { width: 100%; accent-color: #38bdf8; }
+    .val { color: #f472b6; font-weight: 700; }
+
+    /* transform-origin 演示区 */
+    .origin-stage { height: 220px; }
+    .origin-box {
+      width: 90px; height: 90px;
+      background: linear-gradient(135deg,#a78bfa,#7c3aed);
+      border-radius: 12px;
+      position: relative;
+      animation: spin 4s linear infinite;
+      /* transform-origin 默认是 center，通过 JS 修改 */
+    }
+    /* 标出旋转中心点 */
+    .origin-box::after {
+      content: ""; position: absolute; width: 12px; height: 12px;
+      background: #fff; border-radius: 50%;
+      left: var(--ox, 50%); top: var(--oy, 50%);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 3px #ef4444;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btns button {
+      flex: 1; min-width: 70px;
+      background: #1e293b; color: #e2e8f0;
+      border: 1px solid #334155; border-radius: 8px;
+      padding: 8px; cursor: pointer; font-size: 12px;
+      transition: all 0.2s;
+    }
+    .btns button:hover { background: #38bdf8; color: #0f172a; }
+    .btns button.active { background: #38bdf8; color: #0f172a; font-weight: 700; }
+
+    .tip {
+      margin-top: 24px; padding: 16px 20px;
+      background: rgba(56,189,248,0.08);
+      border-left: 4px solid #38bdf8; border-radius: 8px;
+      font-size: 13px; color: #cbd5e1;
+    }
+    .tip code { background: #0f172a; padding: 2px 6px; border-radius: 4px; color: #f472b6; }
+    .full { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>04 · 2D 变换 Transforms</h1>
+      <p>拖动滑块实时控制 translateX / rotate / scale / skew，直观感受 transform 的每个函数。</p>
+    </header>
+
+    <div class="grid">
+      <!-- 1. translateX 平移 -->
+      <div class="card">
+        <h3>translateX（平移）</h3>
+        <div class="stage"><div class="box b1" id="box1">移</div></div>
+        <label>translateX: <span class="val" id="v1">0px</span></label>
+        <input type="range" id="r1" min="-60" max="60" value="0" />
+      </div>
+
+      <!-- 2. rotate 旋转 -->
+      <div class="card">
+        <h3>rotate（旋转）</h3>
+        <div class="stage"><div class="box b2" id="box2">转</div></div>
+        <label>rotate: <span class="val" id="v2">0deg</span></label>
+        <input type="range" id="r2" min="0" max="360" value="0" />
+      </div>
+
+      <!-- 3. scale 缩放 -->
+      <div class="card">
+        <h3>scale（缩放）</h3>
+        <div class="stage"><div class="box b3" id="box3">缩</div></div>
+        <label>scale: <span class="val" id="v3">1</span></label>
+        <input type="range" id="r3" min="0.3" max="2" step="0.05" value="1" />
+      </div>
+
+      <!-- 4. skew 倾斜 -->
+      <div class="card">
+        <h3>skewX（倾斜）</h3>
+        <div class="stage"><div class="box b4" id="box4">斜</div></div>
+        <label>skewX: <span class="val" id="v4">0deg</span></label>
+        <input type="range" id="r4" min="-45" max="45" value="0" />
+      </div>
+
+      <!-- 5. transform-origin 变换中心 -->
+      <div class="card full">
+        <h3>transform-origin（旋转中心点）</h3>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:10px;">
+          红圈标出旋转中心。改变 transform-origin 会改变盒子绕哪个点旋转。
+        </p>
+        <div class="stage origin-stage"><div class="origin-box" id="originBox"></div></div>
+        <div class="btns" id="originBtns">
+          <button data-origin="50% 50%" class="active">center</button>
+          <button data-origin="0% 0%">左上角</button>
+          <button data-origin="100% 0%">右上角</button>
+          <button data-origin="0% 100%">左下角</button>
+          <button data-origin="100% 100%">右下角</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>关键提示：</strong>
+      transform 不脱离文档流（不影响其它元素布局），但会创建<strong>层叠上下文</strong>并触发 GPU 合成，性能优秀；
+      <code>translate</code> 的百分比相对<strong>自身尺寸</strong>；多个函数书写时<strong>从右到左</strong>依次叠加，
+      例如 <code>transform: rotate(45deg) translateX(50px)</code> 与 <code>translateX(50px) rotate(45deg)</code> 结果不同；
+      <code>inline</code> 行内元素无法应用 transform（需 inline-block / block）。
+    </div>
+  </div>
+
+  <script>
+    // ===== 工具：根据滑块组合 transform 字符串 =====
+    const r1 = document.getElementById('r1');
+    const r2 = document.getElementById('r2');
+    const r3 = document.getElementById('r3');
+    const r4 = document.getElementById('r4');
+
+    r1.addEventListener('input', () => {
+      document.getElementById('box1').style.transform = `translateX(${r1.value}px)`;
+      document.getElementById('v1').textContent = r1.value + 'px';
+    });
+    r2.addEventListener('input', () => {
+      document.getElementById('box2').style.transform = `rotate(${r2.value}deg)`;
+      document.getElementById('v2').textContent = r2.value + 'deg';
+    });
+    r3.addEventListener('input', () => {
+      document.getElementById('box3').style.transform = `scale(${r3.value})`;
+      document.getElementById('v3').textContent = r3.value;
+    });
+    r4.addEventListener('input', () => {
+      document.getElementById('box4').style.transform = `skewX(${r4.value}deg)`;
+      document.getElementById('v4').textContent = r4.value + 'deg';
+    });
+
+    // ===== transform-origin 切换 =====
+    const originBox = document.getElementById('originBox');
+    document.getElementById('originBtns').addEventListener('click', (e) => {
+      if (e.target.tagName !== 'BUTTON') return;
+      const o = e.target.dataset.origin;
+      originBox.style.transformOrigin = o;          // 设置旋转中心
+      // 同步移动那个白色中心点标记
+      const [x, y] = o.split(' ');
+      originBox.style.setProperty('--ox', x);
+      originBox.style.setProperty('--oy', y);
+      // 高亮当前按钮
+      document.querySelectorAll('#originBtns button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  </script>
+</body>
+</html>

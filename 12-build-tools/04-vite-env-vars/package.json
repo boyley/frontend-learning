@@ -1,0 +1,16 @@
+{
+  "name": "vite-env-vars-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "12-build-tools · 04 · 环境变量 import.meta.env / .env 文件",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:staging": "vite build --mode staging",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

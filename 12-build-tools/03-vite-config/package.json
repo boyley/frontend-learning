@@ -1,0 +1,15 @@
+{
+  "name": "vite-config-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "12-build-tools · 03 · vite.config.js 常用配置演示",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

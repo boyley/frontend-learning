@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · Class 与 Style 绑定</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    .box { padding: 16px; border-radius: 6px; margin-top: 8px; transition: .3s; }
+    .active { background: #42b883; color: #fff; }
+    .danger { border: 2px solid #e63946; }
+    .big { font-size: 22px; }
+  </style>
+</head>
+<body>
+  <h1>06 · Class 与 Style 绑定</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① 对象语法绑定 class（key 是类名，value 是布尔）</h3>
+      <button @click="isActive = !isActive">切换 active（{{ isActive }}）</button>
+      <button @click="hasError = !hasError">切换 danger（{{ hasError }}）</button>
+      <!-- 静态 class 'box' 会和动态绑定的合并 -->
+      <div class="box" :class="{ active: isActive, danger: hasError }">
+        对象语法：哪个为 true 就加哪个类
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>② 数组语法绑定 class</h3>
+      <button @click="toggleBig">切换大字（big）</button>
+      <div class="box" :class="[baseClass, isBig ? 'big' : '']">
+        数组语法：把多个类名放进数组
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>③ 绑定内联 style（对象语法）</h3>
+      <label>色相：<input type="range" min="0" max="360" v-model="hue" /></label>
+      <label>圆角：<input type="range" min="0" max="40" v-model="radius" /></label>
+      <!-- 注意 CSS 属性用驼峰 backgroundColor 或字符串 'background-color' -->
+      <div class="box" :style="{ backgroundColor: bgColor, borderRadius: radius + 'px', color: '#fff' }">
+        style 绑定：hue={{ hue }}, radius={{ radius }}
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, computed } = Vue;
+    createApp({
+      setup() {
+        const isActive = ref(true);
+        const hasError = ref(false);
+
+        const baseClass = ref('box');
+        const isBig = ref(false);
+        const toggleBig = () => (isBig.value = !isBig.value);
+
+        const hue = ref(150);
+        const radius = ref(6);
+        const bgColor = computed(() => `hsl(${hue.value}, 70%, 50%)`);
+
+        return { isActive, hasError, baseClass, isBig, toggleBig, hue, radius, bgColor };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

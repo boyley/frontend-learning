@@ -1,0 +1,15 @@
+{
+  "name": "vite-getting-started",
+  "private": true,
+  "version": "1.0.0",
+  "description": "12-build-tools · 02 · 创建第一个 Vite 项目（最小可运行）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

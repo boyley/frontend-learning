@@ -1,0 +1,21 @@
+/* card.component.css —— CardComponent 的外部样式
+   组件样式默认有「视图封装」：这里的选择器只作用于本组件，不会污染全局。 */
+.card {
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  max-width: 320px;
+}
+
+.card__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #1976d2;
+}
+
+.card__body {
+  margin: 0;
+  color: #555;
+  line-height: 1.5;
+}

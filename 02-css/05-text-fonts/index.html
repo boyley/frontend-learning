@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 · 文本与字体 Text & Fonts</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px;
+      background: #f5f6fa; color: #2d3436;
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    h1 { font-size: 24px; }
+    h2 { font-size: 18px; border-left: 4px solid #00b894; padding-left: 10px; margin-top: 32px; }
+    .card { background:#fff; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .sample { padding:12px; border:1px solid #dfe6e9; border-radius:8px; margin:10px 0; }
+    .label { font-size:12px; color:#636e72; display:block; margin-bottom:4px; }
+    code { background:#f1f2f6; padding:2px 6px; border-radius:4px; color:#e84393; font-size:13px; }
+    .demo-text { font-size: 16px; }
+
+    /* ===== 字体族对比 ===== */
+    .ff-serif      { font-family: Georgia, "Times New Roman", "SimSun", serif; }      /* 衬线 */
+    .ff-sans       { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }        /* 无衬线 */
+    .ff-mono       { font-family: "Consolas", "Courier New", monospace; }             /* 等宽 */
+
+    /* ===== 字号 / 字重 / 斜体 ===== */
+    .fs-small  { font-size: 12px; }
+    .fs-mid    { font-size: 18px; }
+    .fs-big    { font-size: 28px; }
+    .fw-bold   { font-weight: bold; }   /* 700 */
+    .fw-light  { font-weight: 300; }
+    .fi-italic { font-style: italic; }
+
+    /* ===== 行高对比 ===== */
+    .lh-tight { line-height: 1.0; }
+    .lh-loose { line-height: 2.2; }
+
+    /* ===== 字间距 / 词间距 ===== */
+    .ls-wide { letter-spacing: 4px; }   /* 字符间距 */
+    .ws-wide { word-spacing: 16px; }    /* 单词间距，对英文有效 */
+
+    /* ===== 对齐 ===== */
+    .ta-left   { text-align: left; }
+    .ta-center { text-align: center; }
+    .ta-right  { text-align: right; }
+    .ta-justify{ text-align: justify; }  /* 两端对齐 */
+
+    /* ===== 文本装饰 / 大小写 / 缩进 ===== */
+    .td-underline   { text-decoration: underline; }
+    .td-line        { text-decoration: line-through; }
+    .td-overline    { text-decoration: overline wavy #e17055; }
+    .tt-upper { text-transform: uppercase; }  /* 全大写 */
+    .tt-cap   { text-transform: capitalize; } /* 首字母大写 */
+    .ti-indent { text-indent: 2em; }          /* 首行缩进 2 字符 */
+
+    /* ===== white-space ===== */
+    .ws-nowrap { white-space: nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ws-pre    { white-space: pre; background:#f1f2f6; }
+
+    /* ===== font 简写 ===== */
+    .font-short { font: italic bold 20px/1.5 Georgia, serif; }  /* style weight size/line-height family */
+    .color-demo { color: #6c5ce7; }
+  </style>
+</head>
+<body>
+  <h1>🅰️ 文本与字体 Text &amp; Fonts</h1>
+  <p>下面用同一段中英文文本，演示常用文本/字体属性的视觉效果差异。</p>
+
+  <!-- 字体族 -->
+  <section class="card">
+    <h2>① font-family 字体族（衬线 / 无衬线 / 等宽）</h2>
+    <div class="sample ff-serif demo-text"><span class="label">serif 衬线：Georgia / 宋体</span>The quick brown fox · 前端学习合集 123</div>
+    <div class="sample ff-sans demo-text"><span class="label">sans-serif 无衬线：Segoe UI / 微软雅黑</span>The quick brown fox · 前端学习合集 123</div>
+    <div class="sample ff-mono demo-text"><span class="label">monospace 等宽：Consolas</span>The quick brown fox · 前端学习合集 123</div>
+  </section>
+
+  <!-- 字号字重斜体 -->
+  <section class="card">
+    <h2>② 字号 font-size / 字重 font-weight / 斜体 font-style</h2>
+    <div class="sample"><span class="label">font-size</span>
+      <span class="fs-small">12px 小字</span> ｜
+      <span class="fs-mid">18px 中字</span> ｜
+      <span class="fs-big">28px 大字</span>
+    </div>
+    <div class="sample"><span class="label">font-weight / font-style</span>
+      <span class="fw-light">细体300 Light</span> ｜
+      <span class="fw-bold">粗体bold Bold</span> ｜
+      <span class="fi-italic">斜体 Italic</span>
+    </div>
+  </section>
+
+  <!-- 行高与间距 -->
+  <section class="card">
+    <h2>③ 行高 line-height / 字间距 letter-spacing / 词间距 word-spacing</h2>
+    <div class="sample lh-tight"><span class="label">line-height:1.0 紧凑</span>第一行文字 first line<br>第二行文字 second line</div>
+    <div class="sample lh-loose"><span class="label">line-height:2.2 宽松</span>第一行文字 first line<br>第二行文字 second line</div>
+    <div class="sample ls-wide"><span class="label">letter-spacing:4px 字符间距</span>间距 spacing 测试</div>
+    <div class="sample ws-wide"><span class="label">word-spacing:16px 单词间距</span>word spacing test demo</div>
+  </section>
+
+  <!-- 对齐 -->
+  <section class="card">
+    <h2>④ 文本对齐 text-align</h2>
+    <div class="sample ta-left"><span class="label">left 左对齐</span>前端学习合集 frontend learning collection demo text 演示文本。</div>
+    <div class="sample ta-center"><span class="label">center 居中</span>前端学习合集 frontend learning collection demo text 演示文本。</div>
+    <div class="sample ta-right"><span class="label">right 右对齐</span>前端学习合集 frontend learning collection demo text 演示文本。</div>
+    <div class="sample ta-justify"><span class="label">justify 两端对齐</span>前端学习合集 frontend learning collection demo text 这是一段较长的文本用来演示两端对齐效果让每行左右都贴边。</div>
+  </section>
+
+  <!-- 装饰 大小写 缩进 -->
+  <section class="card">
+    <h2>⑤ 装饰 text-decoration / 大小写 text-transform / 缩进 text-indent</h2>
+    <div class="sample"><span class="label">text-decoration</span>
+      <span class="td-underline">下划线</span> ｜
+      <span class="td-line">删除线</span> ｜
+      <span class="td-overline">波浪上划线</span>
+    </div>
+    <div class="sample"><span class="label">text-transform（对英文有效）</span>
+      <span class="tt-upper">uppercase text</span> ｜
+      <span class="tt-cap">capitalize each word</span>
+    </div>
+    <div class="sample ti-indent"><span class="label">text-indent:2em 首行缩进</span>这是一个段落，首行缩进了两个字符，常用于中文排版的段落开头。</div>
+  </section>
+
+  <!-- white-space / color / font 简写 -->
+  <section class="card">
+    <h2>⑥ white-space / color / font 简写</h2>
+    <div class="sample ws-nowrap"><span class="label">white-space:nowrap + 省略号</span>这是一段很长很长很长很长很长很长很长很长很长很长很长很长不换行会被截断的文本</div>
+    <div class="sample ws-pre"><span class="label">white-space:pre 保留空格与换行</span>保留    多个空格
+和    手动换行</div>
+    <div class="sample color-demo"><span class="label">color:#6c5ce7</span>带颜色的文本 colored text</div>
+    <div class="sample font-short"><span class="label">font: italic bold 20px/1.5 Georgia</span>font 简写一行搞定 multiple props</div>
+  </section>
+</body>
+</html>

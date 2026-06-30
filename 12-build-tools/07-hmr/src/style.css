@@ -1,0 +1,19 @@
+/* src/style.css —— 改这里的颜色保存，页面样式会「无刷新」秒变（CSS 的 HMR 开箱即用） */
+body {
+  font-family: system-ui, "PingFang SC", sans-serif;
+  background: #f0f4ff;     /* 试着把这个颜色改成 #fff0f0 保存，背景立刻变，且计数器不归零 */
+  color: #213547;
+  padding: 2rem;
+}
+.box {
+  display: inline-block;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+button {
+  font-size: 1rem;
+  padding: .5em 1em;
+  cursor: pointer;
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>优先级、层叠与 !important</title>
+  <style>
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      line-height: 1.7;
+      color: #2c3e50;
+      background: #f7f9fb;
+    }
+    h1 { font-size: 24px; }
+    h2 {
+      font-size: 18px;
+      margin-top: 32px;
+      border-left: 4px solid #4a90d9;
+      padding-left: 10px;
+    }
+    .demo {
+      background: #fff;
+      border: 1px solid #e1e6eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    code { background: #eef2f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid #d0d7de; padding: 8px 10px; text-align: left; font-size: 14px; }
+    th { background: #eef2f5; }
+    .target-text { font-size: 20px; font-weight: bold; }
+
+    /* ============================================================
+       同一段文字会被下面多条规则同时命中，看看谁最终生效。
+       目标元素：<p id="msg" class="note" style="...">
+       ============================================================ */
+
+    /* 规则 A：元素选择器  权重 (0,0,0,1) */
+    p { color: #95a5a6; }
+
+    /* 规则 B：类选择器    权重 (0,0,1,0) —— 比 A 高 */
+    .note { color: #27ae60; }
+
+    /* 规则 C：id 选择器   权重 (0,1,0,0) —— 比 B 高 */
+    #msg { color: #2980b9; }
+
+    /* 规则 D：同为 id，但放在 C 后面，源码顺序更晚 —— 同优先级时它赢
+       这里故意注释掉，避免覆盖 C，用于课堂演示“源码顺序”可手动启用 */
+    /* #msg { color: #8e44ad; } */
+
+    /* 行内 style="color:#e67e22" 权重 (1,0,0,0) —— 比 id 还高 */
+
+    /* 规则 E：用 !important 强行翻盘（演示其威力，慎用！） */
+    .note.win { color: #c0392b !important; }
+
+    /* 权重标注小色块 */
+    .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>优先级、层叠与 !important</h1>
+  <p>层叠（Cascade）决定多条规则冲突时谁生效，顺序为：<b>来源/重要性 → 优先级 → 源码顺序</b>。</p>
+
+  <!-- 演示一：行内样式胜过 id -->
+  <h2>演示一：同一元素被多条规则命中</h2>
+  <div class="demo">
+    <!-- 该 p 同时被 p / .note / #msg / 行内 style 四处命中 -->
+    <p id="msg" class="note target-text" style="color:#e67e22">
+      我的最终颜色由“优先级最高”的规则决定（当前为橙色 = 行内样式）
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>规则</th><th>选择器</th><th>权重 (行内,id,类,元素)</th><th>颜色</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td><code>p</code></td><td>(0,0,0,1)</td><td><span class="swatch" style="background:#95a5a6"></span> 灰</td></tr>
+        <tr><td>B</td><td><code>.note</code></td><td>(0,0,1,0)</td><td><span class="swatch" style="background:#27ae60"></span> 绿</td></tr>
+        <tr><td>C</td><td><code>#msg</code></td><td>(0,1,0,0)</td><td><span class="swatch" style="background:#2980b9"></span> 蓝</td></tr>
+        <tr><td>行内</td><td><code>style=""</code></td><td><b>(1,0,0,0)</b></td><td><span class="swatch" style="background:#e67e22"></span> 橙 ← 胜出</td></tr>
+      </tbody>
+    </table>
+    <p>逐位比较：行内的 1 大于 id 的 0，直接胜出，后面位不用再比。</p>
+  </div>
+
+  <!-- 演示二：!important 翻盘 -->
+  <h2>演示二：!important 强行翻盘</h2>
+  <div class="demo">
+    <!-- 加上 win 类后，.note.win 带 !important，凌驾于行内样式之上 -->
+    <p id="msg2" class="note win target-text" style="color:#e67e22">
+      即使写了行内橙色，!important 仍让我变成红色（这就是它危险的原因）
+    </p>
+    <p>普通比较里行内最高，但带 <code>!important</code> 的声明属于更高的“重要性层级”，会越过普通声明。</p>
+  </div>
+
+  <!-- 演示三：源码顺序 -->
+  <h2>演示三：同优先级看源码顺序</h2>
+  <div class="demo">
+    <!-- 两条都是单类选择器，权重相同，后写的赢 -->
+    <p class="order-demo target-text">同优先级时，后定义的规则覆盖前面的（我是蓝色）</p>
+    <style>
+      .order-demo { color: #c0392b; } /* 先写：红 */
+      .order-demo { color: #2980b9; } /* 后写：蓝 —— 胜出 */
+    </style>
+  </div>
+
+  <p style="color:#888;font-size:13px">注：通用选择器 <code>*</code> 与组合器（空格、&gt;、+、~）不计入权重。</p>
+</body>
+</html>

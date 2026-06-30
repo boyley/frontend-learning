@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>18 · 组合式函数</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    button { padding: 6px 12px; margin: 4px 4px 0 0; cursor: pointer; }
+    code { background: #f5f5f5; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>18 · 组合式函数（Composables）</h1>
+  <div id="app">
+    <div class="card">
+      <h3>① useCounter —— 复用计数逻辑</h3>
+      <p>计数器 A：{{ a.count }}</p>
+      <button @click="a.inc">+1</button>
+      <button @click="a.dec">-1</button>
+      <button @click="a.reset">重置</button>
+      <hr />
+      <p>计数器 B（互不影响）：{{ b.count }}</p>
+      <button @click="b.inc">+1</button>
+    </div>
+
+    <div class="card">
+      <h3>② useMouse —— 复用「跟踪鼠标位置」逻辑（带生命周期清理）</h3>
+      <p>鼠标位置：x = {{ mouse.x }}，y = {{ mouse.y }}（在页面上移动）</p>
+    </div>
+
+    <div class="card">
+      <p>组合式函数就是一个以 <code>use</code> 开头、内部用响应式 API 的普通函数，
+         把「有状态的逻辑」抽出来在多个组件/多个实例间复用。</p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref, reactive, onMounted, onUnmounted } = Vue;
+
+    // ===== 组合式函数 1：计数器逻辑 =====
+    // 约定以 use 开头；每次调用都创建一份独立的状态
+    function useCounter(initial = 0) {
+      const count = ref(initial);
+      const inc = () => count.value++;
+      const dec = () => count.value--;
+      const reset = () => (count.value = initial);
+      // 返回响应式状态 + 操作方法
+      return reactive({ count, inc, dec, reset });
+    }
+
+    // ===== 组合式函数 2：鼠标位置追踪（封装了事件监听 + 清理）=====
+    function useMouse() {
+      const x = ref(0), y = ref(0);
+      const update = (e) => { x.value = e.pageX; y.value = e.pageY; };
+      // 组合式函数内部也能用生命周期钩子！
+      onMounted(() => window.addEventListener('mousemove', update));
+      onUnmounted(() => window.removeEventListener('mousemove', update));
+      return reactive({ x, y });
+    }
+
+    createApp({
+      setup() {
+        // 同一个 useCounter 调两次，得到两份互不干扰的状态
+        const a = useCounter(0);
+        const b = useCounter(100);
+        const mouse = useMouse();
+        return { a, b, mouse };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

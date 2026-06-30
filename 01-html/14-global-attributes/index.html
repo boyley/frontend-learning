@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML 全局属性 Demo</title>
+  <style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; margin: 24px; color: #222; line-height: 1.7; }
+    h1 { font-size: 22px; }
+    section { border: 1px solid #ddd; border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+    h2 { font-size: 16px; margin-top: 0; }
+    .card { display: inline-block; padding: 10px 14px; border: 1px solid #bbb; border-radius: 6px; cursor: pointer; }
+    .editable { border: 1px dashed #888; padding: 8px 10px; border-radius: 6px; min-height: 1.5em; }
+    code { background: #f6f8fa; padding: 1px 6px; border-radius: 4px; }
+    output { display: block; margin-top: 10px; color: #0a7; font-weight: 600; }
+    [hidden] { /* 浏览器默认就会隐藏带 hidden 的元素，这里只是提示 */ }
+  </style>
+</head>
+<body>
+  <h1>全局属性（Global Attributes）</h1>
+  <p>“全局属性”是指<strong>几乎所有 HTML 元素都能使用</strong>的属性。下面分类演示。</p>
+
+  <!-- id / class / style / title -->
+  <section>
+    <h2>1. id / class / style / title</h2>
+    <!-- id 唯一标识；class 可复用分组；style 行内样式；title 鼠标悬停提示 -->
+    <p id="intro" class="card" style="background:#eef6ff"
+       title="把鼠标停在这里 1 秒会看到这段提示文字（title 属性）">
+      鼠标悬停我看 title 提示
+    </p>
+  </section>
+
+  <!-- data-* 自定义数据属性 -->
+  <section>
+    <h2>2. data-* 自定义数据属性（dataset）</h2>
+    <!-- data-* 让你在 HTML 上挂自定义数据，JS 通过 element.dataset 读取 -->
+    <!-- 注意：data-user-id 在 dataset 里会变成驼峰 userId -->
+    <button class="card" id="prodBtn"
+            data-product-id="A1001"
+            data-price="29.9"
+            data-user-id="u-777">
+      点我读取 data-* 数据
+    </button>
+    <output id="dataOut">（点击按钮后这里显示读取结果）</output>
+  </section>
+
+  <!-- contenteditable -->
+  <section>
+    <h2>3. contenteditable 可编辑内容</h2>
+    <!-- contenteditable="true" 让普通元素变成可直接编辑的富文本区 -->
+    <div class="editable" contenteditable="true" id="editBox">
+      这段文字可以直接点进去编辑，试试修改我！
+    </div>
+    <output id="editOut">字符数：—</output>
+  </section>
+
+  <!-- hidden / tabindex -->
+  <section>
+    <h2>4. hidden / tabindex</h2>
+    <!-- hidden：布尔属性，元素从渲染中移除（视觉+可访问性都隐藏） -->
+    <p id="secret" hidden>我本来是隐藏的（hidden），点下面按钮显示我。</p>
+    <button class="card" id="toggleBtn">切换 hidden</button>
+    <!-- tabindex 控制键盘 Tab 聚焦顺序：0 加入自然顺序，-1 仅可脚本聚焦不进 Tab 流 -->
+    <p>
+      用 Tab 键聚焦下面三个块，注意顺序由 tabindex 决定：
+    </p>
+    <span class="card" tabindex="2">tabindex=2（第二个聚焦）</span>
+    <span class="card" tabindex="1">tabindex=1（第一个聚焦）</span>
+    <span class="card" tabindex="3">tabindex=3（第三个聚焦）</span>
+  </section>
+
+  <!-- lang / dir -->
+  <section>
+    <h2>5. lang / dir 语言与文字方向</h2>
+    <!-- lang 标注局部语言，利于翻译/朗读；dir 控制文字方向 ltr / rtl -->
+    <p lang="en" title="这段被标注为英语">This sentence is marked as English (lang="en").</p>
+    <p dir="rtl">这段设置了 dir="rtl"，文字从右向左排列（常用于阿拉伯语/希伯来语）。</p>
+  </section>
+
+  <script>
+    // ===== data-* 读取演示 =====
+    const prodBtn = document.getElementById('prodBtn');
+    const dataOut = document.getElementById('dataOut');
+    prodBtn.addEventListener('click', () => {
+      // dataset 把 data-product-id 变成 productId（驼峰命名）
+      const d = prodBtn.dataset;
+      dataOut.textContent =
+        `productId=${d.productId}, price=${d.price}, userId=${d.userId}`;
+    });
+
+    // ===== contenteditable 监听编辑 =====
+    const editBox = document.getElementById('editBox');
+    const editOut = document.getElementById('editOut');
+    const updateCount = () => {
+      editOut.textContent = '字符数：' + editBox.textContent.trim().length;
+    };
+    editBox.addEventListener('input', updateCount); // 每次输入触发
+    updateCount();
+
+    // ===== hidden 切换 =====
+    const secret = document.getElementById('secret');
+    document.getElementById('toggleBtn').addEventListener('click', () => {
+      // 直接操作 hidden 属性（布尔）即可显示/隐藏
+      secret.hidden = !secret.hidden;
+    });
+  </script>
+</body>
+</html>

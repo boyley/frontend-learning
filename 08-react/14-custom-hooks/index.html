@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14 · 自定义 Hook</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .card { border: 1px solid #ccc; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    input { padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ====== 自定义 Hook 1：useLocalStorage ======
+    // 作用：把一个 state 自动同步到 localStorage，刷新页面后还在。
+    // 约定：函数名必须以 use 开头，内部可以调用其他 Hook（useState/useEffect）。
+    function useLocalStorage(key, initialValue) {
+      // 初始化时优先从 localStorage 读，读不到再用默认值
+      const [value, setValue] = useState(() => {
+        const saved = localStorage.getItem(key);
+        return saved != null ? JSON.parse(saved) : initialValue;
+      });
+
+      // 每当 value 变化，就写回 localStorage
+      useEffect(() => {
+        localStorage.setItem(key, JSON.stringify(value));
+      }, [key, value]);
+
+      // 返回值任意：这里仿照 useState 返回 [值, 更新函数]
+      return [value, setValue];
+    }
+
+    // ====== 自定义 Hook 2：useWindowWidth ======
+    // 作用：实时返回窗口宽度，封装了事件监听与清理逻辑。
+    function useWindowWidth() {
+      const [width, setWidth] = useState(window.innerWidth);
+      useEffect(() => {
+        const onResize = () => setWidth(window.innerWidth);
+        window.addEventListener('resize', onResize);
+        // 清理函数：组件卸载时移除监听，防止内存泄漏
+        return () => window.removeEventListener('resize', onResize);
+      }, []);
+      return width; // 直接返回一个数字
+    }
+
+    // ====== 组件 A：复用 useLocalStorage ======
+    function NameCard() {
+      const [name, setName] = useLocalStorage('demo-name', '');
+      return (
+        <div className="card">
+          <h3>useLocalStorage 演示</h3>
+          <input
+            value={name}
+            placeholder="输入名字后刷新页面试试"
+            onChange={e => setName(e.target.value)}
+          />
+          <p>你好，{name || '匿名'}！（已自动存进 localStorage）</p>
+        </div>
+      );
+    }
+
+    // ====== 组件 B：同样复用 useLocalStorage，但 state 互相独立 ======
+    function ThemeCard() {
+      const [theme, setTheme] = useLocalStorage('demo-theme', 'light');
+      return (
+        <div className="card">
+          <h3>同一个 Hook，独立的 state</h3>
+          <p>当前主题：{theme}</p>
+          <button onClick={() => setTheme(t => (t === 'light' ? 'dark' : 'light'))}>
+            切换主题
+          </button>
+          <p style={{ color: '#888' }}>
+            它和上面的名字用同一个 useLocalStorage，但 key 不同、state 各自独立。
+          </p>
+        </div>
+      );
+    }
+
+    // ====== 组件 C：复用 useWindowWidth ======
+    function WidthCard() {
+      const width = useWindowWidth();
+      return (
+        <div className="card">
+          <h3>useWindowWidth 演示</h3>
+          <p>拖动改变窗口大小：当前宽度 = <b>{width}px</b></p>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h2>自定义 Hook Demo</h2>
+          <NameCard />
+          <ThemeCard />
+          <WidthCard />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

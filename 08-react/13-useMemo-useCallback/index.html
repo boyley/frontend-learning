@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13 · useMemo / useCallback 性能优化</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    input { padding: 4px 8px; }
+    .hint { color: #888; font-size: 14px; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <p class="hint">打开浏览器控制台（F12）观察 console.log，体会哪些计算/渲染被缓存跳过了。</p>
+
+  <script type="text/babel">
+    const { useState, useMemo, useCallback, memo } = React;
+
+    // 一个「昂贵」的过滤函数：用循环模拟耗时计算
+    function expensiveFilter(list, keyword) {
+      console.log('💰 执行了昂贵的过滤计算');
+      let dummy = 0;
+      for (let i = 0; i < 3_000_000; i++) dummy += i; // 故意拖慢
+      return list.filter(item => item.includes(keyword));
+    }
+
+    // 子组件用 React.memo 包裹：只有当 props 真正变化时才重渲染。
+    // 前提是传进来的函数引用要稳定（靠 useCallback 保证）。
+    const ListItem = memo(function ListItem({ name, onSelect }) {
+      console.log('🔁 ListItem 渲染：', name);
+      return <li><button onClick={() => onSelect(name)}>{name}</button></li>;
+    });
+
+    function App() {
+      const [keyword, setKeyword] = useState('');
+      const [count, setCount] = useState(0); // 与列表无关的 state，用来触发重渲染
+
+      const allFruits = ['apple', 'banana', 'orange', 'grape', 'pear', 'mango'];
+
+      // useMemo：缓存过滤结果。只有 keyword 变化时才重新执行昂贵计算；
+      // 点击 count++ 触发重渲染时，因依赖未变会直接复用上次结果。
+      const filtered = useMemo(
+        () => expensiveFilter(allFruits, keyword),
+        [keyword]
+      );
+
+      // useCallback：缓存函数引用。依赖为空数组，所以这个函数永远是同一个引用，
+      // 配合 memo 让 ListItem 在无关的 count++ 重渲染时不被牵连。
+      const handleSelect = useCallback((name) => {
+        alert('你选择了：' + name);
+      }, []);
+
+      return (
+        <div>
+          <h2>useMemo / useCallback 性能优化 Demo</h2>
+          <p>
+            无关计数器：{count}{' '}
+            <button onClick={() => setCount(c => c + 1)}>count + 1（触发重渲染）</button>
+          </p>
+          <p>
+            过滤关键字：
+            <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="如 an" />
+          </p>
+          <p className="hint">
+            点「count+1」：不会重跑昂贵过滤（useMemo 命中），ListItem 也不重渲染（memo + useCallback 命中）。<br/>
+            改输入框：会重跑过滤，匹配变化的项才重渲染。
+          </p>
+          <ul>
+            {filtered.map(name => (
+              <ListItem key={name} name={name} onSelect={handleSelect} />
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

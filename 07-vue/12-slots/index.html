@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12 · 插槽</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    .panel { border: 1px solid #42b883; border-radius: 8px; overflow: hidden; }
+    .panel-head { background: #42b883; color: #fff; padding: 8px 12px; }
+    .panel-body { padding: 12px; }
+    .panel-foot { background: #f5f5f5; padding: 8px 12px; text-align: right; }
+    button { padding: 4px 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>12 · 插槽（Slots）</h1>
+  <div id="app">
+
+    <div class="card">
+      <h3>① 默认插槽 + 具名插槽</h3>
+      <!-- 父组件把内容“塞进”子组件的 slot 占位 -->
+      <my-panel>
+        <!-- #header 是 v-slot:header 的简写，对应子组件 name="header" 的插槽 -->
+        <template #header>📦 我的面板标题</template>
+        <!-- 没指定名字的内容进入“默认插槽” -->
+        <p>这是面板主体内容，由父组件提供。</p>
+        <template #footer>
+          <button>确定</button>
+        </template>
+      </my-panel>
+    </div>
+
+    <div class="card">
+      <h3>② 作用域插槽（子组件把数据传给插槽内容）</h3>
+      <!-- v-slot="slotProps" 接收子组件通过 slot 暴露的数据 -->
+      <user-list :users="users">
+        <template #default="{ user, index }">
+          <span>{{ index + 1 }}. <b>{{ user.name }}</b>（{{ user.age }} 岁）</span>
+        </template>
+      </user-list>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    const app = createApp({
+      setup() {
+        const users = ref([
+          { name: '小明', age: 18 },
+          { name: '小红', age: 20 },
+          { name: '小刚', age: 22 },
+        ]);
+        return { users };
+      }
+    });
+
+    // 带具名插槽的面板组件
+    app.component('MyPanel', {
+      template: `
+        <div class="panel">
+          <div class="panel-head"><slot name="header">默认标题</slot></div>
+          <div class="panel-body"><slot>默认内容</slot></div>
+          <div class="panel-foot"><slot name="footer"></slot></div>
+        </div>
+      `
+    });
+
+    // 作用域插槽：子组件循环数据，把每项通过 slot 的属性“暴露”给父组件
+    app.component('UserList', {
+      props: { users: Array },
+      template: `
+        <ul>
+          <li v-for="(user, index) in users" :key="user.name">
+            <!-- 把 user / index 作为 slot props 传出去，由父组件决定怎么渲染 -->
+            <slot :user="user" :index="index">{{ user.name }}</slot>
+          </li>
+        </ul>
+      `
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

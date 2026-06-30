@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16 · 数据请求（Fetching Data）</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; max-width: 640px; }
+    button { font-size: 15px; padding: 8px 16px; cursor: pointer; border-radius: 8px;
+             border: 1px solid #2563eb; background: #2563eb; color: #fff; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    ul { padding-left: 0; list-style: none; }
+    li { padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin: 8px 0; }
+    .muted { color: #6b7280; font-size: 13px; }
+    .error { color: #b91c1c; background: #fee2e2; padding: 10px; border-radius: 8px; }
+    .loading { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const API = 'https://jsonplaceholder.typicode.com/users';
+
+    function UserList() {
+      // === 异步数据的三种状态 ===
+      const [data, setData] = useState(null);       // 成功拿到的数据
+      const [loading, setLoading] = useState(true);  // 是否加载中
+      const [error, setError] = useState(null);      // 出错信息
+      // reloadKey：每次点“重新请求”就 +1，作为 effect 依赖触发重新拉取
+      const [reloadKey, setReloadKey] = useState(0);
+
+      useEffect(() => {
+        // 竞态保护标志：本次 effect 是否已被“清理”（组件卸载或依赖变更）
+        // 如果旧请求晚于新请求返回，靠它丢弃过期结果，避免覆盖最新数据。
+        let ignore = false;
+
+        // ⚠️ 不能直接把 useEffect 的回调写成 async，
+        // 所以在内部定义一个 async 函数再调用。
+        async function fetchUsers() {
+          setLoading(true);
+          setError(null);
+          try {
+            const res = await fetch(API);
+            // fetch 只有网络层失败才 reject，HTTP 4xx/5xx 不会，需要手动判断
+            if (!res.ok) throw new Error(`HTTP 错误：${res.status}`);
+            const json = await res.json();
+            if (!ignore) {        // 只有“当前有效”的请求才允许写入状态
+              setData(json);
+              setLoading(false);
+            }
+          } catch (err) {
+            if (!ignore) {
+              setError(err.message);
+              setLoading(false);
+            }
+          }
+        }
+
+        fetchUsers();
+
+        // 清理函数：依赖变化 / 组件卸载时执行，标记本次请求作废
+        return () => { ignore = true; };
+      }, [reloadKey]); // 依赖 reloadKey：它变了就重新请求
+
+      // === 根据三态分别渲染 ===
+      if (loading) return <p className="loading">⏳ 加载中…</p>;
+      if (error)   return (
+        <div>
+          <p className="error">❌ 请求失败：{error}</p>
+          <button onClick={() => setReloadKey(k => k + 1)}>重试</button>
+        </div>
+      );
+
+      return (
+        <div>
+          <button onClick={() => setReloadKey(k => k + 1)}>🔄 重新请求</button>
+          <p className="muted">共 {data.length} 位用户（数据来自 jsonplaceholder）</p>
+          <ul>
+            {data.map(u => (
+              <li key={u.id}>
+                <strong>{u.name}</strong>（@{u.username}）<br />
+                <span className="muted">📧 {u.email} · 🏙️ {u.address.city}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h1>👥 用户列表（数据请求三态示例）</h1>
+          <UserList />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

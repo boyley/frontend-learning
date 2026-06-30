@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 · 组件与 Props</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 12px 0; }
+    h3 { margin-top: 0; color: #42b883; }
+    .product { border: 1px solid #42b883; border-radius: 8px; padding: 12px; margin: 8px 0; }
+    .badge { background: #e63946; color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+    button { padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>10 · 组件与 Props（父传子）</h1>
+  <div id="app">
+    <div class="card">
+      <h3>父组件用数据循环渲染多个子组件，通过 props 传值</h3>
+      <button @click="discountAll">全场再打 9 折</button>
+      <!-- :title、:price、:on-sale 都是把父组件数据传给子组件的 props -->
+      <!-- 注意：HTML 属性不区分大小写，组件里的 onSale 在模板写成 on-sale -->
+      <product-card
+        v-for="p in products"
+        :key="p.id"
+        :title="p.title"
+        :price="p.price"
+        :on-sale="p.onSale"
+      ></product-card>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const { createApp, reactive } = Vue;
+    const app = createApp({
+      setup() {
+        const products = reactive([
+          { id: 1, title: 'Vue 实战课', price: 199, onSale: true },
+          { id: 2, title: 'TypeScript 入门', price: 99, onSale: false },
+          { id: 3, title: '前端工程化', price: 299, onSale: true },
+        ]);
+        const discountAll = () => products.forEach(p => (p.price = Math.round(p.price * 0.9)));
+        return { products, discountAll };
+      }
+    });
+
+    // 注册一个全局子组件 ProductCard
+    app.component('ProductCard', {
+      // props 声明：用对象形式可指定类型、必填、默认值
+      props: {
+        title: { type: String, required: true },
+        price: { type: Number, required: true },
+        onSale: { type: Boolean, default: false },
+      },
+      // setup 第一个参数就是 props（只读！子组件不能直接改）
+      setup(props) {
+        return { props };
+      },
+      template: `
+        <div class="product">
+          <h4>{{ props.title }} <span v-if="props.onSale" class="badge">促销</span></h4>
+          <p>价格：￥{{ props.price }}</p>
+        </div>
+      `
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

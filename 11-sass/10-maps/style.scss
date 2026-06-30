@@ -1,0 +1,95 @@
+// ============================================================
+// 10 · 映射（Maps）：键值对数据结构 + sass:map 模块
+// ------------------------------------------------------------
+// map 是 Sass 的「字典 / 对象」：(key: value, ...)。
+// 配合 sass:map 模块的 map.get / map.has-key / map.merge 等，
+// 是组织主题、断点、设计 token 的最佳数据结构。
+// ============================================================
+
+@use "sass:map"; // 内置 map 模块（现代写法，替代旧的 map-get 全局函数）
+
+// ---------- 1) 定义 map ----------
+// 主题色板
+$theme: (
+  "primary": #6750a4,
+  "secondary": #625b71,
+  "success": #21a366,
+  "danger": #b3261e,
+);
+
+// 响应式断点
+$breakpoints: (
+  "mobile": 600px,
+  "tablet": 900px,
+  "desktop": 1200px,
+);
+
+// map 可以嵌套 map
+$spacing: (
+  "sm": 8px,
+  "md": 16px,
+  "lg": 24px,
+);
+
+// ---------- 2) map.get：按 key 取值（最常用）----------
+.btn {
+  background: map.get($theme, "primary"); // 取主题色
+  padding: map.get($spacing, "md");
+  color: #fff;
+}
+
+// ---------- 3) map.has-key：安全判断 key 是否存在 ----------
+@mixin bg($name) {
+  @if map.has-key($theme, $name) {
+    background: map.get($theme, $name);
+  } @else {
+    @error "颜色 #{$name} 不在主题里！可用：#{map.keys($theme)}";
+  }
+}
+
+.alert {
+  @include bg("danger");
+  color: #fff;
+  padding: map.get($spacing, "sm") map.get($spacing, "md");
+}
+
+// ---------- 4) 遍历 map 批量生成（@each 配合 map）----------
+@each $name, $color in $theme {
+  .chip-#{$name} {
+    background: $color;
+    color: #fff;
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+}
+
+// ---------- 5) map.keys / map.values / map.merge ----------
+// map.merge 合并两个 map（返回新 map，不改原值），常用于「默认配置 + 覆盖」
+$base-config: (
+  "radius": 8px,
+  "border": 1px,
+);
+$user-config: (
+  "radius": 16px,
+); // 只覆盖 radius
+$config: map.merge($base-config, $user-config); // radius=16px, border=1px
+
+.box {
+  border-radius: map.get($config, "radius"); // → 16px
+  border: map.get($config, "border") solid #ccc; // → 1px
+}
+
+// ---------- 6) 用断点 map 封装响应式 mixin ----------
+@mixin respond-to($bp) {
+  @media (min-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+.container {
+  width: 100%;
+  @include respond-to("tablet") {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+}

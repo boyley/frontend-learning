@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · Web Storage</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 24px; transition: background .25s, color .25s;
+    }
+    /* 主题：通过 data-theme 切换；持久化在 localStorage */
+    body[data-theme="light"] { background: #f5f6fa; color: #222; }
+    body[data-theme="dark"]  { background: #1e1e2e; color: #cdd6f4; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .sub { opacity: .75; margin: 0 0 20px; font-size: 14px; }
+    .panel {
+      border-radius: 10px; padding: 18px; margin-bottom: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    }
+    body[data-theme="light"] .panel { background: #fff; }
+    body[data-theme="dark"]  .panel { background: #2a2a3c; }
+    .panel h2 { font-size: 15px; margin: 0 0 12px; color: #7c83ff; }
+    textarea, input[type=text] {
+      width: 100%; padding: 10px; font-size: 14px; border-radius: 6px;
+      border: 1px solid #aab; background: transparent; color: inherit; font-family: inherit;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    button {
+      padding: 9px 16px; margin: 8px 6px 0 0; font-size: 14px; cursor: pointer;
+      border: none; border-radius: 6px; background: #7c83ff; color: #fff;
+      transition: background .15s;
+    }
+    button:hover { background: #5d65f0; }
+    button.ghost { background: rgba(124,131,255,.18); color: #7c83ff; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 640px){ .grid { grid-template-columns: 1fr; } }
+    pre {
+      margin: 10px 0 0; padding: 10px 12px; background: rgba(125,125,160,.15);
+      border-radius: 8px; font-size: 13px; line-height: 1.6; overflow-x: auto;
+      white-space: pre-wrap; word-break: break-all; min-height: 22px;
+    }
+    .tip { font-size: 12px; opacity: .7; margin-top: 6px; }
+    code { background: rgba(125,125,160,.25); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body data-theme="light">
+  <h1>08 · Web Storage（localStorage / sessionStorage）</h1>
+  <p class="sub">在下面输入笔记并保存，<b>刷新页面后还在</b>；切换主题也会被记住。对比下方 sessionStorage：关掉标签页就没了。</p>
+
+  <div class="panel">
+    <h2>① 主题切换（存 localStorage，持久化）</h2>
+    <button id="btnLight" class="ghost">☀️ 浅色 light</button>
+    <button id="btnDark" class="ghost">🌙 深色 dark</button>
+    <p class="tip">切换后刷新页面，主题仍保留 —— 来自 <code>localStorage.getItem('theme')</code>。</p>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>② 笔记（localStorage，刷新/重开都在）</h2>
+      <textarea id="note" placeholder="随便写点什么，会自动保存…"></textarea>
+      <div>
+        <button id="btnSaveNote">保存笔记</button>
+        <button id="btnClearNote" class="ghost">清空笔记</button>
+      </div>
+      <p class="tip">输入即自动保存；<code>localStorage</code> 关浏览器再开仍在。</p>
+    </div>
+
+    <div class="panel">
+      <h2>③ 草稿（sessionStorage，关标签页即失效）</h2>
+      <input id="draft" type="text" placeholder="临时草稿，仅本标签页本次会话有效" />
+      <div>
+        <button id="btnSaveDraft">保存草稿</button>
+      </div>
+      <p class="tip">刷新还在，但<b>关闭标签页</b>后再开就没了 —— 这就是 <code>sessionStorage</code>。</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>④ 存对象需 JSON 序列化（演示）</h2>
+    <button id="btnSaveObj">保存一个对象 { name, time }</button>
+    <button id="btnReadObj" class="ghost">读取并解析对象</button>
+    <pre id="objOut">点上面按钮看效果…</pre>
+  </div>
+
+  <div class="panel">
+    <h2>⑤ 当前 localStorage 全部内容</h2>
+    <button id="btnDump" class="ghost">刷新查看</button>
+    <button id="btnClearAll" class="ghost">clear() 清空全部</button>
+    <pre id="dump">点「刷新查看」…</pre>
+    <p class="tip">提示：打开两个相同页面的标签页，在一边保存笔记，另一边会通过 <code>storage</code> 事件收到通知（见控制台）。</p>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

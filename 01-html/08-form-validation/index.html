@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · 表单原生校验演示</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 620px; margin: 24px auto; padding: 0 16px; line-height: 1.6; color: #222; }
+    h1 { font-size: 22px; }
+    .row { margin: 14px 0; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; }
+    input, textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 2px solid #cbd5e1; border-radius: 8px; font: inherit; }
+
+    /* :valid / :invalid 伪类：根据控件校验状态自动变色 */
+    /* 用 :not(:placeholder-shown) 避免“还没输入就先标红”的体验问题 */
+    input:not(:placeholder-shown):valid,
+    textarea:not(:placeholder-shown):valid { border-color: #16a34a; }
+    input:not(:placeholder-shown):invalid,
+    textarea:not(:placeholder-shown):invalid { border-color: #dc2626; }
+
+    /* 每个字段的提示文字，默认隐藏，校验失败时显示 */
+    .hint { font-size: 12px; color: #dc2626; min-height: 16px; margin-top: 4px; }
+
+    button { font: inherit; padding: 9px 20px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+    output { display: block; margin-top: 14px; padding: 10px; background: #ecfdf5; color: #065f46; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>HTML5 原生校验：required / pattern / type / 自定义提示</h1>
+
+  <!--
+    novalidate（这里没加）：若加在 form 上会“关闭”浏览器原生校验气泡，
+    便于完全用 JS 接管。本 demo 保留原生校验，并额外用 JS 做实时反馈。
+  -->
+  <form id="signup" novalidate>
+
+    <div class="row">
+      <label for="user">用户名（必填，3-10 位字母数字）</label>
+      <!--
+        required   ：必填，为空则 invalid
+        pattern    ：正则约束，这里要求 3-10 位字母或数字
+        minlength/maxlength：长度约束
+        placeholder 同时也用于 :not(:placeholder-shown) 技巧
+      -->
+      <input type="text" id="user" name="user"
+             required pattern="[A-Za-z0-9]{3,10}"
+             minlength="3" maxlength="10" placeholder="如 alice01" />
+      <div class="hint" data-for="user"></div>
+    </div>
+
+    <div class="row">
+      <label for="mail">邮箱（type=email 自动校验格式）</label>
+      <input type="email" id="mail" name="mail" required placeholder="you@example.com" />
+      <div class="hint" data-for="mail"></div>
+    </div>
+
+    <div class="row">
+      <label for="site">个人主页（type=url，可选）</label>
+      <input type="url" id="site" name="site" placeholder="https://..." />
+      <div class="hint" data-for="site"></div>
+    </div>
+
+    <div class="row">
+      <label for="age">年龄（18-60）</label>
+      <!-- type=number + min/max 限定数值范围 -->
+      <input type="number" id="age" name="age" required min="18" max="60" placeholder="18-60" />
+      <div class="hint" data-for="age"></div>
+    </div>
+
+    <div class="row">
+      <label for="pwd2">确认密码（演示 setCustomValidity）</label>
+      <!-- 这里固定要求等于 "123456"，否则用 JS 设自定义错误信息 -->
+      <input type="password" id="pwd2" name="pwd2" required placeholder="本 demo 固定填 123456" />
+      <div class="hint" data-for="pwd2"></div>
+    </div>
+
+    <button type="submit">注册</button>
+    <output id="ok"></output>
+  </form>
+
+  <script>
+    const form = document.getElementById('signup');
+
+    // 把每个控件的“校验信息”渲染到它下方的 .hint
+    function showHint(input) {
+      const hint = form.querySelector(`.hint[data-for="${input.id}"]`);
+      if (!hint) return;
+      // validity 是 ValidityState 对象，valid 为 true 表示通过
+      // validationMessage 是浏览器根据失败原因生成的本地化文案
+      hint.textContent = input.validity.valid ? '' : input.validationMessage;
+    }
+
+    // 确认密码：用 Constraint Validation API 的 setCustomValidity 注入自定义规则
+    const pwd2 = document.getElementById('pwd2');
+    function checkPwd() {
+      if (pwd2.value && pwd2.value !== '123456') {
+        // 设非空字符串 => 该控件变为 invalid，并以此为提示
+        pwd2.setCustomValidity('演示规则：密码必须等于 123456');
+      } else {
+        // 设空字符串 => 清除自定义错误，恢复有效
+        pwd2.setCustomValidity('');
+      }
+    }
+
+    // 实时反馈：输入时即时校验并显示提示
+    form.addEventListener('input', (e) => {
+      if (e.target === pwd2) checkPwd();
+      showHint(e.target);
+    });
+
+    // 提交：因为 form 上加了 novalidate，需手动触发 checkValidity()
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      checkPwd();
+      // 给所有控件刷新提示
+      form.querySelectorAll('input').forEach(showHint);
+      if (form.checkValidity()) {
+        // 全部通过
+        document.getElementById('ok').textContent = '✅ 校验全部通过，可以提交！';
+      } else {
+        document.getElementById('ok').textContent = '';
+        // reportValidity 会聚焦第一个非法控件（这里也能弹原生气泡）
+        form.reportValidity();
+      }
+    });
+  </script>
+</body>
+</html>

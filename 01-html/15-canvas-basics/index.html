@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canvas 入门 Demo</title>
+  <style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; margin: 24px; color: #222; line-height: 1.7; }
+    h1 { font-size: 22px; }
+    /* 给 canvas 加边框，方便看清画布范围；注意尺寸要用 width/height 属性而不是 CSS */
+    canvas { border: 1px solid #999; background: #fafafa; display: block; margin-top: 12px; }
+    .tip { background: #eef6ff; border-left: 4px solid #3b82f6; padding: 10px 14px; margin-top: 14px; }
+    code { background: #f6f8fa; padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Canvas 基础绘图</h1>
+  <p><code>&lt;canvas&gt;</code> 是一块“位图画布”，本身不画任何东西，所有图形都靠 JavaScript 用 2D 上下文 API 绘制。</p>
+
+  <!--
+    width / height 必须写在标签属性上（单位 px），它决定画布的“像素分辨率”。
+    如果只用 CSS 设置宽高，会拉伸画布导致图形变形/模糊。
+  -->
+  <canvas id="board" width="480" height="320">
+    你的浏览器不支持 canvas（这段是后备文字）。
+  </canvas>
+
+  <div class="tip">
+    画布坐标系：左上角是原点 (0,0)，x 向右增大，y <strong>向下</strong>增大。
+  </div>
+
+  <script>
+    // 1) 拿到 canvas 元素
+    const canvas = document.getElementById('board');
+
+    // 2) 获取 2D 绘图上下文（context），所有绘制 API 都在它上面
+    const ctx = canvas.getContext('2d');
+
+    // ========== 绘制填充矩形 fillRect(x, y, w, h) ==========
+    ctx.fillStyle = '#3b82f6';        // 设置填充颜色（蓝）
+    ctx.fillRect(20, 20, 120, 80);    // 在 (20,20) 处画 120x80 的实心矩形
+
+    // ========== 绘制描边矩形 strokeRect ==========
+    ctx.strokeStyle = '#ef4444';      // 设置描边颜色（红）
+    ctx.lineWidth = 3;                // 线宽
+    ctx.strokeRect(170, 20, 120, 80); // 只有边框的矩形
+
+    // ========== 用路径画线 beginPath/moveTo/lineTo/stroke ==========
+    ctx.beginPath();                  // 开启一条新路径（很重要，否则会和之前的连起来）
+    ctx.moveTo(20, 140);              // 把“画笔”移动到起点（不画）
+    ctx.lineTo(140, 200);             // 画一条到该点的线
+    ctx.lineTo(20, 200);              // 再画一条，形成折线
+    ctx.closePath();                  // 闭合路径（连回起点）
+    ctx.strokeStyle = '#10b981';      // 绿色
+    ctx.lineWidth = 2;
+    ctx.stroke();                     // 真正“描边”把路径画出来
+
+    // ========== 画圆 arc(x, y, r, startAngle, endAngle) ==========
+    ctx.beginPath();                  // 圆也是路径，先开新路径
+    // 圆心(360,150)，半径50，从0到2π（整圆），角度单位是弧度
+    ctx.arc(360, 150, 50, 0, Math.PI * 2);
+    ctx.fillStyle = '#f59e0b';        // 橙色填充
+    ctx.fill();                       // 填充整个圆
+    ctx.strokeStyle = '#92400e';      // 深棕描边
+    ctx.lineWidth = 3;
+    ctx.stroke();                     // 再给圆描个边
+
+    // ========== 画半圆/扇形演示弧度 ==========
+    ctx.beginPath();
+    ctx.arc(360, 150, 50, 0, Math.PI);// 0 到 π 是下半圆（因为 y 向下）
+    ctx.strokeStyle = '#7c3aed';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // ========== 写文字 fillText(text, x, y) ==========
+    ctx.fillStyle = '#111';           // 文字颜色
+    ctx.font = '20px "Microsoft YaHei", sans-serif'; // 字体大小与字族
+    ctx.fillText('Canvas 你好！', 20, 270);  // (x,y) 是文字基线左端
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.strokeText('描边文字 Outline', 20, 300); // 空心描边文字
+  </script>
+</body>
+</html>

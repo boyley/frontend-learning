@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- 声明文档类型为 HTML5 -->
+<html lang="zh-CN">
+<!-- lang="zh-CN" 告诉浏览器和屏幕阅读器：本页主要语言是简体中文 -->
+<head>
+  <!-- charset 必须放在 head 最前面，声明使用 UTF-8 编码，避免中文乱码 -->
+  <meta charset="UTF-8" />
+  <!-- viewport 让页面在移动端按设备宽度渲染，是响应式图片生效的前提 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 图片与 figure 演示</title>
+  <style>
+    /* 仅为让 demo 效果直观，非知识点本身 */
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; line-height: 1.6; color: #222; }
+    h1 { font-size: 22px; }
+    section { border: 1px solid #e2e2e2; border-radius: 10px; padding: 16px; margin: 18px 0; }
+    h2 { font-size: 16px; margin-top: 0; color: #2563eb; }
+    img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
+    /* figure 默认带有左右外边距，这里归零便于观察 */
+    figure { margin: 0; }
+    figcaption { font-size: 13px; color: #666; margin-top: 6px; text-align: center; }
+    code { background: #f4f4f5; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>图片（img）/ 响应式（srcset）/ picture / figure 演示</h1>
+
+  <!-- ① 最基础的 img：必须有 src 与 alt -->
+  <section>
+    <h2>① 基础 img：src + alt + width/height + loading</h2>
+    <img
+      src="https://placehold.co/600x300/2563eb/ffffff?text=Basic+Image"
+      alt="一张蓝色背景、写着 Basic Image 的占位示意图"
+      width="600"
+      height="300"
+      loading="lazy"
+    />
+    <!--
+      src      ：图片地址（必需）
+      alt      ：图片无法加载或屏幕阅读器朗读时的替代文本（无障碍必需）
+      width/height：声明固有尺寸，浏览器可提前预留空间，减少布局抖动(CLS)
+      loading="lazy"：进入视口附近才加载，节省首屏带宽
+    -->
+  </section>
+
+  <!-- ② 内联 SVG：不依赖任何外部资源也能显示图形 -->
+  <section>
+    <h2>② 内联 SVG（零外部依赖的矢量图）</h2>
+    <svg width="600" height="120" viewBox="0 0 600 120" role="img" aria-label="一条由蓝到紫的渐变色带">
+      <!-- defs 里定义渐变，linearGradient 是线性渐变 -->
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#2563eb" />
+          <stop offset="100%" stop-color="#7c3aed" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="600" height="120" rx="8" fill="url(#g)" />
+      <text x="300" y="68" fill="#fff" font-size="22" text-anchor="middle">Inline SVG</text>
+    </svg>
+  </section>
+
+  <!-- ③ 响应式 srcset/sizes：浏览器按屏幕宽度/DPR 自动选最合适的图 -->
+  <section>
+    <h2>③ 响应式图片 srcset + sizes</h2>
+    <img
+      alt="根据视口宽度自动切换分辨率的响应式占位图"
+      src="https://placehold.co/400x200/0ea5e9/ffffff?text=400w"
+      srcset="
+        https://placehold.co/400x200/0ea5e9/ffffff?text=400w 400w,
+        https://placehold.co/800x400/0284c7/ffffff?text=800w 800w,
+        https://placehold.co/1200x600/0369a1/ffffff?text=1200w 1200w"
+      sizes="(max-width: 600px) 100vw, 600px"
+    />
+    <!--
+      srcset 列出多个候选图，每个后面的 400w 是该图“宽度描述符”
+      sizes  告诉浏览器图片在不同视口下的“显示宽度”
+      浏览器结合 sizes + 设备像素比(DPR) 自己挑选最优候选，无需 JS
+      可拖动改变窗口宽度，再刷新观察文字（400w/800w/1200w）变化
+    -->
+  </section>
+
+  <!-- ④ picture：根据条件切换“不同的图片源/格式”（艺术指导） -->
+  <section>
+    <h2>④ picture 元素（按视口换不同构图）</h2>
+    <picture>
+      <!-- 视口 ≥ 600px 时用横版宽图 -->
+      <source media="(min-width: 600px)"
+              srcset="https://placehold.co/600x200/16a34a/ffffff?text=Wide+(>=600px)" />
+      <!-- 否则回退到下面 img 的竖版方图 -->
+      <img
+        src="https://placehold.co/300x300/15803d/ffffff?text=Square+(<600px)"
+        alt="窄屏显示方形构图、宽屏显示横向构图的示意图" />
+    </picture>
+    <!--
+      picture 内可放多个 <source>，浏览器从上到下取第一个匹配的
+      <img> 是必需的兜底，所有 source 都不匹配时显示它，alt 也写在它上面
+    -->
+  </section>
+
+  <!-- ⑤ figure + figcaption：图文一体的语义容器 -->
+  <section>
+    <h2>⑤ figure / figcaption（带说明的配图）</h2>
+    <figure>
+      <img
+        src="https://placehold.co/600x260/ef4444/ffffff?text=Chart"
+        alt="一张红色背景、标注 Chart 的示意图表" />
+      <!-- figcaption 是这张图的标题/说明，语义上与 figure 内容绑定 -->
+      <figcaption>图 1：figure 把“图片 + 说明”封装成一个独立语义单元，可整体移动而不影响正文。</figcaption>
+    </figure>
+  </section>
+</body>
+</html>

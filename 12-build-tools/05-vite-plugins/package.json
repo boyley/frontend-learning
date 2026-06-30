@@ -1,0 +1,15 @@
+{
+  "name": "vite-plugins-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "12-build-tools · 05 · Vite 插件机制（手写插件）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

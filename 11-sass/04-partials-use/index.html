@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>04 · 模块化 @use / @forward</title>
+    <!-- 只引入入口编译产物 main.css；partial 不会单独生成 css -->
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <h1 class="title">模块化样式系统</h1>
+    <p>颜色来自 <code>_colors.scss</code>，排版来自 <code>_typography.scss</code>，<br />
+      经 <code>_index.scss</code> 用 <code>@forward</code> 聚合，再由 <code>main.scss</code> 用 <code>@use</code> 引入。</p>
+    <button class="btn btn--primary">Primary</button>
+    <button class="btn btn--success">Success</button>
+    <button class="btn btn--danger">Danger</button>
+  </body>
+</html>

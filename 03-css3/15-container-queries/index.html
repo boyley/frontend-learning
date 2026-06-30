@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15 · 容器查询 Container Queries</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #fff7ed 0%, #fef2f2 100%);
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 24px;
+    }
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { margin: 0 0 8px; color: #c2410c; font-size: clamp(1.4rem, 4vw, 2rem); }
+    header p { margin: 0; color: #64748b; }
+
+    .stage { max-width: 1000px; margin: 0 auto; }
+    .row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    /* ===== 关键：把两个外层盒子声明为“查询容器” ===== */
+    /* container-type: inline-size 表示按“容器自身的宽度”来响应 */
+    .container {
+      container-type: inline-size;   /* 建立内联尺寸查询容器 */
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .container .label {
+      font-size: .8rem; font-weight: 700; color: #94a3b8;
+      margin-bottom: 10px; text-align: center;
+    }
+    .wide   { flex: 1 1 520px; }   /* 宽容器 */
+    .narrow { flex: 0 0 260px; }   /* 窄容器 */
+
+    /* ===== 同一个 .card 组件 ===== */
+    /* 默认（窄容器内）：竖向图文布局 */
+    .card {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: linear-gradient(160deg, #fff, #fff7ed);
+      border: 1px solid #fed7aa;
+    }
+    .card .thumb {
+      /* 容器查询单位 cqw：1cqw = 容器宽度的 1% */
+      height: 40cqw;
+      max-height: 180px;
+      background: linear-gradient(135deg, #fb923c, #f43f5e);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 1.4rem;
+    }
+    .card .body { padding: 0 14px 14px; }
+    .card h3 { margin: 6px 0; color: #c2410c; }
+    .card p { margin: 0; color: #64748b; font-size: .9rem; }
+    .card .tag {
+      display: inline-block; margin-top: 8px;
+      background: #ffedd5; color: #c2410c;
+      padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700;
+    }
+
+    /* ===== 容器查询：当“容器”宽度 > 400px 时，卡片变横向布局 ===== */
+    @container (min-width: 400px) {
+      .card {
+        grid-template-columns: 200px 1fr;   /* 左图右文 */
+        align-items: center;
+      }
+      .card .thumb { height: 100%; min-height: 150px; }
+      .card .body { padding: 14px; }
+      .card h3 { font-size: 1.3rem; }
+    }
+
+    /* ===== 演示 2：range 滑块实时改容器宽度 ===== */
+    .demo2 {
+      background: #fff; border-radius: 16px; padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .demo2 .controls {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+      font-weight: 600; color: #475569; font-size: .9rem; flex-wrap: wrap;
+    }
+    .demo2 input[type="range"] { width: 260px; accent-color: #f97316; }
+    .demo2 .status {
+      font-weight: 700;
+      padding: 3px 10px; border-radius: 999px;
+      background: #ffedd5; color: #c2410c; font-size: .8rem;
+    }
+    /* 可调宽度的查询容器（宽度由 JS 控制） */
+    #resizable {
+      container-type: inline-size;
+      width: 600px;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 2px dashed #fb923c;
+      border-radius: 14px;
+      padding: 12px;
+      transition: width .08s linear;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>容器查询 Container Queries</h1>
+    <p>按"父容器尺寸"而不是"视口尺寸"响应，让同一个组件真正可复用</p>
+  </header>
+
+  <div class="stage">
+    <!-- 演示 1：同组件放进宽 / 窄两种容器 -->
+    <div class="row">
+      <div class="container wide">
+        <div class="label">宽容器（>400px）→ 卡片自动横向</div>
+        <article class="card">
+          <div class="thumb">IMG</div>
+          <div class="body">
+            <h3>同一个卡片组件</h3>
+            <p>我没改任何 HTML，只是被放进了更宽的容器里，于是 @container 让我变成左图右文的横向布局。</p>
+            <span class="tag">Container Query</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="container narrow">
+        <div class="label">窄容器（&lt;400px）→ 卡片竖向</div>
+        <article class="card">
+          <div class="thumb">IMG</div>
+          <div class="body">
+            <h3>同一个卡片组件</h3>
+            <p>同样的代码放进窄容器，自动堆叠成竖向图文布局。</p>
+            <span class="tag">Container Query</span>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- 演示 2：滑块改容器宽度，实时触发查询 -->
+    <div class="demo2">
+      <div class="controls">
+        容器宽度：
+        <input type="range" id="widthRange" min="220" max="760" value="600" />
+        <span id="widthVal">600</span>px
+        <span class="status" id="status">横向布局</span>
+      </div>
+      <div id="resizable">
+        <article class="card">
+          <div class="thumb">IMG</div>
+          <div class="body">
+            <h3>拖动滑块改变我的容器宽度</h3>
+            <p>越过 400px 阈值时，卡片会在横向 / 竖向布局之间切换——这正是容器查询的威力。</p>
+            <span class="tag">@container (min-width: 400px)</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const range = document.getElementById('widthRange');
+    const widthVal = document.getElementById('widthVal');
+    const status = document.getElementById('status');
+    const box = document.getElementById('resizable');
+    range.addEventListener('input', e => {
+      const w = e.target.value;
+      box.style.width = w + 'px';
+      widthVal.textContent = w;
+      // 与 CSS 中 @container (min-width: 400px) 阈值保持一致
+      status.textContent = w >= 400 ? '横向布局' : '竖向布局';
+    });
+  </script>
+</body>
+</html>

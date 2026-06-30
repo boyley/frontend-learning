@@ -1,0 +1,93 @@
+// ============================================================
+// 03 · 嵌套与父选择器 &（Nesting & Parent Selector）
+// ------------------------------------------------------------
+// 嵌套让 CSS 结构跟 HTML 结构一样有层级感；& 代表「父选择器」，
+// 是写 BEM、伪类、状态类的利器。
+// ⚠️ 嵌套别超过 3 层，否则编译出的选择器又长又难维护。
+// ============================================================
+
+// ---------- 1) 基础嵌套：子选择器写进父级 {} 内 ----------
+.nav {
+  background: #6750a4;
+  padding: 12px 20px;
+
+  // 编译成 .nav ul（后代选择器，中间有空格）
+  ul {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  // 编译成 .nav a
+  a {
+    color: #fff;
+    text-decoration: none;
+
+    // & = 当前父选择器 .nav a，编译成 .nav a:hover（无空格，紧贴）
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// ---------- 2) & 拼接 BEM 命名 ----------
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &__header {
+    // 编译成 .card__header
+    padding: 16px;
+    background: #f5f3fb;
+    font-weight: 700;
+  }
+
+  &__body {
+    // 编译成 .card__body
+    padding: 16px;
+  }
+
+  // & 放在后面：.card 与修饰类组合
+  &--featured {
+    // 编译成 .card--featured
+    border-color: #6750a4;
+    border-width: 2px;
+  }
+}
+
+// ---------- 3) & 用于上下文：父在子里被「引用」 ----------
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+
+  // 把 & 放右边：编译成 .dark-theme .btn —— 表示「在暗色主题下的按钮」
+  .dark-theme & {
+    background: #2b2930;
+    color: #fff;
+  }
+}
+
+// ---------- 4) 嵌套属性（property nesting）：共享前缀的属性 ----------
+.text {
+  // font: { ... } 会展开成 font-family / font-size / font-weight
+  font: {
+    family: system-ui, sans-serif;
+    size: 15px;
+    weight: 600;
+  }
+}
+
+// ---------- 5) @media 也能嵌套进选择器内部 ----------
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+
+  @media (max-width: 600px) {
+    // 编译后会自动提升为 .container 的媒体查询块
+    padding: 0 12px;
+  }
+}

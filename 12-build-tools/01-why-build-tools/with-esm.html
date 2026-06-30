@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>01 · 原生 ES Module（无污染）</title>
+</head>
+<body>
+  <h1>原生 ES Module（请打开控制台 F12）</h1>
+  <p>只引入一个入口 <code>main.js</code>，它的依赖 <code>math.js</code> 由浏览器自动加载。</p>
+  <p>模块内变量互相隔离，<strong>不会污染全局 window</strong>。</p>
+
+  <!--
+    关键：type="module"
+    ① 让浏览器以 ES Module 方式解析，支持 import / export
+    ② 模块自带独立作用域，顶层变量不会挂到 window
+    ③ 自动延迟执行（相当于 defer），且只需引入入口文件
+    ⚠️ 必须通过 http(s):// 访问，不能 file:// 直接打开（CORS 限制）
+  -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

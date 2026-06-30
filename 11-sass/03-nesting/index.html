@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>03 · 嵌套与 & Nesting</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; background: #f5f3fb; }
+    </style>
+  </head>
+  <body>
+    <nav class="nav">
+      <ul>
+        <li><a href="#">首页</a></li>
+        <li><a href="#">文档</a></li>
+        <li><a href="#">关于</a></li>
+      </ul>
+    </nav>
+
+    <div class="container" style="padding: 24px 0;">
+      <div class="card card--featured">
+        <div class="card__header">精选卡片（.card--featured）</div>
+        <div class="card__body">
+          <p class="text">这里用了嵌套属性 font:{...}。</p>
+          <button class="btn">普通按钮</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

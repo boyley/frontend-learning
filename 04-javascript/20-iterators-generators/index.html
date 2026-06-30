@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>20 · 迭代器与生成器</title>
+    <style>
+      body {
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 24px;
+        line-height: 1.7;
+        color: #222;
+        background: #fafafa;
+      }
+      h1 {
+        border-bottom: 3px solid #f7df1e;
+        padding-bottom: 8px;
+      }
+      .tip {
+        background: #fff8d6;
+        border-left: 4px solid #f7df1e;
+        padding: 10px 14px;
+        border-radius: 4px;
+        margin: 16px 0;
+      }
+      pre#output {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>20 · 迭代器与生成器（Iterators & Generators）</h1>
+    <p>
+      演示可迭代协议（<code>Symbol.iterator</code>）、迭代器协议
+      （<code>next()</code>）、生成器函数（<code>function*</code> + <code>yield</code>）、
+      惰性求值，以及用生成器实现自定义迭代器。
+    </p>
+    <p class="tip">💡 打开浏览器控制台（F12）查看完整输出，下方也会展示关键结果。</p>
+    <pre id="output">正在加载…</pre>
+    <script src="demo.js"></script>
+  </body>
+</html>

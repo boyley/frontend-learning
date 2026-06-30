@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · CSS 渐变 Gradients</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      background: #0f172a;          /* 深色背景衬托彩色渐变 */
+      color: #e2e8f0;
+      line-height: 1.7;
+      padding: 32px 20px 64px;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; }
+
+    /* 顶部标题区 */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 30px;
+      /* 标题文字本身也用渐变上色：background-clip:text */
+      background: linear-gradient(90deg, #f472b6, #facc15, #34d399, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    header p { color: #94a3b8; margin-top: 8px; font-size: 15px; }
+
+    /* 区块卡片 */
+    section {
+      background: #1e293b;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    section h2 {
+      font-size: 19px;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+    section .desc { color: #94a3b8; font-size: 14px; margin-bottom: 18px; }
+
+    /* 渐变色卡网格 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      height: 130px;
+      border-radius: 14px;
+      display: flex;
+      align-items: flex-end;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.5);
+      font-family: "SF Mono", Consolas, monospace;
+    }
+
+    /* ---- 线性渐变示例 ---- */
+    .lg-angle { background: linear-gradient(45deg, #f472b6, #fb7185); }   /* 45度方向 */
+    .lg-todir { background: linear-gradient(to right, #06b6d4, #6366f1); } /* 关键字方向 */
+    .lg-stops { background: linear-gradient(120deg, #facc15 0%, #f97316 40%, #ef4444 100%); } /* 多色标 */
+    /* 硬边条纹 trick：相同百分比让颜色突变，没有过渡 */
+    .lg-hard {
+      background: linear-gradient(90deg,
+        #22d3ee 0 25%, #a78bfa 25% 50%, #f472b6 50% 75%, #fbbf24 75% 100%);
+    }
+
+    /* ---- 径向渐变示例 ---- */
+    .rg-circle { background: radial-gradient(circle, #fde68a, #f97316); }
+    .rg-ellipse { background: radial-gradient(ellipse at center, #5eead4, #0ea5e9); }
+    .rg-at { background: radial-gradient(circle at top left, #f9a8d4, #7c3aed); } /* at 定位圆心 */
+    .rg-multi { background: radial-gradient(circle at 30% 30%, #fff 0 8%, #38bdf8 9% 60%, #1e3a8a 100%); }
+
+    /* ---- 圆锥渐变示例 ---- */
+    .cg-wheel {
+      /* 色环：从红一圈回到红 */
+      background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+    }
+    .cg-pie {
+      /* 饼图：硬边圆锥 */
+      background: conic-gradient(#ef4444 0 40%, #facc15 40% 70%, #22c55e 70% 100%);
+    }
+
+    /* ---- 重复渐变 ---- */
+    .rep-linear {
+      background: repeating-linear-gradient(45deg, #1f2937 0 12px, #334155 12px 24px);
+    }
+    .rep-radial {
+      background: repeating-radial-gradient(circle at center, #6d28d9 0 10px, #db2777 10px 20px);
+    }
+    .rep-conic {
+      background: repeating-conic-gradient(#0ea5e9 0 15deg, #1e293b 15deg 30deg);
+    }
+
+    /* ===== 进度环（conic-gradient + 百分比变量） ===== */
+    .ring-demo { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+    .ring {
+      --p: 65;                          /* 百分比，由 JS 写入 */
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      /* 用角度计算：百分比 *3.6deg；用同色透明做底环 */
+      background: conic-gradient(#34d399 calc(var(--p) * 1%), #334155 0);
+      display: grid; place-items: center;
+      position: relative;
+    }
+    .ring::before {            /* 中间挖空成环 */
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 50%;
+      background: #1e293b;
+    }
+    .ring span {
+      position: relative;
+      font-size: 30px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    /* ===== 实时可调线性渐变角度 ===== */
+    .live-box {
+      height: 170px;
+      border-radius: 16px;
+      /* --ang 由滑块控制 */
+      background: linear-gradient(var(--ang, 90deg), #f472b6, #38bdf8);
+      transition: background .05s linear;
+    }
+    .controls { margin-top: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    input[type="range"] { flex: 1; min-width: 200px; accent-color: #38bdf8; }
+    .val { font-family: monospace; color: #38bdf8; min-width: 70px; }
+
+    code { background:#0f172a; padding:1px 6px; border-radius:5px; color:#fbbf24; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>CSS 渐变 Gradients</h1>
+      <p>渐变本质是一张 <code>&lt;image&gt;</code>，用于 <code>background</code>。包含 linear / radial / conic 及其重复版本。</p>
+    </header>
+
+    <!-- 线性渐变 -->
+    <section>
+      <h2>1. 线性渐变 linear-gradient</h2>
+      <p class="desc">沿一条直线过渡。角度 <code>0deg</code> 朝上、顺时针增大；也可用 <code>to right</code> 等关键字。相同百分比的色标可制造「硬边条纹」。</p>
+      <div class="grid">
+        <div class="card lg-angle">45deg 双色</div>
+        <div class="card lg-todir">to right 方向</div>
+        <div class="card lg-stops">多色标 0/40/100%</div>
+        <div class="card lg-hard">硬边四条纹</div>
+      </div>
+    </section>
+
+    <!-- 径向渐变 -->
+    <section>
+      <h2>2. 径向渐变 radial-gradient</h2>
+      <p class="desc">从一个圆心向外辐射。可指定 <code>circle</code>/<code>ellipse</code> 形状与 <code>at</code> 圆心位置。</p>
+      <div class="grid">
+        <div class="card rg-circle">circle 圆形</div>
+        <div class="card rg-ellipse">ellipse 椭圆</div>
+        <div class="card rg-at">at top left 圆心</div>
+        <div class="card rg-multi">高光小球</div>
+      </div>
+    </section>
+
+    <!-- 圆锥渐变 -->
+    <section>
+      <h2>3. 圆锥渐变 conic-gradient</h2>
+      <p class="desc">颜色绕圆心旋转过渡，天然适合做色环与饼图。</p>
+      <div class="grid">
+        <div class="card cg-wheel">色环 color wheel</div>
+        <div class="card cg-pie">饼图 pie 40/30/30</div>
+      </div>
+    </section>
+
+    <!-- 重复渐变 -->
+    <section>
+      <h2>4. 重复渐变 repeating-*</h2>
+      <p class="desc">把色标定义的图案沿方向无限平铺，做条纹、靶心、扇形非常方便。</p>
+      <div class="grid">
+        <div class="card rep-linear">repeating-linear 斜条纹</div>
+        <div class="card rep-radial">repeating-radial 靶心</div>
+        <div class="card rep-conic">repeating-conic 扇形</div>
+      </div>
+    </section>
+
+    <!-- 进度环 -->
+    <section>
+      <h2>5. 实战：conic-gradient 百分比进度环</h2>
+      <p class="desc">用 <code>conic-gradient</code> 画出进度，再用 <code>::before</code> 挖空中心成环。拖动滑块改变百分比。</p>
+      <div class="ring-demo">
+        <div class="ring" id="ring"><span id="ringTxt">65%</span></div>
+        <div style="flex:1; min-width:220px;">
+          <input type="range" id="ringRange" min="0" max="100" value="65" />
+          <p style="margin-top:10px; color:#94a3b8; font-size:13px;">
+            进度由 CSS 变量 <code>--p</code> 驱动：<code>conic-gradient(#34d399 calc(var(--p)*1%), #334155 0)</code>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 实时角度 -->
+    <section>
+      <h2>6. 实战：实时调节线性渐变角度</h2>
+      <p class="desc">滑块写入 CSS 变量 <code>--ang</code>，直观感受角度方向（0° 朝上、顺时针）。</p>
+      <div class="live-box" id="liveBox"></div>
+      <div class="controls">
+        <span>角度</span>
+        <input type="range" id="angRange" min="0" max="360" value="90" />
+        <span class="val" id="angVal">90deg</span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // 进度环：滑块 -> --p 变量 + 文字
+    const ring = document.getElementById('ring');
+    const ringTxt = document.getElementById('ringTxt');
+    document.getElementById('ringRange').addEventListener('input', (e) => {
+      const v = e.target.value;
+      ring.style.setProperty('--p', v);
+      ringTxt.textContent = v + '%';
+    });
+
+    // 线性角度：滑块 -> --ang 变量
+    const liveBox = document.getElementById('liveBox');
+    const angVal = document.getElementById('angVal');
+    document.getElementById('angRange').addEventListener('input', (e) => {
+      const deg = e.target.value + 'deg';
+      liveBox.style.setProperty('--ang', deg);
+      angVal.textContent = deg;
+    });
+  </script>
+</body>
+</html>

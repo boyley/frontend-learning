@@ -1,6 +1,6 @@
 # 06 · TypeScript 教学工程
 
-> TypeScript 是 JavaScript 的「带类型的超集」（Typed Superset of JavaScript）：在 JS 之上加了一套**静态类型系统**，在编译期就能发现 bug，并提供强大的编辑器智能提示。本工程对照官方 [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html) 整理，由易到难拆成 15 个聚焦模块，每个模块一个可运行的 `demo.ts`。
+> TypeScript 是 JavaScript 的「带类型的超集」（Typed Superset of JavaScript）：在 JS 之上加了一套**静态类型系统**，在编译期就能发现 bug，并提供强大的编辑器智能提示。本工程对照官方 [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html) + Reference 整理，由易到难拆成 27 个聚焦模块，每个模块一个可运行的 `demo.ts`。
 
 ## 📖 TypeScript 简介
 
@@ -37,6 +37,18 @@ flowchart LR
 | 13 | [decorators](./13-decorators/) | 装饰器：类/方法/属性/参数装饰器 | Decorators |
 | 14 | [modules](./14-modules/) | 模块：ESM 导入导出、type-only、命名空间 | Modules |
 | 15 | [tsconfig](./15-tsconfig/) | 编译配置：strict 系列、核心字段 | tsconfig Reference |
+| 16 | [type-assertions](./16-type-assertions/) | 类型断言：as/尖括号、非空 `!`、`as const` | Everyday Types · Type Assertions |
+| 17 | [satisfies-operator](./17-satisfies-operator/) | `satisfies`：既校验又保留精确类型 | Release Notes 4.9 |
+| 18 | [indexed-access-types](./18-indexed-access-types/) | 索引访问类型：`T[K]`、`T[number]` | Indexed Access Types |
+| 19 | [template-literal-types](./19-template-literal-types/) | 模板字面量类型 + Uppercase/Capitalize | Template Literal Types |
+| 20 | [type-inference](./20-type-inference/) | 类型推断：拓宽、上下文类型、最佳通用类型 | Type Inference |
+| 21 | [type-compatibility](./21-type-compatibility/) | 类型兼容：结构化类型、逆变、多余属性检查 | Type Compatibility |
+| 22 | [declaration-merging](./22-declaration-merging/) | 声明合并：接口/命名空间合并、模块扩充 | Declaration Merging |
+| 23 | [namespaces](./23-namespaces/) | 命名空间与 ES 模块的取舍 | Namespaces |
+| 24 | [declaration-files](./24-declaration-files/) | 声明文件 `.d.ts`、`declare`、`@types` | Declaration Files |
+| 25 | [symbols](./25-symbols/) | `symbol`/`unique symbol`、well-known symbols | Symbols |
+| 26 | [mixins](./26-mixins/) | 混入：构造函数类型 + 泛型约束拼装能力 | Mixins |
+| 27 | [iterators-generators](./27-iterators-generators/) | 迭代器/生成器：`Iterable`/`Generator<T>` | Iterators and Generators |
 
 ## 🛤️ 学习路线图
 
@@ -52,19 +64,32 @@ flowchart TD
         M06 --> M07[07 类]
         M07 --> M08[08 类型收窄]
     end
-    subgraph S3["第三阶段 · 类型体操（进阶）"]
+    subgraph S3["第三阶段 · 类型操作与体操（进阶）"]
         M09[09 工具类型] --> M10[10 keyof/typeof]
-        M10 --> M11[11 条件类型]
+        M10 --> M18[18 索引访问类型]
+        M18 --> M11[11 条件类型]
         M11 --> M12[12 映射类型]
+        M12 --> M19[19 模板字面量类型]
+        M16[16 类型断言] --> M17[17 satisfies]
     end
-    subgraph S4["第四阶段 · 工程化"]
+    subgraph S4["第四阶段 · 类型推断与兼容"]
+        M20[20 类型推断] --> M21[21 类型兼容性]
+    end
+    subgraph S5["第五阶段 · 工程化 / 声明文件"]
         M13[13 装饰器] --> M14[14 模块]
         M14 --> M15[15 tsconfig]
+        M15 --> M22[22 声明合并]
+        M22 --> M23[23 命名空间]
+        M23 --> M24[24 声明文件]
     end
-    S1 --> S2 --> S3 --> S4
+    subgraph S6["第六阶段 · 进阶模式"]
+        M25[25 符号] --> M26[26 混入]
+        M26 --> M27[27 迭代器/生成器]
+    end
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
 ```
 
-建议顺序：**先把第一、二阶段（01-08）吃透**，能写出类型安全的业务代码即可上手项目；第三阶段（09-12）是「类型体操」，写库 / 封装通用工具时再深入；第四阶段（13-15）按工程需要学习。
+建议顺序：**先把第一、二阶段（01-08）吃透**，能写出类型安全的业务代码即可上手项目；第三阶段（09-12、16-19）是「类型操作与体操」，写库 / 封装通用工具时深入；第四阶段（20-21）理解推断与兼容规则，能读懂各种「为什么这样也能赋值」的报错；第五阶段（13-15、22-24）是工程化与声明文件，接第三方库 / 补类型时必备；第六阶段（25-27）是进阶模式，按需了解。
 
 ## ▶️ 运行说明
 

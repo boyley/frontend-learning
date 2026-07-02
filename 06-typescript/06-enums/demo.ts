@@ -95,3 +95,6 @@ let sc: StatusCode = 999; // 不报错！这是数字枚举的坑
 console.log("数字枚举可被任意 number 赋值(坑):", sc);
 
 console.log("演示结束");
+
+// —— 让本文件成为独立 ES 模块作用域，避免与其它 demo 的同名声明在 IDE/整项目编译时冲突 ——
+export {};

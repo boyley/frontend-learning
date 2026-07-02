@@ -132,3 +132,6 @@ console.log("getProp name/id:", name, id);
 console.log("apiResponse:", userResp.data);
 console.log("boxes:", stringBox.content, numberBox.content);
 console.log("stack size & pop:", numStack.size, numStack.pop());
+
+// —— 让本文件成为独立 ES 模块作用域，避免与其它 demo 的同名声明在 IDE/整项目编译时冲突 ——
+export {};

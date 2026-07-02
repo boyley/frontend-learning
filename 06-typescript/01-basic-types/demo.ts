@@ -97,3 +97,6 @@ logMessage("基础类型 demo 运行完成");
 console.log("maybeName:", maybeName);
 // 不调用 fail() 以免中断；它的类型是 never
 console.log("never 函数已定义，类型为 never，不在此处调用");
+
+// —— 让本文件成为独立 ES 模块作用域，避免与其它 demo 的同名声明在 IDE/整项目编译时冲突 ——
+export {};

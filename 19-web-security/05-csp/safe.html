@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!--
+  05 · CSP —— 安全版（用 CSP + nonce 防御 XSS）
+  ============================================================
+  本页面通过 <meta> 下发 CSP：
+    default-src 'self'; script-src 'nonce-abc123'; object-src 'none'; base-uri 'none'
+  演示：
+    - 带匹配 nonce="abc123" 的合法内联脚本 → 正常执行；
+    - 被注入的、没有 nonce 的内联脚本 / onerror → 被 CSP 拦截，不弹窗。
+  ⚠️ 仅供安全学习。真实项目里 nonce 必须由服务器每次响应随机生成，绝不能写死成 abc123。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>05 · CSP 安全版（nonce 拦截注入）</title>
+
+  <!--
+    CSP 策略说明：
+      default-src 'self'      —— 兜底：其它未声明的资源只允许同源
+      script-src 'nonce-abc123' —— 脚本：只放行带 nonce="abc123" 的内联脚本，
+                                    没有 'unsafe-inline'，所以无 nonce 的注入脚本全被拦
+      object-src 'none'       —— 禁用 <object>/<embed> 老插件攻击面
+      base-uri 'none'         —— 锁死 <base>，防注入 <base href="//evil.com"> 篡改加载基准
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'nonce-abc123'; object-src 'none'; base-uri 'none'">
+
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.7; }
+    h1 { color: #27ae60; }
+    .box { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .good { background: #eafaf1; border-color: #a3e4c1; }
+    .bad { background: #fdecea; border-color: #f5c6cb; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>✅ 安全版：CSP + nonce</h1>
+
+  <p>本页面通过 <code>&lt;meta&gt;</code> 下发了 CSP，脚本策略是
+  <code>script-src 'nonce-abc123'</code>——<b>只有带匹配 nonce 的内联脚本才被执行</b>。</p>
+
+  <div class="box good">
+    <p>👀 <b>观察点</b>（请按 <b>F12</b> 打开控制台对照）：</p>
+    <ul>
+      <li>页面 <b>不会弹窗</b>：下面模拟被注入的 <code>&lt;script&gt;</code> 和 <code>&lt;img onerror&gt;</code> 都被 CSP 拦截。</li>
+      <li>控制台会出现类似 <code>Refused to execute inline script because it violates the following Content Security Policy directive...</code> 的 CSP 报错。</li>
+      <li>而带 <code>nonce="abc123"</code> 的合法脚本仍正常运行——见下方绿色区域会显示一行文字。</li>
+    </ul>
+  </div>
+
+  <div class="box bad">
+    <p><b>模拟「被注入」的恶意内容区</b>（仅供学习）：这些脚本没有 nonce，会被 CSP 拦下。</p>
+
+    <!-- ❌ 仅供学习：被注入的 <img onerror>，没有 nonce → onerror 内联脚本被 CSP 拦截，不弹窗 -->
+    <img src="x" onerror="alert('XSS')" alt="被注入的图片（onerror 会被 CSP 拦截）">
+
+    <!-- ❌ 仅供学习：被注入的内联脚本，没有 nonce → 被 CSP 拦截，不执行 -->
+    <script>alert('注入脚本');</script>
+  </div>
+
+  <div class="box good">
+    <p>本页合法业务脚本（带匹配 nonce，正常执行）：</p>
+    <p id="legit">（若下面这行没出现，说明脚本未运行）</p>
+
+    <!-- ✅ 合法内联脚本：带 nonce="abc123"，与 CSP 匹配 → 放行执行 -->
+    <script nonce="abc123">
+      document.getElementById('legit').textContent =
+        '✅ 我方合法脚本已执行（因为它带了匹配的 nonce="abc123"）';
+      console.log('合法脚本执行：nonce 匹配，被 CSP 放行');
+    </script>
+  </div>
+
+  <p style="color:#888">对照实验：打开同目录 <code>vulnerable.html</code>（无 CSP），同样的注入内容会直接弹窗得逞。</p>
+</body>
+</html>

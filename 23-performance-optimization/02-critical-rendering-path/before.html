@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化前 · 关键渲染路径被阻塞（before）</title>
+
+  <!--
+    ⚠️ 反面教材：这个页面故意演示「关键渲染路径被阻塞」的写法。
+    两个阻塞点（对照 after.html 看）：
+      1. JS 阻塞解析（parser-blocking）：
+         <head> 里放一个「同步」<script>，用 busy-wait（忙等）循环卡住主线程约 800ms，
+         模拟一个「解析器阻塞脚本」。浏览器解析 HTML 到这里会「停下来」先下载并执行脚本，
+         期间 DOM 构建暂停、首屏迟迟画不出来。
+      2. CSS 阻塞渲染（render-blocking）：
+         把一大段样式当作「渲染阻塞 CSS」——渲染树依赖 CSSOM，CSSOM 没构建完，
+         浏览器什么都不画（避免无样式内容闪烁 FOUC）。这里样式体量偏大，进一步拖慢首屏。
+    页面底部用 PerformanceObserver 监听 FCP / LCP，并读 Navigation Timing 的 DOMContentLoaded，
+    把三个时间显示在页面上，方便和 after.html 直观对比。
+  -->
+
+  <!-- ❌ 阻塞点 2：一大段「渲染阻塞 CSS」。CSSOM 未完成前浏览器不绘制任何内容。
+       真实项目里这通常是一个很大的外链 <link rel="stylesheet">，这里内联放大体量演示同样效果。 -->
+  <style>
+    /* —— 下面是一大段「非关键样式」，本应异步加载，这里却当作渲染阻塞 CSS 全量放进 head —— */
+    :root { --brand: #b91c1c; --bg: #fef2f2; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+      line-height: 1.7;
+      color: #1f2937;
+      background: var(--bg);
+    }
+    header {
+      padding: 28px 24px;
+      background: var(--brand);
+      color: #fff;
+    }
+    header h1 { margin: 8px 0 0; font-size: 24px; }
+    .tag {
+      display: inline-block; background: #fee2e2; color: var(--brand);
+      padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    }
+    .content { max-width: 760px; margin: 0 auto; padding: 20px 16px; }
+    .hero {
+      /* 这块彩色大区块是 LCP 候选元素：视口内最大的可见块 */
+      height: 260px; border-radius: 12px; margin: 16px 0;
+      background: linear-gradient(135deg, #dc2626, #7c2d12);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    p { margin: 12px 0; }
+    code { background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: 90%; }
+
+    /* —— 下面这些规则纯粹为了「放大 CSS 体量」，模拟一份臃肿的渲染阻塞样式表 —— */
+    .box-0 { color:#100; } .box-1 { color:#101; } .box-2 { color:#102; } .box-3 { color:#103; }
+    .box-4 { color:#104; } .box-5 { color:#105; } .box-6 { color:#106; } .box-7 { color:#107; }
+    .u-m-0{margin:0}.u-m-1{margin:4px}.u-m-2{margin:8px}.u-m-3{margin:12px}.u-m-4{margin:16px}
+    .u-p-0{padding:0}.u-p-1{padding:4px}.u-p-2{padding:8px}.u-p-3{padding:12px}.u-p-4{padding:16px}
+    .u-fs-1{font-size:12px}.u-fs-2{font-size:14px}.u-fs-3{font-size:16px}.u-fs-4{font-size:20px}
+    .grid-1{display:grid}.grid-2{gap:8px}.grid-3{grid-template-columns:1fr 1fr}
+    .flex-1{display:flex}.flex-2{align-items:center}.flex-3{justify-content:space-between}
+    .r-1{border-radius:2px}.r-2{border-radius:4px}.r-3{border-radius:8px}.r-4{border-radius:16px}
+    .sh-1{box-shadow:0 1px 2px rgba(0,0,0,.1)}.sh-2{box-shadow:0 2px 6px rgba(0,0,0,.15)}
+    .metrics {
+      margin: 20px 0; padding: 16px; border-radius: 12px;
+      background: #fff; border: 1px solid #fecaca;
+    }
+    .metrics h2 { margin: 0 0 12px; font-size: 16px; color: var(--brand); }
+    .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #fecaca; }
+    .metric-row:last-child { border-bottom: 0; }
+    .metric-name { color: #6b7280; }
+    .metric-val { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .filler { height: 700px; background: linear-gradient(#fff, #fee2e2); border-radius: 12px; margin-top: 16px; }
+  </style>
+
+  <!--
+    ❌ 阻塞点 1：<head> 里的「同步脚本」。
+    没有 defer / async，浏览器必须「下载 + 执行完」它，才能继续解析后面的 HTML。
+    这里用忙等（busy-wait）死循环占住主线程约 800ms，放大「解析器阻塞」的效果：
+    在这 800ms 里 DOM 构建停摆、首屏无法绘制，FCP/LCP 被整体推迟。
+  -->
+  <script>
+    // 记录脚本开始时刻（相对页面导航起点）
+    console.log("[before] head 同步脚本开始执行，即将忙等阻塞主线程约 800ms……");
+    const blockStart = performance.now();
+    const BLOCK_MS = 800; // 想更夸张可调大
+    // ⛔ 忙等：用一个空转循环占住主线程，模拟「重脚本同步执行」。
+    //    注意这是「反面」写法，真实代码永远不要这样卡主线程。
+    while (performance.now() - blockStart < BLOCK_MS) {
+      // 故意什么都不做，只为拖住解析器
+    }
+    console.log(`[before] head 同步脚本执行完毕，共阻塞 ${(performance.now() - blockStart).toFixed(0)}ms，解析器现在才继续`);
+  </script>
+</head>
+<body>
+  <header>
+    <span class="tag">BEFORE · 关键路径被阻塞</span>
+    <h1>优化前：head 同步脚本忙等 + 臃肿渲染阻塞 CSS</h1>
+  </header>
+
+  <div class="content">
+    <div class="hero">首屏主视觉（LCP 候选元素）</div>
+
+    <p>本页在 <code>&lt;head&gt;</code> 放了一个<strong>同步脚本</strong>，用忙等占住主线程约
+       <strong>800ms</strong>，模拟「解析器阻塞脚本」；同时把一大段样式当作
+       <strong>渲染阻塞 CSS</strong>。两者叠加，让首屏被整体推迟。</p>
+
+    <p>下方仪表盘展示本页实测的 <code>FCP</code>（首次内容绘制）、<code>LCP</code>（最大内容绘制）、
+       <code>DCL</code>（DOMContentLoaded）。打开 <code>after.html</code> 对比，会看到三项都明显更晚。</p>
+
+    <div class="metrics">
+      <h2>本页关键渲染指标（实测）</h2>
+      <div class="metric-row"><span class="metric-name">FCP 首次内容绘制</span><span class="metric-val" id="fcp">测量中…</span></div>
+      <div class="metric-row"><span class="metric-name">LCP 最大内容绘制</span><span class="metric-val" id="lcp">测量中…</span></div>
+      <div class="metric-row"><span class="metric-name">DCL DOMContentLoaded</span><span class="metric-val" id="dcl">测量中…</span></div>
+    </div>
+
+    <div class="filler">↓ 下面是占位内容，用来撑高页面。</div>
+  </div>
+
+  <!--
+    📊 指标测量脚本：放在 body 末尾，本身不阻塞首屏，仅负责「读数并显示」。
+    - PerformanceObserver 监听 'paint' 取 FCP、'largest-contentful-paint' 取 LCP；
+    - Navigation Timing（PerformanceNavigationTiming）读 domContentLoadedEventEnd 得 DCL。
+    这段脚本在 before / after 两页里完全一致，数值差异全部来自上面的「阻塞写法」不同。
+  -->
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (ms) => `${ms.toFixed(0)} ms`;
+
+    // —— FCP：首次内容绘制。paint 条目里的 'first-contentful-paint' —— //
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          if (e.name === "first-contentful-paint") {
+            $("fcp").textContent = fmt(e.startTime);
+            console.log(`[before] FCP = ${e.startTime.toFixed(0)}ms`);
+          }
+        }
+      }).observe({ type: "paint", buffered: true }); // buffered:true 回放 observer 创建前的条目，避免漏测
+    } catch (err) { $("fcp").textContent = "当前浏览器不支持 paint"; }
+
+    // —— LCP：最大内容绘制。会不断刷新为「当前最大元素」的绘制时间 —— //
+    try {
+      new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1]; // 取最后一次（最新最大元素）
+        $("lcp").textContent = fmt(last.startTime);
+        console.log(`[before] LCP 刷新 = ${last.startTime.toFixed(0)}ms`);
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+    } catch (err) { $("lcp").textContent = "当前浏览器不支持 LCP"; }
+
+    // —— DCL：DOMContentLoaded。DOM 解析+同步脚本执行完即触发；被 head 忙等直接拖后 —— //
+    function showDCL() {
+      const nav = performance.getEntriesByType("navigation")[0];
+      if (nav) {
+        $("dcl").textContent = fmt(nav.domContentLoadedEventEnd);
+        console.log(`[before] DCL = ${nav.domContentLoadedEventEnd.toFixed(0)}ms`);
+      }
+    }
+    // navigation 条目要等 load 之后字段才齐全，这里 load 后再读一次
+    if (document.readyState === "complete") showDCL();
+    else window.addEventListener("load", showDCL);
+  </script>
+</body>
+</html>

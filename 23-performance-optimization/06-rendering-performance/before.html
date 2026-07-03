@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化前 · 渲染性能未优化（before）</title>
+
+  <!--
+    ⚠️ 反面教材：这个页面故意演示「没做渲染优化」的两个典型错误。
+    对比点（对照 after.html 看）：
+      1. 长列表：一次性把 10000 条 DOM 全部 appendChild 插入 → 节点数爆炸，
+         布局/绘制成本巨大，插入瞬间形成长任务，页面卡死。
+      2. Layout Thrashing（强制同步布局）：scroll 处理器在循环里「写 style → 立刻读
+         offsetTop/offsetHeight → 再写」交替进行，每次读都强制浏览器同步重算布局，
+         N 个节点 = N 次 reflow，滚动奇卡无比。
+    左上角常驻「流畅度探针」（旋转方块 + 每 100ms 自增计数器 + FPS），
+    卡顿时方块僵住、计数器停更、FPS 掉到个位数，非常直观。
+  -->
+  <link rel="stylesheet" href="probe.css" />
+  <style>
+    /* 列表容器：固定高度、可滚动。before 里塞进 10000 个真实 DOM 节点。 */
+    .list-wrap {
+      height: 420px;
+      overflow-y: auto;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .row {
+      height: 40px;
+      line-height: 40px;
+      padding: 0 16px;
+      border-bottom: 1px solid #f0f0f0;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row.near { background: #fde7e9; }   /* 「距视口中线最近」的行会被高亮（制造 thrashing 的借口） */
+  </style>
+</head>
+<body>
+  <header class="perf-header perf-header--bad">
+    <span class="tag tag--bad">BEFORE · 未优化</span>
+    <h1>优化前：一次性渲染 10000 条 + 滚动时强制同步布局</h1>
+    <p>盯着左上角探针：点「渲染」时页面会明显卡一下，滚动时方块几乎僵住、FPS 掉到个位数。</p>
+  </header>
+
+  <!-- 常驻流畅度探针（旋转方块 + 计数器 + FPS） -->
+  <div class="probe" id="probe">
+    <div class="spinner"></div>
+    <div class="probe-row"><span class="big" id="counter">0</span><span class="probe-label">计数器 /100ms</span></div>
+    <div class="probe-row"><span class="big" id="fps">–</span><span class="probe-label">FPS</span></div>
+  </div>
+
+  <div class="wrap">
+    <p class="tip">
+      👀 <b>观察方法</b>：<br>
+      1）点「渲染 10000 条」→ 一次性插入一万个 DOM，插入瞬间是一个长任务，探针会卡顿一下。<br>
+      2）随后<b>快速滚动</b>列表 → scroll 处理器对全部一万个节点做「写-读-写」的强制同步布局，
+      每帧触发上万次 reflow，方块几乎不动、FPS 掉到个位数。
+    </p>
+
+    <div class="panel">
+      <button class="btn btn--bad" id="btnRender">渲染 10000 条</button>
+      <span class="status" id="status">尚未渲染</span>
+    </div>
+
+    <div class="list-wrap" id="listWrap"></div>
+  </div>
+
+  <script src="probe.js"></script>
+  <script>
+    // ========================================================================
+    // 反面做法 1：一次性把 10000 条 DOM 全部插入
+    // ========================================================================
+    const COUNT = 10000;               // 列表数据量
+    const listWrap = document.getElementById('listWrap');
+    const status = document.getElementById('status');
+    const btnRender = document.getElementById('btnRender');
+
+    // 造一批假数据
+    const data = Array.from({ length: COUNT }, (_, i) =>
+      `#${String(i + 1).padStart(5, '0')}  长列表数据行 · row item ${i + 1}  —  ${Math.random().toString(36).slice(2, 10)}`
+    );
+
+    btnRender.addEventListener('click', () => {
+      btnRender.disabled = true;
+      status.textContent = '渲染中…（注意探针卡顿）';
+
+      // 用 setTimeout 让「渲染中…」这句提示先画出来，否则同步长任务会把它一起卡住。
+      setTimeout(() => {
+        const t0 = performance.now();
+
+        // ❌ 反面：for 循环里逐个 createElement + appendChild，一次性插入一万个真实节点。
+        //    DOM 节点数是内存/布局/绘制三重成本的根源，一万个节点会形成明显长任务。
+        for (let i = 0; i < COUNT; i++) {
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.textContent = data[i];
+          listWrap.appendChild(row);
+        }
+
+        const cost = (performance.now() - t0).toFixed(0);
+        status.innerHTML = `已插入 <b>${COUNT}</b> 个 DOM 节点，耗时 <b class="bad">${cost}ms</b>（长任务）。现在快速滚动试试 👇`;
+      }, 60);
+    });
+
+    // ========================================================================
+    // 反面做法 2：scroll 处理器制造 Layout Thrashing（强制同步布局）
+    // ------------------------------------------------------------------------
+    // 每次滚动都遍历全部一万个节点，且在循环里「写 style → 立刻读 offsetTop/offsetHeight
+    // → 再写 style」交替进行。读布局属性会强制浏览器把刚才排队的写操作同步刷成一次布局，
+    // 循环 N 次 = N 次 reflow，这就是布局抖动，性能雪崩。
+    // 而且没有任何节流：滚动每一帧都全量跑一遍。
+    // ========================================================================
+    listWrap.addEventListener('scroll', () => {
+      const rows = listWrap.children;
+      const viewMid = listWrap.scrollTop + listWrap.clientHeight / 2; // 视口中线
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+
+        // ❌ 写：先清掉高亮
+        row.classList.remove('near');
+
+        // ❌ 读：紧接着读取几何属性 → 强制同步布局（forced reflow）！
+        //    每次读都要求浏览器基于「上一行刚写的 class」立刻重算整页布局。
+        const top = row.offsetTop;          // 触发 reflow
+        const h = row.offsetHeight;         // 再次触发 reflow
+
+        // ❌ 写：根据刚读到的位置决定是否高亮 → 又弄脏布局，下一轮读再次同步刷新
+        if (Math.abs(top + h / 2 - viewMid) < 40) {
+          row.classList.add('near');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

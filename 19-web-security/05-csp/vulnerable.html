@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!--
+  05 · CSP —— 漏洞版（无 CSP）
+  ============================================================
+  本页面【没有】任何内容安全策略（CSP）。
+  演示：没有 CSP 时，被注入的内联脚本 / onerror 会直接执行，XSS 得逞。
+  ⚠️ 仅供安全学习，请勿用于任何真实站点。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>05 · CSP 漏洞版（无 CSP，注入得逞）</title>
+  <!-- 注意：这里【故意】不下发任何 Content-Security-Policy，作为对照 -->
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.7; }
+    h1 { color: #c0392b; }
+    .box { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .bad { background: #fdecea; border-color: #f5c6cb; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>❌ 漏洞版：没有 CSP</h1>
+
+  <p>本页面没有下发任何 <code>Content-Security-Policy</code>。打开时你会看到一个 <b>弹窗</b>——
+  这是下面「模拟被注入」的脚本执行的结果，说明 <b>没有 CSP 时 XSS 注入直接得逞</b>。</p>
+
+  <div class="box">
+    <p>👀 <b>观察点</b>：</p>
+    <ul>
+      <li>页面一打开就弹出 <code>alert('XSS')</code>（来自被注入的 <code>&lt;img onerror&gt;</code>）。</li>
+      <li>再弹出 <code>alert('注入脚本')</code>（来自被注入的内联 <code>&lt;script&gt;</code>）。</li>
+      <li>对照打开 <code>safe.html</code>：加了 CSP 后，这两个弹窗都不会出现。</li>
+    </ul>
+  </div>
+
+  <div class="box bad">
+    <p><b>模拟「被注入」的恶意内容区</b>（真实场景里这段是攻击者通过 XSS 注入进来的，此处仅供学习）：</p>
+
+    <!-- ❌ 仅供学习：模拟被 XSS 注入的一段 <img>，加载失败触发 onerror 弹窗 -->
+    <img src="x" onerror="alert('XSS')" alt="被注入的图片（会触发 onerror）">
+
+    <!-- ❌ 仅供学习：模拟被 XSS 注入的内联脚本，无 CSP 时直接执行 -->
+    <script>
+      alert('注入脚本');
+      console.log('被注入的内联脚本执行了——因为本页没有 CSP');
+    </script>
+  </div>
+
+  <div class="box">
+    <p>本页的合法业务脚本（同样是内联脚本，无 CSP 时也照常执行）：</p>
+    <p id="legit"></p>
+    <!-- 合法内联脚本：无 CSP 时和被注入的脚本一样能跑，浏览器无法区分二者 -->
+    <script>
+      document.getElementById('legit').textContent = '✅ 我方合法脚本已执行（当前无 CSP 保护）';
+    </script>
+  </div>
+
+  <p style="color:#888">下一步：打开同目录的 <code>safe.html</code>，体验加了 CSP 后注入如何被拦截。</p>
+</body>
+</html>

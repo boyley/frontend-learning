@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🎁 幸运大转盘 · 领奖啦（点击劫持演示 · 仅供学习）</title>
+  <!--
+    =========================================================
+    ⚠️⚠️⚠️ 本页为「点击劫持（Clickjacking）」攻击演示，仅供学习 ⚠️⚠️⚠️
+    演示目的：让你直观看到「透明 iframe 覆盖 + 点击穿透」的原理。
+    请勿用于任何真实站点或非法用途。
+    =========================================================
+  -->
+  <style>
+    body {
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #ffd86b, #ff8a3d);
+      min-height: 100vh;
+    }
+    .banner {
+      text-align: center;
+      padding: 16px;
+      color: #7a3b00;
+    }
+    .banner h1 { margin: 8px 0; }
+    .note {
+      max-width: 560px;
+      margin: 0 auto 16px;
+      background: rgba(255, 255, 255, .85);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #663300;
+      line-height: 1.7;
+    }
+
+    /* 攻击区域：诱饵按钮（下层） + 透明 iframe（上层）叠放 */
+    .stage {
+      position: relative;
+      width: 560px;
+      height: 460px;
+      margin: 0 auto;
+    }
+
+    /* 诱饵按钮：用户「看到」并以为自己在点的按钮，位于下层 z-index:1 */
+    .lure {
+      position: absolute;
+      /* 这个坐标经过调整，使它正好落在 iframe 内 victim 的「删除账户」按钮下方 */
+      top: 300px;
+      left: 170px;
+      width: 220px;
+      height: 56px;
+      z-index: 1;               /* 下层 */
+      background: #16a34a;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+    }
+
+    /* 透明 iframe：加载目标站，盖在诱饵按钮【上层】z-index:2，拦截真实点击 */
+    .stage iframe {
+      position: absolute;
+      top: 0;
+      left: 20px;
+      width: 520px;
+      height: 460px;
+      border: 2px dashed #d00;   /* 教学：画个虚线框标出 iframe 范围，真实攻击无边框 */
+      /*
+        ⚠️ 关键：真实攻击这里是 opacity: 0（完全透明，用户完全看不见目标站）
+        教学演示故意设为 0.3，让你能【看到】目标站叠在诱饵按钮之上、
+        并观察「删除账户」按钮正好压在「领取奖品」按钮的位置。
+        把下面的 0.3 改成 0，就是真实攻击的效果（诱饵按钮清晰可见，目标站隐形）。
+      */
+      opacity: 0.3;
+      z-index: 2;                /* 上层：点击会先落到 iframe 上 */
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <h1>🎁 恭喜你被抽中！点击下方按钮领取 iPhone 大奖 🎉</h1>
+  </div>
+
+  <div class="note">
+    <strong>【点击劫持演示 · 仅供学习】</strong><br>
+    下方绿色「点击领取奖品」是<strong>诱饵按钮</strong>；半透明盖在它上面的（红色虚线框内）是被
+    <code>iframe</code> 嵌入的<strong>目标银行站</strong>。真实攻击中 iframe 的
+    <code>opacity</code> 是 <code>0</code>（完全隐形），用户只看得到诱饵按钮。<br>
+    现在请你点击「点击领取奖品」——由于透明 iframe 盖在上层，你的点击实际会命中目标站的
+    <strong>「⚠️ 删除我的账户」</strong>按钮，弹窗证明操作以你的身份被执行了。
+  </div>
+
+  <div class="stage">
+    <!-- 下层：诱饵按钮（用户以为自己在点它） -->
+    <button class="lure">🎁 点击领取奖品</button>
+
+    <!--
+      上层：透明 iframe 加载目标站。
+      想演示「防御成功」，把 src 改成 victim-protected.html 再打开本页即可。
+    -->
+    <iframe src="victim.html"></iframe>
+  </div>
+</body>
+</html>

@@ -49,11 +49,11 @@ const monolith = {
 // B. 微服务：三个服务是「远程」的，用带延迟/可能失败的异步调用模拟
 // ============================================================
 // 模拟一次跨网络的 RPC/HTTP 调用：有网络延迟，且下游可能宕机
-function remoteCall(serviceName, fn, { downMs = 0 } = {}) {
+function remoteCall(serviceName, fn, { down = false } = {}) {
   return async (...args) => {
     const latency = 15 + Math.floor(Math.random() * 25); // 15~40ms 网络往返
     await sleep(latency);
-    if (downMs && Date.now() - t0 < downMs) {
+    if (down) {
       // 该服务此刻「宕机」——微服务里这叫「部分失败 partial failure」
       throw new Error(`调用 ${serviceName} 失败：连接被拒绝（服务不可用）`);
     }
@@ -90,8 +90,8 @@ async function main() {
   console.log(`耗时：${Date.now() - s2}ms（三次网络往返累加，比单体慢，但每个服务可独立扩容/部署）\n`);
 
   console.log('======== C. 微服务的「故障隔离 vs 部分失败」========');
-  // 让 inventory-service 在前 120ms 内「宕机」，观察下单如何失败——但 user/order 服务本身没挂
-  const invDown = remoteCall('inventory-service', monolith.reduceStock.bind(monolith), { downMs: 120 });
+  // 让 inventory-service「宕机」，观察下单如何失败——但 user/order 服务本身没挂
+  const invDown = remoteCall('inventory-service', monolith.reduceStock.bind(monolith), { down: true });
   try {
     await microservicePlaceOrder(userSvc, invDown, orderSvc, 'u-1', 'iphone', 2);
   } catch (e) {

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>待办清单 · E2E 被测页面</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; }
+    li.done span { text-decoration: line-through; color: #999; }
+    .row { display: flex; gap: 8px; }
+    input { flex: 1; padding: 6px; }
+  </style>
+</head>
+<body>
+  <h1>待办清单</h1>
+  <div class="row">
+    <!-- 用 aria-label / placeholder，方便 E2E 按语义定位 -->
+    <input id="new-todo" placeholder="要做点什么？" aria-label="新待办" />
+    <button id="add">添加</button>
+  </div>
+  <p>剩余未完成：<strong data-testid="remaining">0</strong></p>
+  <ul id="list" aria-label="待办列表"></ul>
+
+  <script>
+    const input = document.getElementById('new-todo');
+    const list = document.getElementById('list');
+    const remaining = document.querySelector('[data-testid="remaining"]');
+
+    function updateRemaining() {
+      const undone = list.querySelectorAll('li:not(.done)').length;
+      remaining.textContent = String(undone);
+    }
+
+    function addTodo(text) {
+      if (!text.trim()) return;
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = text;
+      // 点击文字切换完成状态
+      span.addEventListener('click', () => {
+        li.classList.toggle('done');
+        updateRemaining();
+      });
+      const del = document.createElement('button');
+      del.textContent = '删除';
+      del.setAttribute('aria-label', '删除 ' + text);
+      del.addEventListener('click', () => {
+        li.remove();
+        updateRemaining();
+      });
+      li.append(span, ' ', del);
+      list.appendChild(li);
+      updateRemaining();
+    }
+
+    document.getElementById('add').addEventListener('click', () => {
+      addTodo(input.value);
+      input.value = '';
+      input.focus();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('add').click();
+    });
+  </script>
+</body>
+</html>

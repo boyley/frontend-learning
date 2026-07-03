@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 嵌套路由</title>
+  <style>
+    body { font-family: system-ui, "PingFang SC", sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    a.link { padding: 5px 11px; border: 1px solid #16a34a; border-radius: 6px; color: #16a34a; text-decoration: none; font-size: 14px; }
+    a.link:hover { background: #dcfce7; }
+    a.sub { border-color: #6366f1; color: #4338ca; }
+    a.sub:hover { background: #eef2ff; }
+    #app { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; min-height: 90px; }
+    .bar { font-family: ui-monospace, monospace; background: #f3f4f6; padding: 6px 10px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
+    .layout { border: 2px dashed #16a34a; border-radius: 8px; padding: 12px; }
+    .child-outlet { border: 2px dashed #6366f1; border-radius: 8px; padding: 12px; margin-top: 10px; background: #fafaff; }
+    .tag { font-size: 11px; color: #888; }
+    code { background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>07 · 嵌套路由（Nested Route）</h1>
+
+  <p style="font-size:13px;color:#555">
+    hash 模式，可直接双击打开。<b>父路由</b> <code>/user/:id</code> 提供外层布局（绿色框）与一个
+    <b>子出口</b> <code>&lt;router-view&gt;</code>（蓝色框）；<b>子路由</b> <code>profile / posts</code> 渲染进这个子出口。
+    URL 与 UI 的<b>层级</b>一一对应。
+  </p>
+
+  <div class="bar">当前 hash = <span id="hashText"></span> ｜ matched 链 = <span id="matchText"></span></div>
+  <div id="app"></div>
+
+  <script>
+    /* ============================================================
+       手写「嵌套路由」mini-router
+       核心思想：路由是一棵树，URL 命中的是「从根到叶的一条链」(matched)。
+       从外到内逐层渲染，父组件里的 <div class="child-outlet"> 就是子出口，
+       下一层匹配到的组件渲染进去 —— 这正是 <router-view> 的本质。
+       ============================================================ */
+    class NestedRouter {
+      constructor(outlet) {
+        this.routes = [];      // 路由树：每个节点可含 children
+        this.outlet = outlet;  // 顶层出口
+        window.addEventListener('hashchange', () => this.resolve());
+      }
+      setRoutes(routes) { this.routes = routes; return this; }
+
+      // 编译一段路径为正则（支持 :param），返回 { regex, keys }
+      compile(seg) {
+        const keys = [];
+        const str = seg.replace(/:([^/]+)/g, (_, k) => { keys.push(k); return '([^/]+)'; });
+        return { regex: new RegExp('^' + str), keys }; // 注意：不加 $，因为要「前缀匹配」逐层往下吃
+      }
+
+      // 深度优先，返回从根到叶的匹配链 matched=[{route,params}], 累积 params
+      matchTree(routes, path, parentParams = {}) {
+        for (const route of routes) {
+          const full = route.path;                 // 该节点的「绝对路径」，如 /user/:id/posts
+          const { regex, keys } = this.compile(full);
+          const m = regex.exec(path);
+          if (!m) continue;
+          const params = { ...parentParams };
+          keys.forEach((k, i) => (params[k] = decodeURIComponent(m[i + 1])));
+          // 完全吃完 → 叶子命中
+          if (m[0] === path) return [{ route, params }];
+          // 还有剩余 → 继续往 children 里找
+          if (route.children) {
+            const rest = this.matchTree(route.children, path, params);
+            if (rest.length) return [{ route, params }, ...rest];
+          }
+        }
+        return [];
+      }
+
+      resolve() {
+        const path = location.hash.slice(1) || '/';
+        document.getElementById('hashText').textContent = location.hash || '(空)';
+        const matched = this.matchTree(this.routes, path);
+        document.getElementById('matchText').textContent =
+          matched.length ? matched.map(x => x.route.path).join('  ➜  ') : '(无匹配)';
+
+        if (!matched.length) { this.outlet.innerHTML = '<h2>404</h2>'; return; }
+
+        // 从外到内逐层渲染：先渲染最外层，再把内层塞进它的 child-outlet
+        this.outlet.innerHTML = matched[0].route.component(matched[0].params);
+        for (let i = 1; i < matched.length; i++) {
+          const slot = this.outlet.querySelector('.child-outlet');   // 父组件留的子出口
+          if (!slot) break;
+          slot.innerHTML = matched[i].route.component(matched[i].params);
+        }
+      }
+    }
+
+    // —— 路由树：父 /user/:id 含两个子路由 ——
+    // 约定：component 里放 <div class="child-outlet"> 作为 <router-view> 子出口
+    const routes = [
+      { path: '/', component: () =>
+        `<h2>🏠 Home</h2>
+         <nav>
+           <a class="link" href="#/user/1/profile">User1 · Profile</a>
+           <a class="link" href="#/user/1/posts">User1 · Posts</a>
+           <a class="link" href="#/user/2/profile">User2 · Profile</a>
+         </nav>` },
+      {
+        path: '/user/:id',
+        component: (p) =>
+          `<div class="layout">
+             <div class="tag">▲ 父组件 UserLayout（/user/:id）—— 无论看 profile 还是 posts，这层都在</div>
+             <h2>👤 用户 #${p.id} 的空间</h2>
+             <nav>
+               <a class="link" href="#/">← Home</a>
+               <a class="link sub" href="#/user/${p.id}/profile">资料 Profile</a>
+               <a class="link sub" href="#/user/${p.id}/posts">文章 Posts</a>
+             </nav>
+             <!-- 这个蓝框就是子路由出口 <router-view> -->
+             <div class="child-outlet"><span class="tag">（子出口：选择上面的子标签）</span></div>
+           </div>`,
+        children: [
+          { path: '/user/:id/profile', component: (p) =>
+            `<div class="tag">▼ 子组件 Profile</div><h3>📇 资料</h3><p>用户 #${p.id} 的基本资料。父布局仍在外层。</p>` },
+          { path: '/user/:id/posts', component: (p) =>
+            `<div class="tag">▼ 子组件 Posts</div><h3>📝 文章</h3><ul><li>#${p.id} 的文章 A</li><li>#${p.id} 的文章 B</li></ul>` },
+        ],
+      },
+    ];
+
+    const router = new NestedRouter(document.getElementById('app')).setRoutes(routes);
+    router.resolve();
+  </script>
+</body>
+</html>

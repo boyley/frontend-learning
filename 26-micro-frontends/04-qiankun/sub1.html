@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>qiankun 子应用 1</title>
+  <style>
+    /* 子应用自己的样式。开启 experimentalStyleIsolation 后，qiankun 会自动给这些选择器
+       加上 [data-qiankun="sub1"] 之类的作用域前缀，避免污染主应用或其它子应用。 */
+    .sub1-card { background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 10px; padding: 20px; }
+    .sub1-card h2 { margin-top: 0; color: #0e7490; }
+    .sub1-card button { padding: 6px 14px; border-radius: 6px; border: 1px solid #06b6d4; background: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <!-- 子应用的 UI 模板。qiankun 会把这段 body 内容注入到主应用的 #subapp-container 里 -->
+  <div class="sub1-card">
+    <h2>我是子应用 1（sub1）</h2>
+    <p>本页面被 qiankun 通过 <b>HTML Entry</b> 加载：qiankun fetch 了 sub1.html，解析并执行了下面的脚本。</p>
+    <div id="sub1-root"></div>
+  </div>
+
+  <script>
+    // ==========================================================================
+    // qiankun 子应用（非 webpack 构建版）
+    // 子应用必须导出 bootstrap / mount / unmount 三个异步生命周期。
+    // 用 webpack 时通过 output.library + umd 导出；这里免构建，
+    // 直接往 window 挂一个「唯一的全局对象」，import-html-entry 会把它当作导出的生命周期。
+    // ==========================================================================
+
+    // 用一个内部渲染函数，mount 时把内容渲染到 qiankun 提供的容器里
+    function renderSub1(props) {
+      // qiankun 在 mount 时通过 props.container 传入「子应用挂载的容器 DOM」
+      const container = (props && props.container) || document;
+      const root = container.querySelector('#sub1-root');
+      if (!root) return;
+      let count = 0;
+      root.innerHTML = `<button id="sub1-btn">sub1 计数 +1：<b id="sub1-num">0</b></button>`;
+      root.querySelector('#sub1-btn').addEventListener('click', () => {
+        count++;
+        root.querySelector('#sub1-num').textContent = count;
+      });
+    }
+
+    // 关键：只往 window 添加「这一个」新全局属性，值为生命周期对象。
+    // qiankun 的 import-html-entry 会识别脚本执行后新增的全局，作为子应用的导出。
+    window['sub1'] = {
+      // 首次加载时执行一次
+      async bootstrap() {
+        console.log('[sub1] bootstrap');
+      },
+      // 每次被激活时执行，负责渲染
+      async mount(props) {
+        console.log('[sub1] mount，props =', props);
+        renderSub1(props);
+      },
+      // 每次失活时执行，负责清理
+      async unmount(props) {
+        console.log('[sub1] unmount');
+        const container = (props && props.container) || document;
+        const root = container.querySelector('#sub1-root');
+        if (root) root.innerHTML = '';
+      },
+    };
+  </script>
+</body>
+</html>

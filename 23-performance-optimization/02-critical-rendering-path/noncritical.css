@@ -1,0 +1,22 @@
+/*
+  非关键 CSS（首屏用不到的样式）—— 通过「异步方式」加载，不阻塞首屏渲染。
+  加载技巧见 after.html：<link rel="stylesheet" media="print" onload="this.media='all'">
+  浏览器对 media 不匹配（print）的样式表不作为渲染阻塞资源处理，
+  等它下载完再把 media 切回 all 应用上，从而「关键 CSS 内联 + 非关键 CSS 异步」。
+*/
+
+/* 首屏外占位块、工具类等——不影响首屏首次绘制 */
+.filler {
+  height: 700px;
+  background: linear-gradient(#ffffff, #dcfce7);
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.u-m-0{margin:0}.u-m-1{margin:4px}.u-m-2{margin:8px}.u-m-3{margin:12px}.u-m-4{margin:16px}
+.u-p-0{padding:0}.u-p-1{padding:4px}.u-p-2{padding:8px}.u-p-3{padding:12px}.u-p-4{padding:16px}
+.u-fs-1{font-size:12px}.u-fs-2{font-size:14px}.u-fs-3{font-size:16px}.u-fs-4{font-size:20px}
+.grid-1{display:grid}.grid-2{gap:8px}.grid-3{grid-template-columns:1fr 1fr}
+.flex-1{display:flex}.flex-2{align-items:center}.flex-3{justify-content:space-between}
+.r-1{border-radius:2px}.r-2{border-radius:4px}.r-3{border-radius:8px}.r-4{border-radius:16px}
+.sh-1{box-shadow:0 1px 2px rgba(0,0,0,.1)}.sh-2{box-shadow:0 2px 6px rgba(0,0,0,.15)}

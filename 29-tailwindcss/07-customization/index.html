@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 主题定制与任意值</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <!-- v4 的 CSS-first 定制：用 @theme 定义设计令牌，会自动生成对应工具类 -->
+  <style type="text/tailwindcss">
+    @theme {
+      /* 定义品牌色 → 自动得到 bg-brand / text-brand / border-brand 等 */
+      --color-brand: #6750a4;
+      --color-brand-light: #9a82db;
+      /* 自定义间距刻度 → 得到 p-huge / m-huge / gap-huge */
+      --spacing-huge: 6rem;
+      /* 自定义字体族 → 得到 font-display */
+      --font-display: "Georgia", serif;
+      /* 自定义圆角 → 得到 rounded-blob */
+      --radius-blob: 2rem 0.5rem 2rem 0.5rem;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-8 font-sans text-slate-800">
+  <h1 class="text-3xl font-bold mb-8">定制主题 & 逃生舱：任意值</h1>
+
+  <!-- ① 用 @theme 定义的品牌色，像内置色一样使用 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">① 自定义设计令牌（@theme）</h2>
+    <p class="text-sm text-slate-500 mb-4">在 <code class="bg-slate-200 px-1 rounded">@theme</code> 里写 <code class="bg-slate-200 px-1 rounded">--color-brand</code>，就自动有了 <code class="bg-slate-200 px-1 rounded">bg-brand</code>、<code class="bg-slate-200 px-1 rounded">text-brand</code>。</p>
+    <div class="flex flex-wrap gap-4">
+      <div class="bg-brand text-white p-6 rounded-xl">bg-brand</div>
+      <div class="bg-brand-light text-white p-6 rounded-xl">bg-brand-light</div>
+      <div class="border-2 border-brand text-brand p-6 rounded-xl font-semibold">border-brand + text-brand</div>
+      <div class="bg-brand text-white p-6 rounded-blob font-display text-2xl">rounded-blob + font-display</div>
+    </div>
+  </section>
+
+  <!-- ② 自定义间距刻度 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">② 自定义刻度（--spacing-huge → p-huge）</h2>
+    <div class="bg-brand-light text-white p-huge rounded-xl inline-block">p-huge = 6rem padding</div>
+  </section>
+
+  <!-- ③ 任意值 arbitrary values：设计系统之外的一次性精确值 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">③ 任意值（逃生舱，用 [] 包精确值）</h2>
+    <p class="text-sm text-slate-500 mb-4">刻度里没有的值，用方括号即写即用，无需改配置。</p>
+    <div class="space-y-3">
+      <!-- 精确宽度 -->
+      <div class="w-[437px] h-8 bg-sky-500 text-white text-sm grid place-items-center rounded">w-[437px] 精确宽度</div>
+      <!-- 精确颜色（品牌十六进制） -->
+      <div class="bg-[#1da1f2] text-white p-4 rounded-lg">bg-[#1da1f2]（Twitter 蓝，任意 HEX）</div>
+      <!-- 任意字号 + 任意行高 -->
+      <p class="text-[27px] leading-[1.1] text-brand font-bold">text-[27px] leading-[1.1] 任意排版</p>
+      <!-- CSS 变量 & 任意属性 -->
+      <div class="[mask-type:luminance] grid-cols-[repeat(3,80px)] grid gap-2">
+        <div class="h-10 bg-emerald-400 rounded"></div>
+        <div class="h-10 bg-emerald-500 rounded"></div>
+        <div class="h-10 bg-emerald-600 rounded"></div>
+      </div>
+      <p class="text-xs text-slate-400">↑ grid-cols-[repeat(3,80px)] 也是任意值（自定义网格模板）</p>
+    </div>
+  </section>
+
+  <!-- ④ 任意属性：连没有对应工具类的 CSS 也能写 -->
+  <section>
+    <h2 class="text-xl font-semibold mb-3">④ 任意属性 [property:value]</h2>
+    <div class="[writing-mode:vertical-rl] h-32 bg-white shadow rounded p-3 inline-block text-brand font-semibold">
+      竖排文字：[writing-mode:vertical-rl]
+    </div>
+  </section>
+</body>
+</html>

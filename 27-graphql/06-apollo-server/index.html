@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>06 · Apollo Server · 浏览器裸 fetch 客户端</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    button { padding: 8px 14px; margin: 6px 6px 6px 0; border: 1px solid #6247aa; background: #6247aa; color: #fff; border-radius: 6px; cursor: pointer; }
+    input { padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; }
+    pre { background: #0d1117; color: #c9d1d9; padding: 14px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    .hint { color: #666; font-size: 13px; }
+    code { background: #eee; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>06 · Apollo Server —— 浏览器纯 fetch 客户端（零依赖）</h1>
+  <p class="hint">
+    GraphQL 的请求本质就是往 <b>一个 endpoint</b> <code>POST</code> 一段 JSON：
+    <code>{ query, variables }</code>。不需要任何客户端库也能用。<br />
+    ⚠️ 先启动服务：终端里 <code>cd 27-graphql &amp;&amp; npm install &amp;&amp; npm run 06</code>，
+    再用浏览器打开本文件。Apollo Server 默认开启 CORS，允许跨源请求。
+  </p>
+
+  <div>
+    <button id="btnList">① 查询 books</button>
+    <input id="title" placeholder="书名" value="GraphQL 精粹" />
+    <input id="author" placeholder="作者" value="小红" />
+    <button id="btnAdd">② 新增 book（Mutation）</button>
+  </div>
+
+  <pre id="out">点击上面的按钮试试……</pre>
+
+  <script>
+    const ENDPOINT = 'http://localhost:4000/';
+    const out = document.getElementById('out');
+
+    // 通用请求函数：GraphQL 就是一次 POST，body 里带 query 和 variables
+    async function gql(query, variables) {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+      });
+      return res.json(); // { data, errors }
+    }
+
+    document.getElementById('btnList').onclick = async () => {
+      out.textContent = '请求中…';
+      try {
+        const r = await gql(`{ books { id title author } }`);
+        out.textContent = JSON.stringify(r, null, 2);
+      } catch (e) {
+        out.textContent = '失败：' + e.message + '\n（是否已运行 npm run 06 ？）';
+      }
+    };
+
+    document.getElementById('btnAdd').onclick = async () => {
+      out.textContent = '请求中…';
+      const title = document.getElementById('title').value;
+      const author = document.getElementById('author').value;
+      const M = `
+        mutation Add($title: String!, $author: String!) {
+          addBook(title: $title, author: $author) { id title author }
+        }`;
+      try {
+        const r = await gql(M, { title, author });
+        out.textContent = JSON.stringify(r, null, 2);
+      } catch (e) {
+        out.textContent = '失败：' + e.message;
+      }
+    };
+  </script>
+</body>
+</html>

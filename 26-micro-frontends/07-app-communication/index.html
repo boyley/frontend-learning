@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>主子应用通信 · 可交互演示</title>
+  <style>
+    /* ===== 全局基础样式 ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f4f6fb;
+      color: #1f2933;
+      line-height: 1.6;
+      padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .subtitle { color: #64748b; margin-bottom: 20px; }
+
+    /* ===== 通用卡片 ===== */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.05);
+      margin-bottom: 20px;
+    }
+    .card h2 { font-size: 18px; margin-bottom: 6px; }
+    .card .hint { color: #64748b; font-size: 13px; margin-bottom: 14px; }
+
+    /* 主应用区域用蓝色，子应用区域用绿色/紫色区分 */
+    .host { border-left: 6px solid #2563eb; }
+    .apps { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .app-a { border-left: 6px solid #16a34a; }
+    .app-b { border-left: 6px solid #9333ea; }
+    @media (max-width: 760px) { .apps { grid-template-columns: 1fr; } }
+
+    /* ===== 表单元素 ===== */
+    label { display: block; font-size: 13px; color: #475569; margin: 10px 0 4px; }
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+    .row > * { flex: 1; }
+    button {
+      border: 1px solid #2563eb;
+      background: #2563eb;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    button:hover { opacity: .88; }
+    button.ghost { background: #fff; color: #2563eb; }
+
+    /* ===== 状态展示 ===== */
+    .badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #4338ca;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .kv { margin: 6px 0; font-size: 14px; }
+    .kv b { color: #0f172a; }
+
+    /* ===== 日志面板 ===== */
+    .log {
+      background: #0f172a;
+      color: #cbd5e1;
+      border-radius: 10px;
+      padding: 12px;
+      height: 180px;
+      overflow-y: auto;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+    }
+    .log .t-host { color: #60a5fa; }
+    .log .t-a { color: #4ade80; }
+    .log .t-b { color: #c084fc; }
+    .log .t-sys { color: #fbbf24; }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 6px;
+      margin-right: 6px;
+      font-weight: 600;
+    }
+    .tag.props { background: #dbeafe; color: #1d4ed8; }
+    .tag.event { background: #fef3c7; color: #b45309; }
+    .tag.bus { background: #dcfce7; color: #15803d; }
+    .tag.state { background: #f3e8ff; color: #7e22ce; }
+  </style>
+</head>
+<body>
+  <h1>微前端 · 主子应用通信</h1>
+  <p class="subtitle">纯原生 JS 手写实现：Props 下发 / CustomEvent 广播 / EventBus 事件总线 / initGlobalState 全局状态。改一处，子应用实时响应。</p>
+
+  <!-- ============ 主应用区 ============ -->
+  <div class="card host">
+    <h2>🏠 主应用（Host）</h2>
+    <p class="hint">主应用负责注册子应用、下发 props、维护全局状态、广播事件。</p>
+
+    <!-- ① Props：注册子应用时下发（父传子最常用） -->
+    <label>① Props 下发（点击“重新挂载子应用”把下面的用户名作为 props 传给子应用）</label>
+    <div class="row">
+      <input id="propUser" value="Alice" />
+      <button onclick="remountChildren()">重新挂载子应用（下发 props）</button>
+    </div>
+
+    <!-- ④ 全局状态 initGlobalState -->
+    <label>④ 全局状态 setGlobalState（主应用改，两个子应用的 onGlobalStateChange 都会收到）</label>
+    <div class="row">
+      <input id="stateTheme" placeholder="主题，如 dark / light" value="light" />
+      <button onclick="hostSetTheme()">setGlobalState 更新主题</button>
+    </div>
+
+    <!-- ② 自定义事件 CustomEvent 广播 + ③ EventBus -->
+    <label>②③ 广播一条消息（同时用 CustomEvent 和 EventBus 两种方式发出）</label>
+    <div class="row">
+      <input id="broadcastMsg" value="发布会 20:00 开始" />
+      <button onclick="hostBroadcast()">广播通知</button>
+    </div>
+
+    <div style="margin-top:14px">
+      <span class="badge">当前全局状态</span>
+      <span class="kv" style="margin-left:8px">theme = <b id="hostThemeView">light</b>，count = <b id="hostCountView">0</b></span>
+      <button class="ghost" style="margin-left:8px;flex:none" onclick="gs.setGlobalState({ count: gs.getState().count + 1 })">count +1</button>
+    </div>
+  </div>
+
+  <!-- ============ 两个子应用区 ============ -->
+  <div class="apps">
+    <div class="card app-a">
+      <h2>🧩 子应用 A</h2>
+      <p class="hint">通过 props 拿到用户名；监听全局状态与广播事件。</p>
+      <div class="kv">props.username：<b id="aUser">（未挂载）</b></div>
+      <div class="kv">全局 theme：<b id="aTheme">-</b></div>
+      <div class="kv">全局 count：<b id="aCount">-</b></div>
+      <div class="kv">最近收到广播：<b id="aMsg">-</b></div>
+      <div class="row" style="margin-top:8px">
+        <input id="aReply" placeholder="子应用 A 回话，走 EventBus" value="A 收到" />
+        <button onclick="childReply('A')">A → 广播回执</button>
+      </div>
+    </div>
+
+    <div class="card app-b">
+      <h2>🧩 子应用 B</h2>
+      <p class="hint">同样订阅全局状态与事件，验证“一次广播，多子应用响应”。</p>
+      <div class="kv">props.username：<b id="bUser">（未挂载）</b></div>
+      <div class="kv">全局 theme：<b id="bTheme">-</b></div>
+      <div class="kv">全局 count：<b id="bCount">-</b></div>
+      <div class="kv">最近收到广播：<b id="bMsg">-</b></div>
+      <div class="row" style="margin-top:8px">
+        <input id="bReply" placeholder="子应用 B 回话，走 CustomEvent" value="B 收到" />
+        <button onclick="childReply('B')">B → 广播回执</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 通信日志 ============ -->
+  <div class="card">
+    <h2>📜 通信日志（谁发、走哪种方式、谁收到，一目了然）</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!--  以下为核心实现：手写 EventBus + mini initGlobalState + 各通信方式  -->
+  <!-- =================================================================== -->
+  <script>
+    /* ------------------------------------------------------------------ */
+    /*  0. 日志工具：把每一次通信打印到页面，方便观察数据流向             */
+    /* ------------------------------------------------------------------ */
+    const logEl = document.getElementById('log');
+    function log(who, tagClass, tagText, msg) {
+      // who: host / a / b / sys 决定文字颜色；tag 决定通信方式徽标
+      const line = document.createElement('div');
+      line.className = 't-' + who;
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      line.innerHTML =
+        `<span style="color:#475569">${time}</span> ` +
+        `<span class="tag ${tagClass}">${tagText}</span>${msg}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight; // 始终滚到最新一条
+    }
+
+    /* ================================================================== */
+    /*  ③ 手写 EventBus —— 最基础的发布订阅中心（on / emit / off）        */
+    /*  微前端里子子应用之间、无父子关系的模块之间常用它解耦通信          */
+    /* ================================================================== */
+    class EventBus {
+      constructor() {
+        // events 结构：{ 事件名: [回调1, 回调2, ...] }
+        this.events = {};
+      }
+      // 订阅：注册某个事件的回调
+      on(type, handler) {
+        (this.events[type] ||= []).push(handler);
+        return () => this.off(type, handler); // 返回取消订阅的函数，方便卸载时清理
+      }
+      // 发布：触发某个事件，依次调用所有回调，把数据传过去
+      emit(type, payload) {
+        (this.events[type] || []).forEach((fn) => {
+          try { fn(payload); } catch (e) { console.error('[EventBus] 回调异常', e); }
+        });
+      }
+      // 退订：移除某个具体回调（避免内存泄漏 / 子应用卸载后仍被通知）
+      off(type, handler) {
+        if (!this.events[type]) return;
+        this.events[type] = this.events[type].filter((fn) => fn !== handler);
+      }
+    }
+    // 全局唯一的事件总线实例（真实微前端里挂在 window 上供各应用取用）
+    const bus = new EventBus();
+
+    /* ================================================================== */
+    /*  ④ mini 版 initGlobalState —— 模仿 qiankun 的全局状态             */
+    /*  返回 { onGlobalStateChange, setGlobalState }：                     */
+    /*    setGlobalState(part) 合并更新状态，并通知所有监听者             */
+    /*    onGlobalStateChange(cb) 订阅状态变化，state 变了就回调          */
+    /* ================================================================== */
+    function initGlobalState(initial = {}) {
+      let state = { ...initial };      // 所有应用共享的这一份状态
+      const listeners = [];            // 所有 onGlobalStateChange 注册的回调
+
+      function onGlobalStateChange(callback, fireImmediately) {
+        listeners.push(callback);
+        // qiankun 语义：第二个参数为 true 时立即用当前状态回调一次（做初始化）
+        if (fireImmediately) callback({ ...state }, { ...state });
+      }
+
+      function setGlobalState(partial) {
+        const prev = { ...state };
+        state = { ...state, ...partial };      // 浅合并，只覆盖传入的字段
+        // 通知所有监听者：把「新状态」和「旧状态」都给出去
+        listeners.forEach((cb) => cb({ ...state }, prev));
+      }
+
+      // getState 是为了 demo 方便读取当前值（qiankun 原版没有，这里加个便捷方法）
+      function getState() { return { ...state }; }
+
+      return { onGlobalStateChange, setGlobalState, getState };
+    }
+    // 主应用创建全局状态（qiankun 中由主应用调用 initGlobalState 并把 API 透传给子应用）
+    const gs = initGlobalState({ theme: 'light', count: 0 });
+
+    /* ================================================================== */
+    /*  子应用工厂：模拟一个子应用的完整生命周期                          */
+    /*  真实微前端里 bootstrap / mount / unmount 由框架调度               */
+    /* ================================================================== */
+    function createChildApp(name) {
+      const lower = name.toLowerCase();               // 'a' / 'b'
+      // 缓存该子应用注册的所有“取消订阅”函数，unmount 时统一清理
+      let disposers = [];
+
+      // ---- mount：挂载。① props 在这里被子应用接收 ----
+      function mount(props) {
+        // ① Props：父传子。子应用从 props 里读取主应用下发的数据
+        document.getElementById(lower + 'User').textContent = props.username;
+        log(lower, 'props', 'Props', `子应用 ${name} mount，收到 props.username = ${props.username}`);
+
+        // ④ 订阅全局状态：状态一变就更新自己的视图
+        const offState = gs.onGlobalStateChange((next) => {
+          document.getElementById(lower + 'Theme').textContent = next.theme;
+          document.getElementById(lower + 'Count').textContent = next.count;
+          log(lower, 'state', 'GlobalState', `子应用 ${name} 收到状态变化 → theme=${next.theme}, count=${next.count}`);
+        }, true /* 立即触发一次做初始化 */);
+        disposers.push(offState);
+
+        // ③ 订阅 EventBus 上的广播事件
+        const offBus = bus.on('notify', (payload) => {
+          document.getElementById(lower + 'Msg').textContent = payload.text + '（via EventBus）';
+          log(lower, 'bus', 'EventBus', `子应用 ${name} 通过 EventBus 收到：${payload.text}`);
+        });
+        disposers.push(offBus);
+
+        // ② 订阅 window 上的 CustomEvent 广播
+        const onCustom = (e) => {
+          document.getElementById(lower + 'Msg').textContent = e.detail.text + '（via CustomEvent）';
+          log(lower, 'event', 'CustomEvent', `子应用 ${name} 通过 CustomEvent 收到：${e.detail.text}`);
+        };
+        window.addEventListener('micro:notify', onCustom);
+        disposers.push(() => window.removeEventListener('micro:notify', onCustom));
+      }
+
+      // ---- unmount：卸载。清理所有订阅，防止内存泄漏与“僵尸监听” ----
+      function unmount() {
+        disposers.forEach((off) => off());
+        disposers = [];
+        log(lower, 'props', 'unmount', `子应用 ${name} 卸载，已清理全部订阅`);
+      }
+
+      return { mount, unmount, name };
+    }
+
+    // 主应用“注册表”：持有两个子应用实例
+    const children = { A: createChildApp('A'), B: createChildApp('B') };
+
+    /* ================================================================== */
+    /*  主应用侧的操作函数（页面按钮调用）                                */
+    /* ================================================================== */
+
+    // ① 重新挂载：演示 props 下发。先卸载再用新 props 挂载
+    function remountChildren() {
+      const username = document.getElementById('propUser').value || '匿名';
+      Object.values(children).forEach((app) => {
+        app.unmount();                       // 先卸载（清订阅）
+        app.mount({ username });             // 再挂载并下发 props
+      });
+    }
+
+    // ④ 主应用更新全局状态的主题
+    function hostSetTheme() {
+      const theme = document.getElementById('stateTheme').value || 'light';
+      gs.setGlobalState({ theme });          // 只改 theme，count 保持不变
+      log('host', 'state', 'setGlobalState', `主应用 setGlobalState({ theme: "${theme}" })`);
+    }
+
+    // ②③ 主应用广播：同一条消息，同时走 CustomEvent 和 EventBus
+    function hostBroadcast() {
+      const text = document.getElementById('broadcastMsg').value || '(空消息)';
+      // ② CustomEvent：通过 window 派发，detail 携带数据，任何应用可 addEventListener 收
+      window.dispatchEvent(new CustomEvent('micro:notify', { detail: { text } }));
+      log('host', 'event', 'CustomEvent', `主应用 dispatchEvent(micro:notify) → ${text}`);
+      // ③ EventBus：通过总线 emit
+      bus.emit('notify', { text });
+      log('host', 'bus', 'EventBus', `主应用 bus.emit(notify) → ${text}`);
+    }
+
+    // 子应用回话：演示“子 → 主/子”反向通信（也用总线/自定义事件）
+    function childReply(name) {
+      const lower = name.toLowerCase();
+      const text = document.getElementById(lower + 'Reply').value || `${name} 回执`;
+      if (name === 'A') {
+        // A 用 EventBus 回话
+        bus.emit('reply', { from: 'A', text });
+      } else {
+        // B 用 CustomEvent 回话
+        window.dispatchEvent(new CustomEvent('micro:reply', { detail: { from: 'B', text } }));
+      }
+    }
+
+    /* ================================================================== */
+    /*  主应用同样是“一个订阅者”：监听全局状态刷新自己的展示，           */
+    /*  以及监听子应用的回执，证明双向通信                                */
+    /* ================================================================== */
+    gs.onGlobalStateChange((next) => {
+      document.getElementById('hostThemeView').textContent = next.theme;
+      document.getElementById('hostCountView').textContent = next.count;
+      // 顺便把整个页面背景随主题切换，让全局状态的效果“看得见”
+      document.body.style.background = next.theme === 'dark' ? '#1e293b' : '#f4f6fb';
+      document.body.style.color = next.theme === 'dark' ? '#e2e8f0' : '#1f2933';
+    }, true);
+
+    // 主应用监听子应用 A 的 EventBus 回执
+    bus.on('reply', (p) => log('host', 'bus', 'EventBus', `主应用收到子应用 ${p.from} 的回执：${p.text}`));
+    // 主应用监听子应用 B 的 CustomEvent 回执
+    window.addEventListener('micro:reply', (e) =>
+      log('host', 'event', 'CustomEvent', `主应用收到子应用 ${e.detail.from} 的回执：${e.detail.text}`));
+
+    /* ================================================================== */
+    /*  启动：主应用首次挂载两个子应用（下发初始 props）                  */
+    /* ================================================================== */
+    log('sys', 'props', 'boot', '页面加载完成，主应用开始挂载子应用……');
+    remountChildren();
+  </script>
+</body>
+</html>

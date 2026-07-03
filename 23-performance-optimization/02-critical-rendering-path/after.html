@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化后 · 关键渲染路径畅通（after）</title>
+
+  <!--
+    ✅ 正面教材：这个页面演示「缩短关键渲染路径」的写法。
+    三个改动（对照 before.html 看）：
+      1. 只把「首屏必需」的关键 CSS 内联进 <style>（体量很小），首屏立刻可绘制；
+         首屏用不到的样式拆到 noncritical.css，用「异步方式」加载，不阻塞渲染。
+      2. 那个重脚本改成 <script defer>：defer 让脚本「并行下载、DOM 完成后再按序执行」，
+         不再暂停 HTML 解析，首屏不被脚本拖住。
+      3. 指标测量脚本同样不阻塞首屏。
+    结果：FCP / LCP / DCL 都比 before.html 明显更早。
+  -->
+
+  <!-- ✅ 关键 CSS 内联：只放首屏首次绘制需要的最小样式集，浏览器无需等外部样式表即可开画 -->
+  <style>
+    :root { --brand: #15803d; --bg: #f0fdf4; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+      line-height: 1.7; color: #1f2937; background: var(--bg);
+    }
+    header { padding: 28px 24px; background: var(--brand); color: #fff; }
+    header h1 { margin: 8px 0 0; font-size: 24px; }
+    .tag {
+      display: inline-block; background: #dcfce7; color: var(--brand);
+      padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    }
+    .content { max-width: 760px; margin: 0 auto; padding: 20px 16px; }
+    .hero {
+      /* LCP 候选元素：视口内最大的可见块 */
+      height: 260px; border-radius: 12px; margin: 16px 0;
+      background: linear-gradient(135deg, #16a34a, #14532d);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    p { margin: 12px 0; }
+    code { background: #ecfdf5; padding: 1px 6px; border-radius: 4px; font-size: 90%; }
+    .metrics { margin: 20px 0; padding: 16px; border-radius: 12px; background: #fff; border: 1px solid #bbf7d0; }
+    .metrics h2 { margin: 0 0 12px; font-size: 16px; color: var(--brand); }
+    .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #bbf7d0; }
+    .metric-row:last-child { border-bottom: 0; }
+    .metric-name { color: #6b7280; }
+    .metric-val { font-variant-numeric: tabular-nums; font-weight: 700; }
+  </style>
+
+  <!--
+    ✅ 非关键 CSS 异步加载：
+      技巧是先用 media="print"（当前不匹配，不阻塞渲染），下载完成后 onload 里把 media 改回 all 生效。
+      这样 noncritical.css 不进入「渲染阻塞资源」清单，首屏不必等它。
+      <noscript> 兜底：JS 被禁用时也能正常加载样式。
+  -->
+  <link rel="stylesheet" href="./noncritical.css" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="./noncritical.css" /></noscript>
+
+  <!--
+    ✅ 阻塞点 1 的修复：脚本加 defer。
+      defer = 并行下载、不打断 HTML 解析；等 DOM 构建完成、DCL 之前按文档顺序执行。
+      于是「解析器不再被脚本卡住」，首屏能尽快画出来 → FCP / LCP 大幅提前。
+      ⚠️ 注意：defer 脚本在 DOMContentLoaded「之前」执行，所以脚本本身若很重仍会拖后 DCL。
+      正确做法是让首屏初始化脚本保持轻量（重活拆分/懒执行）——本页 heavy-defer.js 只做轻量初始化，
+      因此 DCL 也随之提前。真正的重计算应放到交互后或用 Web Worker（见模块 09）。
+  -->
+  <script defer src="./heavy-defer.js"></script>
+</head>
+<body>
+  <header>
+    <span class="tag">AFTER · 关键路径畅通</span>
+    <h1>优化后：内联关键 CSS + 非关键 CSS 异步 + 脚本 defer</h1>
+  </header>
+
+  <div class="content">
+    <div class="hero">首屏主视觉（LCP 候选元素）</div>
+
+    <p>本页把重脚本改成 <code>&lt;script defer&gt;</code>——它<strong>并行下载、DOM 完成后才执行</strong>，
+       不再暂停 HTML 解析；同时只<strong>内联首屏关键 CSS</strong>，其余样式异步加载。首屏因此更快画出。</p>
+
+    <p>对比 <code>before.html</code>：同样的 <code>FCP / LCP / DCL</code> 测量脚本，这里三项都明显更早。</p>
+
+    <div class="metrics">
+      <h2>本页关键渲染指标（实测）</h2>
+      <div class="metric-row"><span class="metric-name">FCP 首次内容绘制</span><span class="metric-val" id="fcp">测量中…</span></div>
+      <div class="metric-row"><span class="metric-name">LCP 最大内容绘制</span><span class="metric-val" id="lcp">测量中…</span></div>
+      <div class="metric-row"><span class="metric-name">DCL DOMContentLoaded</span><span class="metric-val" id="dcl">测量中…</span></div>
+    </div>
+
+    <div class="filler">↓ 下面是占位内容（样式来自异步加载的 noncritical.css），用来撑高页面。</div>
+  </div>
+
+  <!--
+    📊 指标测量脚本：与 before.html 完全一致，放在 body 末尾不阻塞首屏，仅读数显示。
+  -->
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (ms) => `${ms.toFixed(0)} ms`;
+
+    // FCP：首次内容绘制
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          if (e.name === "first-contentful-paint") {
+            $("fcp").textContent = fmt(e.startTime);
+            console.log(`[after] FCP = ${e.startTime.toFixed(0)}ms`);
+          }
+        }
+      }).observe({ type: "paint", buffered: true });
+    } catch (err) { $("fcp").textContent = "当前浏览器不支持 paint"; }
+
+    // LCP：最大内容绘制
+    try {
+      new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1];
+        $("lcp").textContent = fmt(last.startTime);
+        console.log(`[after] LCP 刷新 = ${last.startTime.toFixed(0)}ms`);
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+    } catch (err) { $("lcp").textContent = "当前浏览器不支持 LCP"; }
+
+    // DCL：DOMContentLoaded（因脚本 defer，不再被推迟）
+    function showDCL() {
+      const nav = performance.getEntriesByType("navigation")[0];
+      if (nav) {
+        $("dcl").textContent = fmt(nav.domContentLoadedEventEnd);
+        console.log(`[after] DCL = ${nav.domContentLoadedEventEnd.toFixed(0)}ms`);
+      }
+    }
+    if (document.readyState === "complete") showDCL();
+    else window.addEventListener("load", showDCL);
+  </script>
+</body>
+</html>

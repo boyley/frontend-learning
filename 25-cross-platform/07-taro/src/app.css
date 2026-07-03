@@ -1,0 +1,6 @@
+/* app.css —— 全局样式 */
+page,
+body {
+  margin: 0;
+  font-family: -apple-system, "PingFang SC", sans-serif;
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qiankun 最小可运行 demo（主应用）</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; color: #222; }
+    header { background: #0e7490; color: #fff; padding: 16px 24px; }
+    header h1 { margin: 0 0 8px; font-size: 20px; }
+    nav a {
+      color: #cffafe; margin-right: 16px; text-decoration: none;
+      padding: 4px 10px; border-radius: 6px; background: #155e75;
+    }
+    nav a:hover { background: #0891b2; }
+    main { padding: 24px; }
+    /* 所有子应用统一挂载到这个容器里，qiankun 会把子应用的 HTML/JS 注入这里 */
+    #subapp-container { min-height: 160px; border: 2px dashed #cbd5e1; border-radius: 10px; padding: 16px; }
+    .hint { color: #6b7280; font-size: 13px; margin-top: 20px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>qiankun · 基于 single-spa 封装的开箱即用微前端框架</h1>
+    <!-- hash 路由导航：qiankun 根据 activeRule 匹配当前路由，自动加载对应子应用 -->
+    <nav>
+      <a href="#/sub1">👉 加载子应用 1（#/sub1）</a>
+      <a href="#/sub2">👉 加载子应用 2（#/sub2）</a>
+      <a href="#/">🏠 不加载（首页）</a>
+    </nav>
+  </header>
+
+  <main>
+    <p>下面这个虚线框是子应用的挂载容器，切换导航时 qiankun 会用 <b>HTML Entry</b> 把对应子应用整页加载进来：</p>
+    <!-- 主应用只提供一个空容器，子应用的内容由 qiankun 动态注入 -->
+    <div id="subapp-container"></div>
+
+    <p class="hint">
+      打开控制台可看到 qiankun 的加载日志与子应用生命周期（bootstrap / mount / unmount）。<br/>
+      注意：qiankun 通过 <b>fetch 子应用的 HTML 地址</b> 来加载，所以必须用 <code>npx serve</code> 起本地服务器
+      （<code>file://</code> 协议下 fetch 会被浏览器拦截）。
+    </p>
+  </main>
+
+  <!--
+    通过 CDN 引入 qiankun 的 UMD 构建（免 npm install），暴露全局对象 qiankun。
+    qiankun 内部依赖的 import-html-entry / single-spa 已一并打包进这个文件。
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/qiankun@2.10.16/dist/index.umd.js"></script>
+
+  <script>
+    // ==========================================================================
+    // qiankun 主应用（基座 / master）核心用法
+    // 相比 single-spa 需要手写路由分发与 JS Entry，qiankun 在其之上封装了：
+    //   1) HTML Entry —— 直接用子应用的 HTML 地址作为 entry，自动解析其中的 js/css；
+    //   2) 内置 JS 沙箱（Proxy / 快照）—— 隔离子应用对 window 的修改；
+    //   3) 样式隔离 —— strictStyleIsolation（Shadow DOM）/ experimentalStyleIsolation。
+    // 主应用只需两步：registerMicroApps([...]) + start()。
+    // ==========================================================================
+
+    const { registerMicroApps, start } = qiankun;
+
+    // --------------------------------------------------------------------------
+    // registerMicroApps：注册子应用列表
+    //   - name：子应用唯一名称
+    //   - entry：子应用入口。qiankun 用「HTML Entry」——直接给 HTML 地址，
+    //            qiankun 会 fetch 这个 HTML，解析并加载其中引用的 js/css。
+    //            （single-spa 用的是 JS Entry：直接给一个 JS 文件地址。）
+    //   - container：子应用挂载到主应用里的哪个 DOM 容器（CSS 选择器 / 元素）。
+    //   - activeRule：当前路由匹配到该规则时，激活并加载此子应用。
+    // --------------------------------------------------------------------------
+    registerMicroApps([
+      {
+        name: 'sub1',
+        // 同源静态文件，用相对地址即可；生产环境这里通常是子应用独立部署的域名
+        entry: './sub1.html',
+        container: '#subapp-container',
+        // 路由 hash 以 #/sub1 开头时激活。用函数写法更灵活。
+        activeRule: () => location.hash.startsWith('#/sub1'),
+      },
+      {
+        name: 'sub2',
+        entry: './sub2.html',
+        container: '#subapp-container',
+        activeRule: () => location.hash.startsWith('#/sub2'),
+      },
+    ]);
+
+    // --------------------------------------------------------------------------
+    // start：启动 qiankun。
+    //   - 可传配置：{ sandbox, prefetch, singular ... }
+    //   - sandbox.strictStyleIsolation：用 Shadow DOM 做严格样式隔离
+    //   - sandbox.experimentalStyleIsolation：给子应用样式加前缀做实验性隔离
+    //   - prefetch：是否预加载未激活子应用的静态资源（默认 true）
+    // --------------------------------------------------------------------------
+    start({
+      sandbox: {
+        // 实验性样式隔离：把子应用的 CSS 选择器自动加上作用域前缀，避免污染主应用
+        experimentalStyleIsolation: true,
+      },
+      prefetch: false, // demo 关闭预加载，日志更清晰
+    });
+
+    console.log('[master] qiankun 已启动，点击导航加载子应用～');
+  </script>
+</body>
+</html>

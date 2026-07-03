@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>子应用 · child.html</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      /* 子应用有自己独立的 CSS，这里的背景不会影响父应用 */
+      background: #faf5ff; color: #4c1d95; padding: 16px; line-height: 1.6;
+    }
+    h2 { font-size: 16px; margin-bottom: 8px; }
+    p { font-size: 13px; margin-bottom: 8px; }
+    .box {
+      background: #fff; border: 1px solid #ddd6fe; border-radius: 8px;
+      padding: 12px; margin-top: 8px; font-size: 13px;
+    }
+    button {
+      margin-top: 8px; padding: 8px 14px; border: none; border-radius: 8px;
+      background: #7c3aed; color: #fff; cursor: pointer; font-size: 13px;
+    }
+    button:hover { background: #6d28d9; }
+    #child-inbox {
+      margin-top: 10px; min-height: 40px; padding: 10px; border-radius: 8px;
+      background: #f5f3ff; font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🟣 我是子应用（child.html）</h2>
+  <p>我被父应用用 iframe 内嵌，但我拥有<strong>独立的 window / document / CSS / JS 上下文</strong>。</p>
+
+  <div class="box">
+    我自己的全局变量：<br>
+    <code>window.appName = "子应用-Child"</code>
+  </div>
+
+  <!-- 收到父应用消息后显示在这里，并自动回显给父应用 -->
+  <div id="child-inbox">📭 等待父应用消息…</div>
+
+  <button id="btn-notify">主动给父应用发一条消息（子 → 父）</button>
+
+  <script>
+    // ============================================================
+    // 子应用：拥有自己独立的全局作用域
+    // 这里的 window 是 iframe 的 window，与父页面的 window 是两个对象。
+    // 因此即便父应用也叫 appName，两者也互不覆盖。
+    // ============================================================
+    window.appName = '子应用-Child';
+
+    const inbox = document.getElementById('child-inbox');
+
+    // ---------- 接收父 → 子 的消息 ----------
+    window.addEventListener('message', (event) => {
+      // 真实项目应校验 event.origin，只信任父应用来源
+      const data = event.data || {};
+      if (data.type === 'PARENT_TO_CHILD') {
+        inbox.textContent = `📨 收到父应用消息：${data.text}`;
+        // 收到后自动回显一条给父应用（子 → 父）
+        event.source.postMessage(
+          { type: 'CHILD_TO_PARENT', text: `已收到「${data.text}」（来自子应用的回执）` },
+          '*'
+        );
+      }
+    });
+
+    // ---------- 子应用主动发消息给父 ----------
+    document.getElementById('btn-notify').onclick = () => {
+      // window.parent 指向父窗口；子应用主动向上通信也走 postMessage
+      window.parent.postMessage(
+        { type: 'CHILD_TO_PARENT', text: '子应用主动打招呼 👋' },
+        '*'
+      );
+    };
+  </script>
+</body>
+</html>

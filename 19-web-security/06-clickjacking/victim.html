@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>我的银行 · 账户设置（无防护目标站）</title>
+  <style>
+    /* 让目标站看起来像一个真实的「账户设置」页面 */
+    body {
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #f7f8fa;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, .08);
+    }
+    h1 { font-size: 20px; }
+    /* 敏感操作按钮：位置固定，方便攻击者对齐（这里故意放在固定位置） */
+    #dangerBtn {
+      display: block;
+      width: 220px;
+      height: 56px;
+      margin: 32px auto 0;
+      background: #e02e2e;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #status { margin-top: 20px; text-align: center; color: #e02e2e; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🏦 我的银行 · 账户设置</h1>
+    <p>你已登录为：<strong>张三</strong>（会话有效）</p>
+    <p>下面是一个「敏感操作」按钮，正常情况下用户会谨慎点击。</p>
+
+    <!-- 敏感操作：删除账户。真实场景可能是「转账」「授权第三方」「删除数据」 -->
+    <button id="dangerBtn">⚠️ 删除我的账户</button>
+
+    <p id="status"></p>
+  </div>
+
+  <script>
+    // 目标站的敏感操作：点击后「删除账户」
+    // 注意：这个站点【没有任何防点击劫持措施】，允许被任意页面 iframe 嵌入
+    document.getElementById('dangerBtn').addEventListener('click', function () {
+      alert('⚠️ 你的账户已被删除！（这是一次以你身份执行的敏感操作）');
+      document.getElementById('status').textContent = '账户已删除 ❌';
+    });
+  </script>
+</body>
+</html>

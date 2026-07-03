@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 状态变体与暗黑模式</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <!-- v4 里「class 手动切暗黑」需要自定义 dark 变体（v3 是在 config 写 darkMode:'class'） -->
+  <style type="text/tailwindcss">
+    @custom-variant dark (&:where(.dark, .dark *));
+  </style>
+</head>
+<!-- 在 <html> 上加/去 .dark 类来切换主题 -->
+<body class="bg-slate-100 dark:bg-slate-900 min-h-screen p-8 font-sans text-slate-800 dark:text-slate-100 transition-colors">
+
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold">状态变体 + 暗黑模式</h1>
+    <!-- 切换按钮：给 <html> 加/删 .dark -->
+    <button id="toggle" class="px-4 py-2 rounded-lg bg-slate-800 text-white dark:bg-yellow-400 dark:text-slate-900 font-semibold">
+      切换 🌙 / ☀️
+    </button>
+  </div>
+
+  <!-- ① 交互状态：hover / focus / active / disabled -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">① 交互状态变体（hover / focus / active / disabled）</h2>
+    <div class="flex flex-wrap gap-3">
+      <!-- hover:改背景、active:按下变深、focus:键盘聚焦出环 -->
+      <button class="px-5 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-300 transition">
+        hover / active / focus 我
+      </button>
+      <!-- disabled: 前缀在禁用时生效 -->
+      <button disabled class="px-5 py-2 rounded-lg bg-violet-600 text-white disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed">
+        我被 disabled 了
+      </button>
+      <!-- focus-within：内部输入聚焦时，外框高亮 -->
+      <label class="px-3 py-2 rounded-lg border-2 border-slate-300 focus-within:border-violet-500 bg-white dark:bg-slate-800 flex items-center gap-2">
+        <span class="text-sm text-slate-400">搜索</span>
+        <input class="outline-none bg-transparent" placeholder="点我看外框变色" />
+      </label>
+    </div>
+  </section>
+
+  <!-- ② group：父 hover 影响子元素 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">② group：悬停父卡片，子元素一起变</h2>
+    <div class="group max-w-sm bg-white dark:bg-slate-800 rounded-xl shadow p-5 cursor-pointer hover:shadow-xl transition">
+      <h3 class="font-bold text-lg group-hover:text-violet-600 transition">把鼠标放到整张卡片上</h3>
+      <p class="text-slate-500 text-sm mt-1">标题会变紫、箭头会右移——它们用的是 <code>group-hover:</code>，由父级 <code>.group</code> 的 hover 驱动。</p>
+      <span class="inline-block mt-3 text-violet-600 group-hover:translate-x-2 transition-transform">阅读更多 →</span>
+    </div>
+  </section>
+
+  <!-- ③ peer：兄弟状态联动（纯 CSS 表单校验提示） -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">③ peer：兄弟元素状态联动</h2>
+    <div class="max-w-sm">
+      <!-- peer 标记「同级参照物」，required + type=email 提供校验状态 -->
+      <input type="email" required placeholder="输入邮箱（试试输错格式）"
+             class="peer w-full px-3 py-2 rounded-lg border-2 border-slate-300 dark:bg-slate-800 outline-none focus:border-violet-500" />
+      <!-- peer-invalid:：当上面的 input 校验不通过时才显示 -->
+      <p class="mt-1 text-sm text-rose-500 hidden peer-invalid:peer-focus:block">邮箱格式不正确</p>
+    </div>
+  </section>
+
+  <!-- ④ dark: 暗黑变体本身 -->
+  <section>
+    <h2 class="text-xl font-semibold mb-3">④ dark: 变体（点右上角按钮切换）</h2>
+    <div class="max-w-md rounded-xl p-6 bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-100 shadow">
+      <p><code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">dark:bg-slate-800</code> 只在 &lt;html&gt; 带 <code>.dark</code> 时生效。整页背景、文字、卡片都为亮/暗各写了一套颜色。</p>
+    </div>
+  </section>
+
+  <script>
+    // 点击按钮时在 <html> 上切换 .dark 类
+    const html = document.documentElement;
+    document.getElementById('toggle').addEventListener('click', () => {
+      html.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>

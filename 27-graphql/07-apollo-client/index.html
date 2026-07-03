@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>07 · Apollo Client（真实 @apollo/client · CDN）</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    button { padding: 8px 14px; margin: 6px 6px 6px 0; border: 1px solid #6247aa; background: #6247aa; color: #fff; border-radius: 6px; cursor: pointer; }
+    pre { background: #0d1117; color: #c9d1d9; padding: 14px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    .hint { color: #666; font-size: 13px; }
+    code { background: #eee; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>07 · Apollo Client —— 真实 InMemoryCache 演示</h1>
+  <p class="hint">
+    本页用 CDN（esm.sh）加载真实的 <code>@apollo/client/core</code>，连到 06 章的服务。<br />
+    ⚠️ 前提：① 先 <code>npm run 06</code> 启动服务；② 本页需联网加载 CDN。<br />
+    点两次「查询」看控制台：第二次 <b>fetchPolicy: cache-first</b> 不再发网络（Network 面板无新请求）。
+  </p>
+  <button id="q1">查询（cache-first，第二次走缓存）</button>
+  <button id="q2">查询（network-only，强制走网络）</button>
+  <pre id="out">等待操作……（若加载失败，多半是未联网或未启动 06 服务）</pre>
+
+  <script type="module">
+    // 真实 Apollo Client 核心包（无 React，纯 core）
+    import { ApolloClient, InMemoryCache, gql, HttpLink }
+      from 'https://esm.sh/@apollo/client@3.11.8/core';
+
+    const out = document.getElementById('out');
+    const client = new ApolloClient({
+      link: new HttpLink({ uri: 'http://localhost:4000/' }),
+      cache: new InMemoryCache(), // ← 规范化缓存，按 __typename:id 归一
+    });
+
+    const BOOKS = gql`query Books { books { id title author } }`;
+
+    async function run(fetchPolicy) {
+      out.textContent = `请求中…（fetchPolicy=${fetchPolicy}）`;
+      try {
+        const r = await client.query({ query: BOOKS, fetchPolicy });
+        out.textContent =
+          `fetchPolicy = ${fetchPolicy}\n` +
+          `数据来源：${r.networkStatus === 7 ? '（含网络）' : ''}\n` +
+          JSON.stringify(r.data, null, 2) +
+          `\n\n打开 DevTools Network 面板对比：cache-first 第二次不发请求。`;
+      } catch (e) {
+        out.textContent = '失败：' + e.message;
+      }
+    }
+    document.getElementById('q1').onclick = () => run('cache-first');
+    document.getElementById('q2').onclick = () => run('network-only');
+  </script>
+</body>
+</html>

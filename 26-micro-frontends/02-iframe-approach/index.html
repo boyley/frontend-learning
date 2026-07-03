@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iframe 微前端方案 · 父应用</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f4f6fb; color: #1f2933; padding: 24px; line-height: 1.6;
+    }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .subtitle { color: #64748b; margin-bottom: 20px; font-size: 14px; }
+
+    .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .panel {
+      background: #fff; border-radius: 12px; padding: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.05); flex: 1; min-width: 320px;
+    }
+    .panel h2 { font-size: 16px; margin-bottom: 12px; }
+
+    /* 父应用区域标为蓝色，子应用(iframe)标为紫色，强调边界 */
+    .panel.parent { border-top: 4px solid #2563eb; }
+    .panel.child  { border-top: 4px solid #7c3aed; }
+
+    label { font-size: 13px; color: #475569; display: block; margin: 10px 0 4px; }
+    input, button { font-size: 14px; }
+    input {
+      width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+    }
+    button {
+      margin-top: 10px; padding: 9px 16px; border: none; border-radius: 8px;
+      background: #2563eb; color: #fff; cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+
+    /* 隔离演示：读取各自 window.appName */
+    .isolation-box {
+      margin-top: 12px; padding: 12px; border-radius: 8px;
+      background: #f8fafc; font-size: 13px;
+    }
+    .badge { font-weight: 600; }
+    .badge.parent { color: #2563eb; }
+    .badge.child  { color: #7c3aed; }
+
+    /* 通信日志 */
+    #log {
+      margin-top: 10px; height: 150px; overflow-y: auto;
+      background: #0f172a; color: #a5f3fc; font-size: 12px;
+      border-radius: 8px; padding: 10px; font-family: monospace;
+    }
+    #log div { margin-bottom: 4px; }
+
+    iframe {
+      width: 100%; height: 340px; border: 2px dashed #7c3aed;
+      border-radius: 10px; margin-top: 8px; background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>iframe 微前端方案（父应用 Parent）</h1>
+  <p class="subtitle">
+    本页是父应用，右侧内嵌 <code>child.html</code> 作为子应用（微前端）。演示两点：①全局变量互不污染；②父子通过 postMessage 通信。
+  </p>
+
+  <div class="layout">
+    <!-- ============ 父应用面板 ============ -->
+    <div class="panel parent">
+      <h2>🔵 父应用（Parent Window）</h2>
+
+      <!-- 隔离演示：父应用自己的全局变量 -->
+      <div class="isolation-box">
+        父应用全局变量 <span class="badge parent">window.appName = "父应用-Parent"</span><br>
+        点下方按钮验证：父读父的、子读子的，互不污染 👇
+      </div>
+      <button id="btn-check-parent">读取父应用 window.appName</button>
+      <button id="btn-check-child" style="background:#7c3aed">读取子应用 window.appName</button>
+
+      <!-- 通信：父 -> 子 发消息 -->
+      <label>向子应用发送一条消息（父 → 子）：</label>
+      <input id="msg-input" placeholder="输入内容，如：你好，子应用" />
+      <button id="btn-send">postMessage 发送给子应用</button>
+
+      <!-- 通信日志 -->
+      <label>父应用通信日志：</label>
+      <div id="log"></div>
+    </div>
+
+    <!-- ============ 子应用面板（iframe） ============ -->
+    <div class="panel child">
+      <h2>🟣 子应用（iframe 内嵌 child.html）</h2>
+      <!-- 子应用作为独立文档被加载，拥有自己的 window/document -->
+      <iframe id="child-frame" src="./child.html" title="子应用"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // 父应用：自己的全局作用域
+    // 注意：这里声明的 window.appName 只属于父窗口。
+    // iframe 内的 child.html 有自己独立的 window，同名变量互不影响。
+    // ============================================================
+    window.appName = '父应用-Parent';
+
+    const logEl = document.getElementById('log');
+    const iframe = document.getElementById('child-frame');
+
+    // 往日志面板追加一行
+    function log(text) {
+      const line = document.createElement('div');
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ---------- 隔离演示 ----------
+    // 1) 读取父应用自己的全局变量
+    document.getElementById('btn-check-parent').onclick = () => {
+      log(`父 window.appName = "${window.appName}"`);
+    };
+
+    // 2) 读取子应用（iframe）里的全局变量：走 iframe.contentWindow
+    //    这能拿到值仅因为父子同源(同目录 file/http)；说明它们是两个独立 window。
+    document.getElementById('btn-check-child').onclick = () => {
+      try {
+        const childName = iframe.contentWindow.appName;
+        log(`子 iframe.contentWindow.appName = "${childName}"（与父不同，证明作用域隔离）`);
+      } catch (e) {
+        // 跨源时会抛出 SecurityError，正好说明 iframe 的强隔离特性
+        log(`❌ 无法读取子应用变量（跨源被浏览器拦截）：${e.name}`);
+      }
+    };
+
+    // ---------- 通信演示：父 → 子 ----------
+    document.getElementById('btn-send').onclick = () => {
+      const text = document.getElementById('msg-input').value || '（空消息）';
+      // postMessage 是跨文档通信的标准手段；第二参数是目标源，
+      // 生产中应写子应用确切源以防泄漏，本 demo 同源用 '*' 简化。
+      iframe.contentWindow.postMessage(
+        { type: 'PARENT_TO_CHILD', text },
+        '*'
+      );
+      log(`父 → 子 发送：${text}`);
+    };
+
+    // ---------- 通信演示：接收子 → 父 ----------
+    // 监听 message 事件，收子应用回传的消息
+    window.addEventListener('message', (event) => {
+      // 安全实践：真实项目要校验 event.origin，只信任已知子应用来源
+      const data = event.data || {};
+      if (data.type === 'CHILD_TO_PARENT') {
+        log(`子 → 父 回显：${data.text}`);
+      }
+    });
+
+    log('父应用已就绪，子应用 iframe 加载中…');
+  </script>
+</body>
+</html>

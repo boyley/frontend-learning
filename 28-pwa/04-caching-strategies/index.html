@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · 缓存策略</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2.2rem 1.5rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .4rem; font-size: 1.7rem; }
+    main { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    .strat { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1rem; }
+    .strat h3 { margin: 0 0 .3rem; color: #93c5fd; font-size: 1.05rem; }
+    .strat p { margin: .2rem 0 .8rem; font-size: .85rem; opacity: .85; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .5rem .9rem; border-radius: 8px; font-size: .9rem; cursor: pointer; }
+    .result { margin-top: .7rem; font-family: ui-monospace, Menlo, monospace; font-size: .8rem; min-height: 2.4rem; }
+    .badge { display: inline-block; padding: .1rem .5rem; border-radius: 6px; font-weight: 700; }
+    .badge.cache { background: #14532d; color: #86efac; }
+    .badge.network { background: #1e3a8a; color: #93c5fd; }
+    .badge.err { background: #7f1d1d; color: #fca5a5; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .tip { font-size: .88rem; opacity: .78; margin-top: 1.2rem; }
+    .bar { display:flex; gap:.6rem; flex-wrap:wrap; margin:1rem 0; }
+    .bar button { background:#334155; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗂️ 五大缓存策略</h1>
+    <p>同一份 <code>payload.json</code>，看不同策略如何抉择「缓存 vs 网络」</p>
+  </header>
+  <main>
+    <p>Service Worker 拦截每个请求后，可自行决定缓存与网络的取舍。点下方各策略的按钮请求同一份数据，结果会标注<strong>来源（缓存/网络）</strong>与<strong>耗时</strong>。想看差异：先各点一次（写入缓存），再在 DevTools → Network 勾选 <b>Offline</b> 重点各按钮。</p>
+
+    <div class="bar">
+      <button id="clear">🧹 清空本模块缓存</button>
+      <span id="sw" style="align-self:center;font-size:.85rem;opacity:.8">SW 检测中…</span>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <p class="tip">📌 <b>stale-while-revalidate</b> 体验：先点一次它（缓存旧数据）→ 改 <code>payload.json</code> 里的 <code>version</code> 保存 → 再点它：第一次仍返回<b>旧</b>值（cache/stale）但后台已拉新，<b>第三次</b>点就变新值了。这就是「先快后新」。</p>
+  </main>
+
+  <script>
+    const STRATS = [
+      { key: 'cache-first',   name: '① Cache First 缓存优先',    desc: '先查缓存，命中即返回；未命中才走网络并回填。适合不常变的静态资源（JS/CSS/字体/图片）。' },
+      { key: 'network-first', name: '② Network First 网络优先',  desc: '先请求网络拿最新，失败再回退缓存。适合要新鲜、但离线也要能看的内容（如文章、API）。' },
+      { key: 'swr',           name: '③ Stale-While-Revalidate',  desc: '立刻返回缓存（旧），同时后台请求网络更新缓存。兼顾「快」与「逐渐新」。适合头像、列表。' },
+      { key: 'cache-only',    name: '④ Cache Only 仅缓存',        desc: '只从缓存取，永不联网。适合预缓存后完全离线的 App Shell。' },
+      { key: 'network-only',  name: '⑤ Network Only 仅网络',      desc: '永远走网络、不碰缓存。适合不可缓存的请求（如统计上报、非幂等 POST）。' },
+    ];
+    const grid = document.getElementById('grid');
+    STRATS.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'strat';
+      el.innerHTML = `<h3>${s.name}</h3><p>${s.desc}</p><button data-k="${s.key}">▶️ 请求</button><div class="result" id="r-${s.key}">—</div>`;
+      grid.appendChild(el);
+    });
+
+    grid.addEventListener('click', async (e) => {
+      const k = e.target.dataset.k; if (!k) return;
+      const out = document.getElementById('r-' + k);
+      out.textContent = '请求中…';
+      const t0 = performance.now();
+      try {
+        // 关键：URL 上带 ?strategy=，SW 据此分发策略
+        const res = await fetch(`./payload.json?strategy=${k}`);
+        const ms = (performance.now() - t0).toFixed(1);
+        const src = res.headers.get('X-Cache-Source') || '未知';
+        if (!res.ok) { out.innerHTML = `<span class="badge err">${res.status}</span> ${await res.text()} · ${ms}ms`; return; }
+        const data = await res.json();
+        const cls = src.startsWith('cache') ? 'cache' : 'network';
+        out.innerHTML = `<span class="badge ${cls}">来源：${src}</span> · ${ms}ms · version=${data.version}`;
+      } catch (err) {
+        out.innerHTML = `<span class="badge err">失败</span> ${err.message}`;
+      }
+    });
+
+    document.getElementById('clear').onclick = async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      document.querySelectorAll('.result').forEach(r => r.textContent = '（缓存已清空）');
+    };
+
+    const swEl = document.getElementById('sw');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => swEl.textContent = 'SW 已注册 ✅')
+        .catch(e => swEl.textContent = 'SW 注册失败：' + e.message);
+    } else swEl.textContent = '不支持 Service Worker';
+  </script>
+</body>
+</html>

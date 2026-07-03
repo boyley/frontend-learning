@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>single-spa 最小可运行 demo</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; color: #222; }
+    header { background: #1f2937; color: #fff; padding: 16px 24px; }
+    header h1 { margin: 0 0 8px; font-size: 20px; }
+    nav a {
+      color: #93c5fd; margin-right: 16px; text-decoration: none;
+      padding: 4px 10px; border-radius: 6px; background: #374151;
+    }
+    nav a:hover { background: #4b5563; }
+    main { padding: 24px; }
+    /* 每个子应用往自己的容器里渲染，这两个容器由主应用（root-config）提供 */
+    #app1-container, #app2-container { min-height: 120px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; }
+    .app1 { background: #eff6ff; }
+    .app2 { background: #f0fdf4; }
+    .hint { color: #6b7280; font-size: 13px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>single-spa · 路由分发的顶层框架（root-config）</h1>
+    <!--
+      导航用 hash 路由：点击后 URL 的 hash 变化，single-spa 监听路由变化，
+      根据每个应用的 activeWhen 规则决定「挂载谁 / 卸载谁」。
+    -->
+    <nav>
+      <a href="#/app1">👉 打开 App1（/app1）</a>
+      <a href="#/app2">👉 打开 App2（/app2）</a>
+      <a href="#/">🏠 都不激活（首页）</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 两个子应用各自的挂载容器，初始为空，由 single-spa 在路由激活时填充 -->
+    <div id="app1-container"></div>
+    <div id="app2-container"></div>
+
+    <p class="hint">
+      打开浏览器控制台可以看到每个子应用的 bootstrap / mount / unmount 生命周期日志。
+      切换上方导航时，观察容器内容与日志的变化。
+    </p>
+  </main>
+
+  <!--
+    通过 CDN 引入 single-spa 的 UMD 构建（免 npm install）。
+    引入后会在 window 上暴露全局对象 singleSpa。
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/single-spa@5.9.5/lib/umd/single-spa.min.js"></script>
+
+  <script>
+    // ==========================================================================
+    // single-spa 核心用法演示
+    // 主应用（root-config）只做一件事：注册子应用 + 启动路由分发。
+    // 每个子应用必须导出 4 个异步生命周期函数：bootstrap / mount / unmount / unload。
+    // single-spa 会在合适的时机调用它们，返回 Promise 即可（这里用 async 函数）。
+    // ==========================================================================
+
+    /**
+     * 生成一个「内联子应用对象」。
+     * 真实项目里子应用通常是独立打包的 JS Entry，这里为了免构建、能直接跑，
+     * 直接用一个普通对象实现生命周期，逻辑与真实子应用完全一致。
+     *
+     * @param {string} name        子应用名（唯一）
+     * @param {string} containerId  该子应用渲染到的容器 DOM id
+     * @param {string} cssClass     卡片样式类
+     * @param {string} title        卡片标题
+     */
+    function createInlineApp(name, containerId, cssClass, title) {
+      return {
+        // 1) bootstrap：应用「首次挂载前」只执行一次，用于一次性初始化（拉配置、注册全局等）。
+        async bootstrap() {
+          console.log(`[${name}] bootstrap —— 首次初始化（只会执行一次）`);
+        },
+
+        // 2) mount：每次该应用被激活时调用，负责把 UI 渲染到页面上。
+        async mount() {
+          console.log(`[${name}] mount —— 挂载 UI`);
+          const container = document.getElementById(containerId);
+          // 用一个计数器演示「组件内部状态」，卸载后再挂载会重新初始化
+          let count = 0;
+          const render = () => {
+            container.innerHTML = `
+              <div class="card ${cssClass}">
+                <h2>${title}</h2>
+                <p>我是子应用 <b>${name}</b>，由 single-spa 根据路由自动挂载。</p>
+                <button id="${name}-btn">点我 +1，当前：<b id="${name}-num">${count}</b></button>
+              </div>`;
+            container.querySelector(`#${name}-btn`).addEventListener('click', () => {
+              count++;
+              container.querySelector(`#${name}-num`).textContent = count;
+            });
+          };
+          render();
+        },
+
+        // 3) unmount：每次该应用「路由失活」时调用，负责清理 DOM / 事件监听，防止内存泄漏。
+        async unmount() {
+          console.log(`[${name}] unmount —— 卸载 UI 并清理`);
+          const container = document.getElementById(containerId);
+          container.innerHTML = ''; // 清空容器，移除本应用渲染的所有内容
+        },
+
+        // 4) unload（可选）：把应用彻底卸载回「未加载」状态，下次会重新 bootstrap。此 demo 不主动触发。
+        async unload() {
+          console.log(`[${name}] unload —— 回到未加载状态`);
+        },
+      };
+    }
+
+    // --------------------------------------------------------------------------
+    // 注册子应用：registerApplication({ name, app, activeWhen })
+    //   - name：唯一标识
+    //   - app：返回「子应用对象 / 加载函数」（可以是对象、也可以是 () => import(...) 动态加载）
+    //   - activeWhen：决定该应用在「哪些路由下」应处于激活（mounted）状态
+    // --------------------------------------------------------------------------
+
+    singleSpa.registerApplication({
+      name: 'app1',
+      // app 可以直接给对象，也可以给一个返回 Promise 的加载函数；这里演示加载函数形式
+      app: async () => createInlineApp('app1', 'app1-container', 'app1', 'App1 · 蓝色应用'),
+      // activeWhen：location 以 /app1 开头（hash 路由下即 #/app1）时激活
+      activeWhen: (location) => location.hash.startsWith('#/app1'),
+    });
+
+    singleSpa.registerApplication({
+      name: 'app2',
+      app: async () => createInlineApp('app2', 'app2-container', 'app2', 'App2 · 绿色应用'),
+      activeWhen: (location) => location.hash.startsWith('#/app2'),
+    });
+
+    // --------------------------------------------------------------------------
+    // start()：启动 single-spa。
+    // 在 start 之前，应用只会被「加载/bootstrap」但不会 mount；
+    // 调用 start 后，single-spa 才会真正按路由挂载激活的应用。
+    // --------------------------------------------------------------------------
+    singleSpa.start();
+
+    console.log('[root-config] single-spa 已启动，切换导航试试～');
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "09-cypress",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cypress 端到端测试：运行在浏览器内、可视化时间旅行调试",
+  "scripts": {
+    "serve": "python3 -m http.server 5173 --directory public",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "test": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.14.0"
+  }
+}

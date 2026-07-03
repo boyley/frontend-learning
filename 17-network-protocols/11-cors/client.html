@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>CORS demo · 简单请求 vs 预检请求</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 40px auto; line-height: 1.6; }
+    button { padding: 8px 16px; margin: 8px 8px 8px 0; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 6px; white-space: pre-wrap; }
+    .hint { color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>CORS demo</h1>
+  <p class="hint">
+    先运行 <code>node server.js</code>（API 跑在 <code>http://localhost:4000</code>）。<br />
+    本页面如果不是从 localhost:4000 打开（比如用 file:// 双击打开，或用别的端口的静态服务器），
+    对 4000 的请求就是<b>跨域</b>请求，会触发 CORS 机制。<br />
+    打开 DevTools → Network，点下面按钮，重点观察<b>非简单请求前面多出来的那一条 OPTIONS 预检</b>。
+  </p>
+
+  <h3>① 简单请求（Simple Request）</h3>
+  <p class="hint">GET + 无自定义头 → 浏览器直接发，Network 里只有 1 条请求。</p>
+  <button onclick="simple()">发起简单请求 GET /api/simple</button>
+
+  <h3>② 非简单请求（触发预检 Preflight）</h3>
+  <p class="hint">POST + Content-Type: application/json + 自定义头 → 浏览器先发 OPTIONS 预检，通过后才发真正的 POST。Network 里会有 2 条（OPTIONS + POST）。</p>
+  <button onclick="preflight()">发起预检请求 POST /api/preflight</button>
+
+  <h3>响应</h3>
+  <pre id="out">（点击上面的按钮）</pre>
+
+  <script>
+    const API = 'http://localhost:4000';
+    const out = document.getElementById('out');
+    const show = (label, data) => (out.textContent = label + '\n' + JSON.stringify(data, null, 2));
+    const err = (label, e) => (out.textContent = label + ' 失败：' + e + '\n（若是 CORS 报错，检查是否跨域、服务端是否带上 Access-Control-Allow-Origin）');
+
+    // 简单请求：GET，不带触发预检的头。浏览器不会先发 OPTIONS。
+    async function simple() {
+      try {
+        const r = await fetch(API + '/api/simple');
+        show('✅ 简单请求成功（Network 里只有 1 条请求）：', await r.json());
+      } catch (e) { err('简单请求', e); }
+    }
+
+    // 非简单请求：POST + application/json + 自定义头，任一条件都会触发预检。
+    async function preflight() {
+      try {
+        const r = await fetch(API + '/api/preflight', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json', // 非"简单值"，触发预检
+            'X-Custom-Header': 'hello',          // 自定义头，触发预检
+          },
+          body: JSON.stringify({ from: 'client', ts: Date.now() }),
+        });
+        show('✅ 预检通过后 POST 成功（Network 里有 OPTIONS + POST 两条）：', await r.json());
+      } catch (e) { err('预检请求', e); }
+    }
+  </script>
+</body>
+</html>

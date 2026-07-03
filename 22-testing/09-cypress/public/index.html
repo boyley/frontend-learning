@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · Cypress 被测页面</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 420px; margin: 40px auto; }
+    .field { margin: 10px 0; display: flex; flex-direction: column; gap: 4px; }
+    .error { color: #c0392b; }
+    .welcome { color: #27ae60; font-size: 20px; }
+    input { padding: 6px; }
+  </style>
+</head>
+<body>
+  <h1>登录</h1>
+  <form id="login-form">
+    <div class="field">
+      <label for="username">用户名</label>
+      <input id="username" name="username" />
+    </div>
+    <div class="field">
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" />
+    </div>
+    <button type="submit">登录</button>
+  </form>
+  <p class="error" data-cy="error" role="alert"></p>
+  <div id="dashboard" hidden>
+    <p class="welcome" data-cy="welcome"></p>
+    <button id="logout">退出</button>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const error = document.querySelector('[data-cy="error"]');
+    const dashboard = document.getElementById('dashboard');
+    const welcome = document.querySelector('[data-cy="welcome"]');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      error.textContent = '';
+      const u = form.username.value.trim();
+      const p = form.password.value;
+      if (!u || !p) {
+        error.textContent = '用户名和密码不能为空';
+        return;
+      }
+      // 假装校验：只有 admin / 123456 成功
+      if (u === 'admin' && p === '123456') {
+        form.hidden = true;
+        dashboard.hidden = false;
+        welcome.textContent = '欢迎回来, ' + u;
+      } else {
+        error.textContent = '用户名或密码错误';
+      }
+    });
+
+    document.getElementById('logout').addEventListener('click', () => {
+      dashboard.hidden = true;
+      form.hidden = false;
+      form.reset();
+    });
+  </script>
+</body>
+</html>

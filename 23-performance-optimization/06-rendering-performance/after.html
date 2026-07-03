@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化后 · 渲染性能已优化（after）</title>
+
+  <!--
+    ✅ 正面教材：同样是一万条数据 + 滚动高亮，但用两招把渲染成本压到最低。
+    对比点（对照 before.html 看）：
+      1. 长列表虚拟化：无论数据多少，DOM 里只保留「可视区 + 上下 buffer」约 20~30 个节点。
+         用一个撑高的占位元素（height = 总条数 × 行高）保持滚动条比例正确；
+         滚动时只更新这批节点的内容 + 用 transform: translateY 定位，节点被复用不新建。
+      2. 消除 Layout Thrashing + rAF 节流：scroll 只登记「需要更新」，真正的计算放进
+         requestAnimationFrame，每帧最多跑一次；且「先集中读布局值，再集中写 style」，
+         浏览器一帧只算一次布局。
+    左上角探针在滚动全程保持约 60 FPS、方块照转、计数器照涨。
+  -->
+  <link rel="stylesheet" href="probe.css" />
+  <style>
+    .list-wrap {
+      height: 420px;
+      overflow-y: auto;
+      position: relative;         /* 作为绝对定位可见行的包含块 */
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+    }
+    /* 占位撑高元素：高度 = 总条数 × 行高，撑出正确的滚动条，但本身不含内容 */
+    .spacer { position: relative; width: 100%; }
+    /* 可见行的「窗口」：绝对定位，整体用 transform 平移到当前可视区顶部 */
+    .viewport { position: absolute; top: 0; left: 0; right: 0; will-change: transform; }
+    .row {
+      height: 40px;
+      line-height: 40px;
+      padding: 0 16px;
+      border-bottom: 1px solid #f0f0f0;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row.near { background: #e6f4ea; } /* 距视口中线最近的行高亮（走 class 切换，只重绘不强制布局） */
+  </style>
+</head>
+<body>
+  <header class="perf-header perf-header--good">
+    <span class="tag tag--good">AFTER · 已优化</span>
+    <h1>优化后：虚拟化只渲染可视区 + rAF 节流 + 批量读写</h1>
+    <p>盯着左上角探针：无论怎么快速滚动，方块照转、计数器照涨、FPS 稳定约 60。</p>
+  </header>
+
+  <!-- 常驻流畅度探针（与 before 完全相同） -->
+  <div class="probe" id="probe">
+    <div class="spinner"></div>
+    <div class="probe-row"><span class="big" id="counter">0</span><span class="probe-label">计数器 /100ms</span></div>
+    <div class="probe-row"><span class="big" id="fps">–</span><span class="probe-label">FPS</span></div>
+  </div>
+
+  <div class="wrap">
+    <p class="tip">
+      👀 <b>观察方法</b>：同样一万条数据，但打开 DevTools → Elements 看列表容器，
+      里面<b>始终只有 ~30 个 <code>&lt;div class="row"&gt;</code></b>（可视区 + buffer），
+      滚动时它们被复用、内容被替换。快速滚动，探针始终流畅。
+    </p>
+
+    <div class="panel">
+      <button class="btn btn--good" id="btnRender">渲染 10000 条（虚拟化）</button>
+      <span class="status" id="status">尚未渲染</span>
+    </div>
+
+    <div class="list-wrap" id="listWrap">
+      <div class="spacer" id="spacer">
+        <div class="viewport" id="viewport"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="probe.js"></script>
+  <script>
+    // ========================================================================
+    // 正面做法 1：长列表虚拟化（只渲染可视区）
+    // ========================================================================
+    const COUNT = 10000;      // 数据量（与 before 相同）
+    const ROW_H = 40;         // 每行固定高度（px），定高才能用纯数学算出 startIndex
+    const BUFFER = 5;         // 可视区上下各多渲染 5 行，滚动时不露白
+
+    const listWrap = document.getElementById('listWrap');
+    const spacer = document.getElementById('spacer');
+    const viewport = document.getElementById('viewport');
+    const status = document.getElementById('status');
+    const btnRender = document.getElementById('btnRender');
+
+    const data = Array.from({ length: COUNT }, (_, i) =>
+      `#${String(i + 1).padStart(5, '0')}  长列表数据行 · row item ${i + 1}  —  ${Math.random().toString(36).slice(2, 10)}`
+    );
+
+    // 复用的行节点池：一旦创建就不再销毁，只改内容和位置。
+    let pool = [];
+    let started = false;
+
+    btnRender.addEventListener('click', () => {
+      // 撑高占位元素：高度 = 总条数 × 行高，这样滚动条比例和「真的插了一万条」完全一致。
+      spacer.style.height = COUNT * ROW_H + 'px';
+      started = true;
+      render();  // 首次渲染当前可视区
+      status.innerHTML = `虚拟化完成：DOM 里只有约 <b class="good">${viewport.children.length}</b> 个节点（而非 ${COUNT} 个）。滚动看看 👇`;
+      btnRender.disabled = true;
+    });
+
+    // 核心渲染函数：根据 scrollTop 计算该显示哪一段 [startIndex, endIndex)，只更新这批节点。
+    function render() {
+      if (!started) return;
+
+      const scrollTop = listWrap.scrollTop;
+      // 用纯数学从滚动位置算出起始下标，无需读取任何节点的布局属性（避免 reflow）。
+      const startIndex = Math.max(0, Math.floor(scrollTop / ROW_H) - BUFFER);
+      const visibleCount = Math.ceil(listWrap.clientHeight / ROW_H) + BUFFER * 2;
+      const endIndex = Math.min(COUNT, startIndex + visibleCount);
+      const needed = endIndex - startIndex;
+
+      // 按需扩充节点池（只在数量不够时新建，之后一直复用）。
+      while (pool.length < needed) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        viewport.appendChild(row);
+        pool.push(row);
+      }
+      // 多余的节点隐藏（例如缩小窗口后）。
+      for (let i = needed; i < pool.length; i++) pool[i].style.display = 'none';
+
+      const viewMid = scrollTop + listWrap.clientHeight / 2;
+
+      // ✅ 只更新可见的这批节点：改内容 + 用 class 高亮，不读取任何布局属性。
+      for (let i = 0; i < needed; i++) {
+        const row = pool[i];
+        const dataIndex = startIndex + i;
+        row.style.display = '';
+        row.textContent = data[dataIndex];
+        // 该行几何位置完全由「下标 × 行高」算出，不需要 offsetTop（无 reflow）。
+        const rowTop = dataIndex * ROW_H;
+        row.classList.toggle('near', Math.abs(rowTop + ROW_H / 2 - viewMid) < ROW_H);
+      }
+
+      // 整个可见窗口用一次 transform 平移到起始行的位置（GPU 合成，不触发布局）。
+      viewport.style.transform = `translateY(${startIndex * ROW_H}px)`;
+    }
+
+    // ========================================================================
+    // 正面做法 2：rAF 节流 —— scroll 只登记，渲染对齐到下一帧，每帧最多一次
+    // ------------------------------------------------------------------------
+    // scroll 是高频事件（一次滚动可触发几十次）。若每次都同步 render，就白算很多遍。
+    // 这里用 requestAnimationFrame 做节流：无论一帧内触发多少次 scroll，都只在
+    // 下一帧渲染一次，把工作对齐到浏览器的绘制节奏（约每 16.6ms 一次）。
+    // ========================================================================
+    let ticking = false;
+    listWrap.addEventListener('scroll', () => {
+      if (ticking) return;            // 本帧已排了一次，忽略后续 scroll
+      ticking = true;
+      requestAnimationFrame(() => {
+        render();
+        ticking = false;
+      });
+    });
+
+    // resize 时可视区行数会变，同样用 rAF 节流重新渲染。
+    let resizeTick = false;
+    window.addEventListener('resize', () => {
+      if (resizeTick) return;
+      resizeTick = true;
+      requestAnimationFrame(() => {
+        render();
+        resizeTick = false;
+      });
+    });
+  </script>
+</body>
+</html>

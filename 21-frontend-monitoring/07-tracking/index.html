@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 埋点方案</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f1420; color: #e6e9ef; line-height: 1.6; padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .subtitle { color: #8b93a7; margin-bottom: 20px; font-size: 14px; }
+
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+    .box { background: #121826; border: 1px solid #2a3346; border-radius: 12px; padding: 16px; }
+    .box h2 { font-size: 15px; margin-bottom: 12px; color: #74c0fc; }
+    .box p.hint { font-size: 12px; color: #6b7488; margin-bottom: 12px; }
+
+    button {
+      background: #2b3550; color: #e6e9ef; border: 1px solid #3a465f;
+      padding: 9px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin: 0 8px 8px 0;
+    }
+    button:hover { background: #38466a; }
+    button.primary { background: #1f6feb; border-color: #1f6feb; }
+    button.primary:hover { background: #388bfd; }
+    a.link { color: #74c0fc; margin-right: 12px; font-size: 14px; cursor: pointer; }
+
+    /* ============ 上报面板 ============ */
+    #panel { margin-top: 16px; background: #121826; border: 1px solid #2a3346; border-radius: 12px; padding: 14px; max-height: 420px; overflow-y: auto; }
+    .panel-head { font-size: 14px; color: #8b93a7; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .row { padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; background: #1a2130; border-left: 3px solid #74c0fc; font-size: 12.5px; animation: fade .25s ease; }
+    @keyframes fade { from {opacity:0; transform: translateY(-4px);} to {opacity:1; transform:none;} }
+    .row.code { border-left-color: #63e6be; }
+    .row.auto { border-left-color: #ffd43b; }
+    .row.pv   { border-left-color: #da77f2; }
+    .row .type { font-size: 11px; padding: 1px 8px; border-radius: 6px; margin-right: 8px; }
+    .type.code { background:#0e3b2e; color:#63e6be; }
+    .type.auto { background:#4a3a12; color:#ffd43b; }
+    .type.pv   { background:#3a1f4a; color:#da77f2; }
+    .row .name { font-weight: 600; }
+    .row .payload { color: #8b93a7; margin-top: 4px; word-break: break-all; }
+    .row .time { float: right; color: #566; font-size: 11px; }
+    .empty { color: #5a6478; text-align: center; padding: 20px; }
+  </style>
+</head>
+<body>
+  <h1>07 · 埋点方案</h1>
+  <p class="subtitle">代码埋点 / 无痕（全）埋点 / 可视化埋点 —— 三种方式采同一批行为数据</p>
+
+  <div class="layout">
+    <!-- 左：代码埋点（手动 track） -->
+    <div class="box">
+      <h2>① 代码埋点（手动调用 track）</h2>
+      <p class="hint">在业务代码里显式调用 <code>track('事件名', {参数})</code>，最精准、可带业务字段，但要逐处写。</p>
+      <button class="primary" id="btn-buy">立即购买（手动上报 click_buy）</button>
+      <button id="btn-fav">收藏（手动上报 click_favorite）</button>
+    </div>
+
+    <!-- 右：无痕埋点（声明式 data-track，全局委托自动采集） -->
+    <div class="box">
+      <h2>② 无痕 / 全埋点（声明式 data-track）</h2>
+      <p class="hint">元素上加 <code>data-track</code> 属性，全局监听自动采集，无需在业务里写上报代码。</p>
+      <button data-track="banner_click" data-track-pos="top">顶部 Banner</button>
+      <button data-track="share_click" data-track-channel="wechat">分享到微信</button>
+      <a class="link" data-track="nav_click" data-track-menu="home">首页</a>
+      <a class="link" data-track="nav_click" data-track-menu="cart">购物车</a>
+    </div>
+  </div>
+
+  <div class="box" style="margin-top:16px;">
+    <h2>③ PV / 路由埋点（自动）</h2>
+    <p class="hint">进入页面自动上报 PV；下面用 hash 模拟单页应用路由切换，自动上报每次路由 PV。</p>
+    <a class="link" href="#/home">#/home</a>
+    <a class="link" href="#/product">#/product</a>
+    <a class="link" href="#/order">#/order</a>
+  </div>
+
+  <div id="panel">
+    <div class="panel-head">
+      <span>📡 上报面板（模拟 sendBeacon，同时 console.log）</span>
+      <span id="count">0 条</span>
+    </div>
+    <div class="empty" id="empty">操作上方元素，看三种埋点分别采到了什么…</div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

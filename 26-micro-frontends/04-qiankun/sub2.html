@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>qiankun 子应用 2</title>
+  <style>
+    .sub2-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 20px; }
+    .sub2-card h2 { margin-top: 0; color: #15803d; }
+    .sub2-card button { padding: 6px 14px; border-radius: 6px; border: 1px solid #22c55e; background: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="sub2-card">
+    <h2>我是子应用 2（sub2）</h2>
+    <p>与 sub1 完全独立：独立的 HTML、独立的样式、独立的生命周期，由 qiankun 按路由切换加载 / 卸载。</p>
+    <div id="sub2-root"></div>
+  </div>
+
+  <script>
+    // 子应用 2，用法与 sub1 相同，演示「多个独立子应用」由 qiankun 统一调度
+    function renderSub2(props) {
+      const container = (props && props.container) || document;
+      const root = container.querySelector('#sub2-root');
+      if (!root) return;
+      const now = new Date().toLocaleTimeString();
+      root.innerHTML = `<p>sub2 挂载时间：<b>${now}</b>（每次重新 mount 都会刷新）</p>`;
+    }
+
+    // 同样只添加一个全局，作为 qiankun 识别的生命周期导出
+    window['sub2'] = {
+      async bootstrap() {
+        console.log('[sub2] bootstrap');
+      },
+      async mount(props) {
+        console.log('[sub2] mount，props =', props);
+        renderSub2(props);
+      },
+      async unmount(props) {
+        console.log('[sub2] unmount');
+        const container = (props && props.container) || document;
+        const root = container.querySelector('#sub2-root');
+        if (root) root.innerHTML = '';
+      },
+    };
+  </script>
+</body>
+</html>

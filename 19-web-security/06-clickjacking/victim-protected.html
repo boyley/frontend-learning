@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>我的银行 · 账户设置（防护版）</title>
+  <style>
+    body {
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #f7f8fa;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, .08);
+    }
+    h1 { font-size: 20px; }
+    #dangerBtn {
+      display: block;
+      width: 220px;
+      height: 56px;
+      margin: 32px auto 0;
+      background: #e02e2e;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #status { margin-top: 20px; text-align: center; color: #e02e2e; font-weight: 700; }
+    .blocked {
+      max-width: 480px;
+      margin: 80px auto;
+      padding: 40px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #b00;
+      background: #fff3f3;
+      border: 2px solid #f5b5b5;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🏦 我的银行 · 账户设置（防护版）</h1>
+    <p>你已登录为：<strong>张三</strong>（会话有效）</p>
+    <p>本页加入了 <strong>frame-busting 兜底</strong>，被 iframe 嵌套时会自我保护。</p>
+
+    <button id="dangerBtn">⚠️ 删除我的账户</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    /*
+      ===== frame-busting 兜底防御（仅作为最后一道防线，可被绕过）=====
+
+      原理：正常直接访问时，本页就是最顶层窗口，self === top。
+      一旦被别人用 iframe 嵌进去，本页就不是顶层窗口了，self !== top，
+      据此判断「我正在被别人套框架」，立刻清空页面并试图跳出。
+
+      ⚠️ 重要：这只是【兜底】。真实、可靠的防御必须靠【服务端响应头】：
+          X-Frame-Options: DENY
+        或
+          Content-Security-Policy: frame-ancestors 'none'
+      因为本 demo 是纯 file:// 静态页，浏览器打开时无法设置响应头，
+      所以这里只能用 JS 演示「拒绝被嵌」的效果。
+
+      本 JS 的弱点：攻击者若用 <iframe sandbox="allow-forms">（不含 allow-scripts）
+      加载本页，脚本被禁用，frame-busting 就失效了 —— 这正是不能只靠 JS 的原因。
+    */
+    if (self !== top) {
+      // 被嵌套：清空敏感内容，阻止点击劫持
+      document.body.innerHTML =
+        '<div class="blocked">⛔ 检测到本页被嵌入到其它站点的框架中，已阻止（防点击劫持）</div>';
+      try {
+        top.location = self.location;   // 试图跳出框架，占据整个窗口
+      } catch (e) {
+        // 跨源时可能抛异常，清空内容已足够阻断攻击
+      }
+    }
+
+    // 正常（未被嵌套）时，敏感操作照常工作
+    var btn = document.getElementById('dangerBtn');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        alert('⚠️ 你的账户已被删除！');
+        document.getElementById('status').textContent = '账户已删除 ❌';
+      });
+    }
+  </script>
+</body>
+</html>

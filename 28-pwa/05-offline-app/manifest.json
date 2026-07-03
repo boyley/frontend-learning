@@ -1,0 +1,15 @@
+{
+  "name": "05 · 离线优先笔记",
+  "short_name": "离线笔记",
+  "description": "离线优先的笔记应用：App Shell 预缓存 + 本地数据 + offline.html 兜底",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

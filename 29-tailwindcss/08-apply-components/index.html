@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · @apply 抽取组件类</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <!-- 用 @apply 把一串工具类「打包」成一个语义化组件类，收敛重复 -->
+  <style type="text/tailwindcss">
+    @layer components {
+      /* 按钮基类：把常用工具类合成 .btn */
+      .btn {
+        @apply inline-flex items-center gap-2 px-5 py-2 rounded-lg font-semibold
+               transition focus:outline-none focus:ring-4;
+      }
+      .btn-primary {
+        @apply bg-violet-600 text-white hover:bg-violet-700 focus:ring-violet-300;
+      }
+      .btn-ghost {
+        @apply bg-transparent text-violet-600 border-2 border-violet-600 hover:bg-violet-50;
+      }
+      /* 卡片组件 */
+      .card {
+        @apply bg-white rounded-2xl shadow-md p-6 hover:shadow-xl transition;
+      }
+      .card-title {
+        @apply text-lg font-bold text-slate-800 mb-1;
+      }
+      /* 徽标 */
+      .badge {
+        @apply inline-block text-xs font-medium px-2 py-0.5 rounded-full
+               bg-emerald-100 text-emerald-700;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-8 font-sans text-slate-800">
+  <h1 class="text-3xl font-bold mb-2">@apply：把工具类抽成组件类</h1>
+  <p class="text-sm text-slate-500 mb-8">当同一串工具类重复很多次（尤其在纯 HTML、无法用框架组件时），用 <code class="bg-slate-200 px-1 rounded">@apply</code> 收敛成 <code class="bg-slate-200 px-1 rounded">.btn</code> / <code class="bg-slate-200 px-1 rounded">.card</code>。</p>
+
+  <!-- ① 组件类：HTML 干净，语义清晰 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">① 按钮组件（.btn / .btn-primary / .btn-ghost）</h2>
+    <div class="flex flex-wrap gap-3">
+      <button class="btn btn-primary">主要按钮 →</button>
+      <button class="btn btn-ghost">次要按钮</button>
+      <!-- 组件类仍可叠加工具类做微调 -->
+      <button class="btn btn-primary w-full sm:w-auto">还能叠加工具类微调</button>
+    </div>
+  </section>
+
+  <!-- ② 卡片组件复用 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">② 卡片组件（.card / .card-title / .badge）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="card">
+        <span class="badge">NEW</span>
+        <h3 class="card-title mt-2">卡片一</h3>
+        <p class="text-slate-500 text-sm">三张卡片共用 .card，HTML 里不再重复一长串工具类。</p>
+      </div>
+      <div class="card">
+        <span class="badge">HOT</span>
+        <h3 class="card-title mt-2">卡片二</h3>
+        <p class="text-slate-500 text-sm">改样式只需改 &lt;style&gt; 里的 .card 一处，所有卡片同步更新。</p>
+      </div>
+      <div class="card">
+        <span class="badge">PRO</span>
+        <h3 class="card-title mt-2">卡片三</h3>
+        <p class="text-slate-500 text-sm">这就是「组件抽象」——用来解决模块 01 说的「HTML 太长」问题。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 对比：不用 @apply 的原始写法 -->
+  <section>
+    <h2 class="text-xl font-semibold mb-3">③ 对比：同一个按钮，两种写法</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="card">
+        <p class="text-xs text-slate-400 mb-2">❌ 直接堆工具类（重复处易失控）</p>
+        <code class="block text-xs bg-slate-100 p-3 rounded leading-relaxed break-all">class="inline-flex items-center gap-2 px-5 py-2 rounded-lg font-semibold transition bg-violet-600 text-white hover:bg-violet-700 …"</code>
+      </div>
+      <div class="card">
+        <p class="text-xs text-slate-400 mb-2">✅ 抽成组件类</p>
+        <code class="block text-xs bg-slate-100 p-3 rounded leading-relaxed">class="btn btn-primary"</code>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

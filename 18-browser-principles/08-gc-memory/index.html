@@ -1,0 +1,162 @@
+<!--
+  08 · 垃圾回收与内存管理 · 内存泄漏演示台
+  纯 HTML + 内联 JS，浏览器直接打开，无需构建。
+  配合 F12 → Memory 面板抓 Heap snapshot 对比观察。
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>08 · GC 与内存泄漏演示台</title>
+
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    max-width: 860px; margin: 0 auto; padding: 24px 20px 60px;
+    line-height: 1.6; color: #222;
+  }
+  h1 { font-size: 22px; }
+  h2 { font-size: 17px; margin-top: 28px; border-left: 4px solid #4a7; padding-left: 10px; }
+  .panel {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 10px;
+    padding: 16px; margin: 14px 0;
+  }
+  .stat { flex: 1 1 200px; }
+  .stat .num { font-size: 34px; font-weight: 700; }
+  .stat .num.leak { color: #d9534f; }
+  .stat .num.ok { color: #4a7; }
+  .stat .label { font-size: 13px; color: #666; }
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+  button {
+    font-size: 15px; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid #ccc; background: #fff; transition: .15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+  #btnLeak  { border-color: #d9534f; color: #d9534f; }
+  #btnClean { border-color: #4a7;   color: #2e7d4f; }
+  #btnWeak  { border-color: #5b8def; color: #3b6fd0; }
+  #log {
+    background: #1e1e1e; color: #d4d4d4; border-radius: 8px; padding: 12px 14px;
+    height: 220px; overflow-y: auto; font-family: ui-monospace, Menlo, monospace;
+    font-size: 12.5px; white-space: pre-wrap;
+  }
+  .steps { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 12px 16px 12px 30px; }
+  .steps li { margin: 4px 0; }
+  code { background: #eef; padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<h1>🗑️ GC 与内存泄漏演示台</h1>
+<p>点击「制造泄漏」会不断分配 <b>脱离文档的 DOM 节点</b>（被全局数组持有）+ <b>未清理的定时器闭包</b>（持有大数组）。这些对象「没用了却仍从 GC root 可达」，GC 无法回收 —— 这就是泄漏。用 F12 → Memory 面板抓快照对比即可看到。</p>
+
+<div class="panel">
+  <div class="stat">
+    <div class="num leak" id="nodeCount">0</div>
+    <div class="label">被全局数组持有的 detached 节点数</div>
+  </div>
+  <div class="stat">
+    <div class="num leak" id="timerCount">0</div>
+    <div class="label">未清理的活动定时器数</div>
+  </div>
+  <div class="stat">
+    <div class="num" id="estMem">0</div>
+    <div class="label">估算已泄漏内存（约 MB）</div>
+  </div>
+</div>
+
+<div class="btns">
+  <button id="btnLeak">💥 制造泄漏（+200 节点 / +1 定时器）</button>
+  <button id="btnClean">✅ 正确释放（清空引用 + 清定时器）</button>
+  <button id="btnWeak">🔍 WeakMap 对照演示</button>
+  <button id="btnGcHint">🧹 建议 GC（打印 performance.memory）</button>
+</div>
+
+<h2>📋 操作日志</h2>
+<div id="log"></div>
+
+<h2>🔬 DevTools 排查步骤</h2>
+<ol class="steps">
+  <li>F12 → <b>Memory</b> 面板 → <code>Heap snapshot</code> → 抓第 1 张（基线）。</li>
+  <li>多次点「💥 制造泄漏」，让上面的计数涨上去。</li>
+  <li>Memory 面板点垃圾桶手动 GC → 抓第 2 张 → 顶部切 <code>Comparison</code> 与第 1 张对比。</li>
+  <li>看 <code>Delta</code> 列：<code>Detached HTMLDivElement</code>、<code>(array)</code> 只增不减 = 泄漏证据；过滤框输入 <code>Detached</code> 可看引用链 Retainers。</li>
+  <li>点「✅ 正确释放」→ 再手动 GC → 抓第 3 张，<code>Detached</code> 应归零，泄漏被解除。</li>
+</ol>
+
+<script>
+  'use strict'; // 防止意外全局变量泄漏
+
+  // ===== 全局状态（本身就是 GC root 可达，故意用来"锚住"泄漏对象）=====
+  const leakedNodes = [];   // 持有 detached DOM 节点 → 无法回收
+  const timers = [];        // 保存 setInterval id
+  const MAX_NODES = 4000;   // 上限保护：避免真把浏览器搞崩
+  const APPROX_BYTES_PER_NODE = 8 * 1024; // 粗略估算每个撑大节点约 8KB
+
+  const $ = (id) => document.getElementById(id);
+  const log = (msg) => {
+    const t = new Date().toLocaleTimeString();
+    $('log').textContent = `[${t}] ${msg}\n` + $('log').textContent;
+  };
+  const render = () => {
+    $('nodeCount').textContent = leakedNodes.length;
+    $('timerCount').textContent = timers.length;
+    const mb = ((leakedNodes.length * APPROX_BYTES_PER_NODE) / (1024 * 1024)).toFixed(1);
+    $('estMem').textContent = mb;
+  };
+
+  // ===== 💥 制造泄漏 =====
+  $('btnLeak').addEventListener('click', () => {
+    if (leakedNodes.length >= MAX_NODES) {
+      log(`⚠️ 已达上限 ${MAX_NODES} 个节点，请先点「正确释放」。（保护浏览器）`);
+      return;
+    }
+    // 泄漏 1：创建 DOM 并加子树，但【不挂进页面】→ detached，仅被全局数组引用
+    for (let i = 0; i < 200; i++) {
+      const el = document.createElement('div');
+      el.innerHTML = '<span>泄漏节点内容占位</span>'.repeat(50); // 撑大体积，快照更明显
+      leakedNodes.push(el); // ← 关键：脱离文档却被全局引用 → GC 无法回收
+    }
+    // 泄漏 2：定时器闭包持有一个大数组，且从不 clearInterval
+    const big = new Array(100000).fill('*'); // 被下面闭包捕获
+    const id = setInterval(() => { void big.length; }, 60000); // 只为让闭包长期存活
+    timers.push(id);
+
+    log(`💥 又泄漏 200 个 detached 节点 + 1 个定时器（闭包持有 10 万元素数组）。`);
+    render();
+  });
+
+  // ===== ✅ 正确释放 =====
+  $('btnClean').addEventListener('click', () => {
+    const n = leakedNodes.length, t = timers.length;
+    leakedNodes.length = 0;          // 断开全局数组对 detached 节点的引用
+    timers.forEach(clearInterval);   // 清掉所有定时器 → 闭包及大数组随之可回收
+    timers.length = 0;
+    log(`✅ 已释放：置空 ${n} 个节点引用、清除 ${t} 个定时器。下次 GC 即可回收。`);
+    render();
+  });
+
+  // ===== 🔍 WeakMap 对照：弱引用不阻止回收 =====
+  $('btnWeak').addEventListener('click', () => {
+    const wm = new WeakMap();
+    let node = document.createElement('div'); // 强引用在局部变量 node
+    wm.set(node, { meta: '附加数据（如缓存）' }); // WeakMap 弱引用 node
+    log(`🔍 WeakMap 已关联一个节点的数据；key=${wm.has(node)}。`);
+    node = null; // 断开唯一强引用 → node 可被回收，WeakMap 条目届时自动消失
+    log(`🔍 已把强引用置 null。因 WeakMap 是弱引用，不会阻止 GC 回收该节点。`);
+    log(`   （对比：若换成普通 Map，条目会一直强引用节点 → 泄漏。）`);
+  });
+
+  // ===== 🧹 打印内存（Chrome 私有 API，非标准）=====
+  $('btnGcHint').addEventListener('click', () => {
+    if (performance && performance.memory) {
+      const m = performance.memory;
+      const mb = (b) => (b / 1048576).toFixed(1);
+      log(`🧹 usedJSHeapSize=${mb(m.usedJSHeapSize)}MB / total=${mb(m.totalJSHeapSize)}MB / limit=${mb(m.jsHeapSizeLimit)}MB`);
+    } else {
+      log(`🧹 当前浏览器不支持 performance.memory（Chrome 私有 API）。用 Memory 面板抓快照更准。`);
+    }
+    log(`   提示：JS 无法主动触发 GC；用 Chrome 启动参数 --js-flags="--expose-gc" 后可调 window.gc()。`);
+  });
+
+  log('就绪。先在 Memory 面板抓一张基线快照，再开始制造泄漏。');
+  render();
+</script>

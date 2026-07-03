@@ -1,0 +1,23 @@
+{
+  "name": "definitely-safe-utils",
+  "version": "1.0.0",
+  "description": "【仅供学习】演示『被投毒的 npm 包』长什么样：一个带 postinstall 生命周期脚本的包。它取了个人畜无害的名字，安装时却会自动执行脚本——这正是供应链投毒最常用的落地方式。本示范里的脚本只做无害的 echo 输出，绝不做任何真实危险操作。",
+  "main": "index.js",
+  "scripts": {
+    "//_说明_1": "下面这些是 npm 的『生命周期脚本』。当有人对本包执行 npm install 时，preinstall / install / postinstall 会被 npm【自动】以当前用户权限执行——使用者没有主动运行任何东西，只是『装』了一下而已。",
+    "//_说明_2": "本示范里三个脚本都只打印一行提示，不做任何危险动作。注释中标明了『真实攻击』会在此处做什么。",
+
+    "preinstall": "node -e \"console.log('[恶意包示范·preinstall] 仅供学习：真实攻击此处可能先探测系统环境、判断是否在 CI 中')\"",
+
+    "postinstall": "node -e \"console.log('[恶意包示范·postinstall] 仅供学习：真实攻击此处会读取 ~/.npmrc(内含 npm token)、process.env(CI 里常有云密钥/AWS 凭证)、~/.ssh/id_rsa(SSH 私钥)，然后通过一个 HTTP 请求把它们外传到攻击者服务器 evil.com。本示范只打印这行文字，不读取也不发送任何数据。')\"",
+
+    "//_如何防御_": "使用方用【npm install --ignore-scripts】安装即可跳过上述所有生命周期脚本，从根上阻断『安装即执行』；或改用 pnpm（默认不执行依赖的构建脚本，需在 pnpm.onlyBuiltDependencies 显式放行）。"
+  },
+  "keywords": [
+    "仅供学习",
+    "supply-chain-security",
+    "postinstall-demo"
+  ],
+  "author": "frontend-learning（教学示范，非真实恶意包）",
+  "license": "MIT"
+}

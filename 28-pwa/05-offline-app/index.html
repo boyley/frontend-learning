@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 离线优先应用</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2rem 1.5rem 1.4rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
+    #banner { display: none; background: #7f1d1d; color: #fecaca; text-align: center; padding: .5rem; font-size: .9rem; }
+    #banner.show { display: block; }
+    main { max-width: 720px; margin: 0 auto; padding: 1.5rem; }
+    .add { display: flex; gap: .5rem; margin: 1rem 0; }
+    input { flex: 1; padding: .6rem .8rem; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 1rem; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .6rem 1.1rem; border-radius: 8px; font-size: .95rem; cursor: pointer; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: .7rem .9rem; margin: .5rem 0; display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
+    li small { opacity: .55; font-size: .75rem; }
+    .del { background: #334155; padding: .3rem .6rem; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .tip { font-size: .88rem; opacity: .78; margin-top: 1.5rem; }
+    .net { font-size: .85rem; opacity: .85; }
+  </style>
+</head>
+<body>
+  <div id="banner">📴 你已离线——应用仍可正常使用，数据保存在本地</div>
+  <header>
+    <h1>📝 离线笔记（Offline-First）</h1>
+    <p class="net" id="net">网络：检测中…</p>
+  </header>
+  <main>
+    <p>这是一个<strong>离线优先</strong>的小应用：App Shell 已被 Service Worker 预缓存，笔记数据存在本地（<code>localStorage</code>）。<b>断网后依然能打开页面、增删笔记</b>；恢复网络无缝继续。</p>
+
+    <div class="add">
+      <input id="input" placeholder="输入一条笔记，回车或点添加…" />
+      <button id="btnAdd">➕ 添加</button>
+    </div>
+    <ul id="list"></ul>
+
+    <p class="tip">
+      🔬 体验离线：注册成功后，DevTools → Network 勾选 <b>Offline</b>，然后<b>刷新页面</b>——页面照常打开（导航请求回退到缓存），还能继续加笔记。<br/>
+      访问一个未缓存的路径（如 <code>/nope</code>）在离线时会看到专门的 <code>offline.html</code> 兜底页。
+    </p>
+  </main>
+
+  <script>
+    // ---------- 本地数据层（离线优先：先写本地，网络只是同步渠道）----------
+    const KEY = 'offline-notes';
+    const load = () => JSON.parse(localStorage.getItem(KEY) || '[]');
+    const save = (n) => localStorage.setItem(KEY, JSON.stringify(n));
+    let notes = load();
+
+    const listEl = document.getElementById('list');
+    function render() {
+      listEl.innerHTML = notes.length ? '' : '<li style="opacity:.6">还没有笔记，添加一条吧～</li>';
+      notes.forEach((n) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${n.text}<br/><small>${new Date(n.at).toLocaleString()}</small></span>`;
+        const del = document.createElement('button');
+        del.className = 'del'; del.textContent = '删除';
+        del.onclick = () => { notes = notes.filter(x => x.id !== n.id); save(notes); render(); };
+        li.appendChild(del);
+        listEl.appendChild(li);
+      });
+    }
+    function add() {
+      const v = input.value.trim(); if (!v) return;
+      notes.unshift({ id: Date.now(), text: v, at: Date.now() });
+      save(notes); input.value = ''; render();
+    }
+    const input = document.getElementById('input');
+    document.getElementById('btnAdd').onclick = add;
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+    render();
+
+    // ---------- 网络状态提示（离线不阻断功能，只提示）----------
+    const banner = document.getElementById('banner'), netEl = document.getElementById('net');
+    const renderNet = () => {
+      const on = navigator.onLine;
+      banner.classList.toggle('show', !on);
+      netEl.textContent = '网络：' + (on ? '在线 🌐' : '离线 📴（应用照常可用）');
+    };
+    renderNet(); addEventListener('online', renderNet); addEventListener('offline', renderNet);
+
+    // ---------- 注册 SW（离线能力来源）----------
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+  </script>
+</body>
+</html>

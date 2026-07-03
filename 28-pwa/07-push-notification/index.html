@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · 推送通知</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2rem 1.5rem 1.4rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
+    main { max-width: 760px; margin: 0 auto; padding: 1.5rem; }
+    .step { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1rem 1.1rem; margin: 1rem 0; }
+    .step h3 { margin: 0 0 .5rem; color: #93c5fd; font-size: 1.05rem; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .55rem 1rem; border-radius: 8px; font-size: .92rem; cursor: pointer; margin: .2rem .3rem .2rem 0; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button.ghost { background: #334155; }
+    pre { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: .7rem; overflow-x: auto; font-size: .74rem; max-height: 160px; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .state { font-weight: 700; }
+    .tip { font-size: .88rem; opacity: .78; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔔 推送通知（Push Notification）</h1>
+    <p>权限 → 订阅 → 推送 → 展示 → 点击</p>
+  </header>
+  <main>
+    <div class="step">
+      <h3>① 请求通知权限（Notifications API）</h3>
+      <p>权限状态：<span class="state" id="perm">default</span></p>
+      <button id="btnPerm">请求授权</button>
+      <p class="tip">浏览器只在<b>用户手势</b>触发时才允许弹权限框；拒绝后无法再用代码重新弹出。</p>
+    </div>
+
+    <div class="step">
+      <h3>② 本地通知（无需服务器）</h3>
+      <p>直接用 <code>registration.showNotification()</code> 弹一条通知，验证展示与点击逻辑。</p>
+      <button id="btnLocal" disabled>弹出本地通知</button>
+    </div>
+
+    <div class="step">
+      <h3>③ 订阅 Web Push（PushManager）</h3>
+      <p>用 VAPID 公钥向浏览器推送服务订阅，得到一个 <code>PushSubscription</code>（含 endpoint）。真实推送需把它发给你的服务器保存。</p>
+      <button id="btnSub" disabled>订阅推送</button>
+      <button id="btnUnsub" class="ghost" disabled>取消订阅</button>
+      <pre id="sub">（尚未订阅）</pre>
+    </div>
+
+    <div class="step">
+      <h3>④ 测试 push 事件</h3>
+      <p>没有真实推送服务器时，在 <b>DevTools → Application → Service Workers</b> 的「Push」框里填入任意文本点 <b>Push</b>，即可派发一次 <code>push</code> 事件，触发 <code>sw.js</code> 里的处理并弹通知。</p>
+    </div>
+
+    <p class="tip">SW 消息：<span id="log">—</span></p>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    // 一个示例 VAPID 公钥（来自 web-push 官方示例）；真实推送要配套私钥在服务器签名
+    const VAPID_PUBLIC = 'BLc4xRzKlKORKWlbdgFaBrrPK3ydWAHo4M0gs0i1oEKgPpWC5cW8OCzVrOQRv-1npXRWk8udnW3oYhIO4475rds';
+
+    // base64url → Uint8Array（applicationServerKey 需要的格式）
+    function urlB64ToUint8Array(base64) {
+      const padding = '='.repeat((4 - base64.length % 4) % 4);
+      const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(b64);
+      return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+    }
+
+    function renderPerm() { $('perm').textContent = Notification.permission; }
+    renderPerm();
+
+    let reg = null;
+
+    $('btnPerm').onclick = async () => {
+      const p = await Notification.requestPermission();
+      renderPerm();
+      if (p === 'granted') { $('btnLocal').disabled = false; $('btnSub').disabled = false; }
+    };
+
+    $('btnLocal').onclick = async () => {
+      if (!reg) reg = await navigator.serviceWorker.ready;
+      // 通过 SW 展示（这样点击才能被 SW 的 notificationclick 接住）
+      await reg.showNotification('👋 本地通知', {
+        body: '这条通知由页面直接调用 showNotification 弹出',
+        icon: './icon.svg', badge: './icon.svg',
+        data: { url: './index.html' },
+        actions: [{ action: 'open', title: '查看' }],
+      });
+    };
+
+    async function refreshSubUI() {
+      if (!reg) return;
+      const sub = await reg.pushManager.getSubscription();
+      $('sub').textContent = sub ? JSON.stringify(sub.toJSON(), null, 2) : '（尚未订阅）';
+      $('btnUnsub').disabled = !sub;
+    }
+
+    $('btnSub').onclick = async () => {
+      if (!reg) reg = await navigator.serviceWorker.ready;
+      try {
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,                       // 承诺每次推送都给用户可见的通知
+          applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC),
+        });
+        $('sub').textContent = JSON.stringify(sub.toJSON(), null, 2);
+        $('btnUnsub').disabled = false;
+        $('log').textContent = '订阅成功：把上面的 subscription 发给服务器即可给该设备推送';
+      } catch (e) {
+        $('sub').textContent = '订阅失败：' + e.message + '\n（可能需联网，或该浏览器推送服务不可达）';
+      }
+    };
+
+    $('btnUnsub').onclick = async () => {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { await sub.unsubscribe(); refreshSubUI(); $('log').textContent = '已取消订阅'; }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', (e) => {
+      if (e.data?.type === 'notification-clicked') $('log').textContent = '通知被点击，目标：' + e.data.url;
+    });
+
+    (async () => {
+      if (!('serviceWorker' in navigator)) { $('log').textContent = '不支持 Service Worker'; return; }
+      await navigator.serviceWorker.register('./sw.js');
+      reg = await navigator.serviceWorker.ready;
+      if (Notification.permission === 'granted') { $('btnLocal').disabled = false; $('btnSub').disabled = false; }
+      refreshSubUI();
+    })();
+  </script>
+</body>
+</html>

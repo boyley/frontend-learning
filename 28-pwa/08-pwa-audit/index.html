@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · PWA 审计</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2rem 1.5rem 1.4rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
+    main { max-width: 820px; margin: 0 auto; padding: 1.5rem; }
+    .score { display: flex; align-items: center; gap: 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1rem 1.2rem; margin: 1rem 0; }
+    .ring { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; font-weight: 800; flex: none; background: conic-gradient(#22c55e 0deg, #334155 0deg); }
+    .ring span { background: #0f172a; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; }
+    ul { list-style: none; padding: 0; margin: 1rem 0; }
+    li { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: .7rem .9rem; margin: .5rem 0; display: flex; gap: .7rem; align-items: flex-start; }
+    li .ic { font-size: 1.2rem; flex: none; }
+    li .txt b { display: block; }
+    li .txt small { opacity: .7; font-size: .82rem; }
+    li.pass { border-color: #14532d; }
+    li.fail { border-color: #7f1d1d; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .6rem 1.1rem; border-radius: 8px; font-size: .95rem; cursor: pointer; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .tip { font-size: .88rem; opacity: .78; margin-top: 1.2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>✅ PWA 质量审计（Audit）</h1>
+    <p>页内自检可安装/可离线条件 + Lighthouse 说明</p>
+  </header>
+  <main>
+    <p>下方脚本会实时检查本页是否满足 PWA 的核心条件（这些正是 Lighthouse 与 Chrome DevTools 判定「可安装」的依据）。这是一个<strong>教学版自检器</strong>，正式审计请以 Lighthouse / DevTools 为准。</p>
+
+    <div class="score">
+      <div class="ring" id="ring"><span id="ringTxt">–</span></div>
+      <div><b id="scoreTitle">检测中…</b><br/><small id="scoreSub">正在运行各项检查</small></div>
+    </div>
+
+    <ul id="checks"></ul>
+    <button id="rerun">🔄 重新检查</button>
+
+    <p class="tip">
+      🔬 正式审计方式：Chrome DevTools → <b>Lighthouse</b> 面板跑一次报告；或 <b>Application</b> 面板查看 Manifest 的 <b>Installability</b> 与 Service Workers 状态。命令行可用 <code>npx lighthouse &lt;url&gt; --view</code>。
+    </p>
+  </main>
+
+  <script>
+    const checksEl = document.getElementById('checks');
+
+    async function runAudit() {
+      const results = [];
+      const add = (pass, title, detail) => results.push({ pass, title, detail });
+
+      // 1) 安全上下文（HTTPS / localhost）
+      add(window.isSecureContext, '运行在安全上下文', 'PWA 能力仅在 HTTPS 或 http://localhost 可用');
+
+      // 2) Service Worker 支持并已注册/控制
+      let swOk = false;
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        swOk = !!(reg && (reg.active || reg.installing || reg.waiting));
+      }
+      add(swOk, '已注册 Service Worker', '带 fetch 处理的 SW 是「可离线/可安装」前提');
+      add(!!navigator.serviceWorker?.controller, '页面已被 SW 控制', 'controller 存在说明请求会经过 SW（可离线）');
+
+      // 3) manifest 关联并可解析
+      const linkEl = document.querySelector('link[rel="manifest"]');
+      let manifest = null;
+      if (linkEl) { try { manifest = await (await fetch(linkEl.href)).json(); } catch {} }
+      add(!!linkEl, '页面关联了 manifest', '<link rel="manifest"> 是可安装的必要条件');
+      add(!!manifest, 'manifest 可成功解析', '返回合法 JSON');
+
+      if (manifest) {
+        add(!!(manifest.name || manifest.short_name), 'manifest 含 name/short_name', '安装弹窗与图标名称');
+        add(!!manifest.start_url, 'manifest 含 start_url', '从图标启动时打开的地址');
+        add(['standalone', 'fullscreen', 'minimal-ui'].includes(manifest.display), 'display 为独立窗口模式', `当前：${manifest.display || '(缺失)'}；不能是 browser`);
+        const icons = manifest.icons || [];
+        const sizesText = icons.map(i => i.sizes).join(' ');
+        add(/192/.test(sizesText), '含 192px 图标', '安装所需最小图标');
+        add(/512/.test(sizesText), '含 512px 图标', '启动画面/高分屏图标');
+        add(icons.some(i => (i.purpose || '').includes('maskable')), '含 maskable 图标', 'Android 自适应裁切（建议项）');
+      }
+
+      // 4) 视口与主题色（体验/审计常见项）
+      add(!!document.querySelector('meta[name="viewport"]'), '设置了 viewport', '移动端适配基础');
+      add(!!document.querySelector('meta[name="theme-color"]') || !!manifest?.theme_color, '设置了主题色', '<meta theme-color> 或 manifest.theme_color');
+
+      // 5) 是否以已安装形态运行
+      const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+      add(true, standalone ? '当前以已安装 App 形态运行 🎉' : '当前在浏览器标签中运行', standalone ? '已通过独立窗口打开' : '安装后可获得独立窗口体验（非失败项）', true);
+
+      render(results);
+    }
+
+    function render(results) {
+      const graded = results.filter(r => r.optional !== true);
+      const passed = graded.filter(r => r.pass).length;
+      const pct = Math.round(passed / graded.length * 100);
+      checksEl.innerHTML = '';
+      results.forEach(r => {
+        const li = document.createElement('li');
+        li.className = r.optional ? '' : (r.pass ? 'pass' : 'fail');
+        const ic = r.optional ? 'ℹ️' : (r.pass ? '✅' : '❌');
+        li.innerHTML = `<span class="ic">${ic}</span><span class="txt"><b>${r.title}</b><small>${r.detail}</small></span>`;
+        checksEl.appendChild(li);
+      });
+      const ring = document.getElementById('ring');
+      const color = pct >= 90 ? '#22c55e' : pct >= 50 ? '#eab308' : '#ef4444';
+      ring.style.background = `conic-gradient(${color} ${pct * 3.6}deg, #334155 0deg)`;
+      document.getElementById('ringTxt').textContent = pct;
+      document.getElementById('scoreTitle').textContent = `PWA 自检得分：${passed}/${graded.length}`;
+      document.getElementById('scoreSub').textContent = pct >= 90 ? '很棒！核心条件基本满足' : '还有可改进项，见下方 ❌';
+    }
+
+    document.getElementById('rerun').onclick = runAudit;
+
+    (async () => {
+      if ('serviceWorker' in navigator) { try { await navigator.serviceWorker.register('./sw.js'); } catch {} }
+      // 略等 SW 激活，检查结果更准
+      setTimeout(runAudit, 600);
+    })();
+  </script>
+</body>
+</html>

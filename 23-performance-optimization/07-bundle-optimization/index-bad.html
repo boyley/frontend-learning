@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>❌ 未优化 · 整包/命名空间导入</title>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- 入口指向 main-bad.js：整包 + 动态访问 + 挂全局，未用函数无法裁剪 -->
+  <script type="module" src="/src/main-bad.js"></script>
+</body>
+</html>

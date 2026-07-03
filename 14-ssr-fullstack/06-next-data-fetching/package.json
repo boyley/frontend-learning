@@ -1,0 +1,16 @@
+{
+  "name": "06-next-data-fetching",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js App Router 数据获取 / 缓存 / SSG / ISR 教学模块",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^16.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

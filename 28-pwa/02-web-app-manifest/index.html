@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · Web App Manifest</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2rem 1.5rem; text-align: center; background: linear-gradient(135deg, #7c3aed, #2563eb); }
+    header h1 { margin: 0; }
+    main { max-width: 880px; margin: 0 auto; padding: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; margin: 1rem 0; }
+    th, td { padding: .7rem .9rem; text-align: left; border-bottom: 1px solid #334155; vertical-align: top; }
+    th { background: #334155; }
+    td code { color: #93c5fd; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .preview { display: flex; gap: 1rem; align-items: center; background: #1e293b; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
+    .preview img { width: 72px; height: 72px; border-radius: 16px; }
+    button { background: #7c3aed; color: #fff; border: 0; padding: .7rem 1.3rem; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: .3rem 0; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    pre { background: #020617; padding: 1rem; border-radius: 10px; overflow: auto; font-size: .85rem; }
+    .tip { font-size: .9rem; opacity: .75; }
+    .badge { display:inline-block; padding:.1rem .5rem; border-radius:6px; background:#334155; font-size:.8rem; }
+  </style>
+</head>
+<body>
+  <header><h1>📦 Web App Manifest</h1><p>一份 JSON，决定安装后的名字、图标、启动方式与配色</p></header>
+  <main>
+    <p>Web App Manifest 是一个 <code>manifest.json</code> 文件，用 <code>&lt;link rel="manifest"&gt;</code> 关联到页面。浏览器读取它，把网页「安装」成桌面/主屏应用，并据此决定图标、启动画面、窗口模式与主题色。</p>
+
+    <div class="preview">
+      <img src="./icon.svg" alt="应用图标" />
+      <div>
+        <div><b id="pName">—</b> <span class="badge" id="pDisplay">—</span></div>
+        <div class="tip">short_name：<span id="pShort">—</span> · 主题色 <span id="pTheme">—</span></div>
+      </div>
+    </div>
+
+    <button id="btnInstall" disabled>⬇️ 安装应用</button>
+    <p class="tip" id="installTip">等待浏览器判定可安装条件…</p>
+
+    <h2 id="fields">📋 常用字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>完整应用名（安装弹窗、启动画面）</td></tr>
+        <tr><td><code>short_name</code></td><td>短名（主屏图标下方，空间有限时显示）</td></tr>
+        <tr><td><code>start_url</code></td><td>从图标启动时打开的 URL</td></tr>
+        <tr><td><code>scope</code></td><td>应用受控范围；超出 scope 的链接在浏览器打开</td></tr>
+        <tr><td><code>display</code></td><td>窗口模式：<code>standalone</code>（独立窗口，最常用）/ <code>fullscreen</code> / <code>minimal-ui</code> / <code>browser</code></td></tr>
+        <tr><td><code>theme_color</code></td><td>标题栏 / 地址栏主题色</td></tr>
+        <tr><td><code>background_color</code></td><td>启动画面背景色（资源加载前显示）</td></tr>
+        <tr><td><code>icons</code></td><td>各尺寸图标；需含 192px 与 512px；<code>purpose:"maskable"</code> 供 Android 自适应裁切</td></tr>
+        <tr><td><code>orientation</code></td><td>锁定方向：<code>portrait</code> / <code>landscape</code></td></tr>
+        <tr><td><code>shortcuts</code></td><td>长按图标弹出的快捷菜单</td></tr>
+      </tbody>
+    </table>
+
+    <h2>🔎 实际读取到的 manifest</h2>
+    <pre id="dump">加载中…</pre>
+    <p class="tip">也可在 DevTools → Application → Manifest 查看解析结果与安装性检查。</p>
+  </main>
+
+  <script>
+    // 注册 SW（满足可安装条件之一）
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+    // 读取并展示 manifest 内容
+    fetch('./manifest.json').then((r) => r.json()).then((m) => {
+      document.getElementById('pName').textContent = m.name;
+      document.getElementById('pShort').textContent = m.short_name;
+      document.getElementById('pDisplay').textContent = m.display;
+      const t = document.getElementById('pTheme');
+      t.textContent = m.theme_color;
+      t.style.color = m.theme_color;
+      document.getElementById('dump').textContent = JSON.stringify(m, null, 2);
+    });
+
+    // 自定义安装按钮
+    let deferred = null;
+    const btn = document.getElementById('btnInstall');
+    const tip = document.getElementById('installTip');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); deferred = e; btn.disabled = false;
+      tip.textContent = '✅ 满足可安装条件，可点击安装';
+    });
+    btn.addEventListener('click', async () => {
+      deferred.prompt();
+      const { outcome } = await deferred.userChoice;
+      tip.textContent = outcome === 'accepted' ? '🎉 已安装' : '已取消';
+      deferred = null; btn.disabled = true;
+    });
+    window.addEventListener('appinstalled', () => tip.textContent = '🎉 已安装到桌面/主屏');
+  </script>
+</body>
+</html>

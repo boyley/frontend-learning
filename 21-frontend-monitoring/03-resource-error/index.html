@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · 资源加载错误</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f1420; color: #e6e9ef; line-height: 1.6; padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .subtitle { color: #8b93a7; margin-bottom: 24px; font-size: 14px; }
+
+    .toolbar { margin-bottom: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      background: #2b3550; color: #e6e9ef; border: 1px solid #3a465f;
+      padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px;
+      transition: background .15s;
+    }
+    button:hover { background: #38466a; }
+    button.danger { border-color: #7a3b3b; }
+    button.danger:hover { background: #5a2f2f; }
+
+    .note {
+      background: #121826; border: 1px solid #2a3346; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 18px; font-size: 13px; color: #9aa3b6;
+    }
+    .note b { color: #ffc078; }
+    code { background: #0d1220; border: 1px solid #232c3e; border-radius: 5px; padding: 1px 6px; color: #74c0fc; }
+
+    /* ============ 捕获面板 ============ */
+    #panel {
+      background: #121826; border: 1px solid #2a3346; border-radius: 12px;
+      padding: 14px; min-height: 140px; max-height: 480px; overflow-y: auto;
+    }
+    .panel-head { font-size: 14px; color: #8b93a7; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .row {
+      padding: 11px 12px; border-radius: 8px; margin-bottom: 9px;
+      background: #1a2130; border-left: 3px solid #ffa94d; font-size: 13px;
+      animation: fade .25s ease;
+    }
+    @keyframes fade { from { opacity: 0; transform: translateY(-4px);} to {opacity:1;transform:none;} }
+    .row .head { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+    .row .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #ffa94d22; color: #ffc078; white-space: nowrap; }
+    .row.miss .badge { background: #ff6b6b22; color: #ff8787; }
+    .row.miss { border-left-color: #ff6b6b; }
+    .row .via { font-size: 11px; color: #5a6478; }
+    .row .time { font-size: 11px; color: #5a6478; margin-left: auto; }
+    .row .msg { color: #ffe3c2; font-weight: 600; word-break: break-all; }
+    .row .meta { color: #8b93a7; font-size: 12px; margin-top: 4px; word-break: break-all; }
+    .empty { color: #5a6478; font-size: 13px; text-align: center; padding: 24px; }
+    /* 存放动态插入的坏资源，隐藏但仍会触发加载 */
+    #sink { position: absolute; width: 0; height: 0; overflow: hidden; opacity: 0; }
+  </style>
+</head>
+<body>
+  <h1>03 · 资源加载错误</h1>
+  <p class="subtitle">img / script / link 加载失败，只有「捕获阶段」监听才抓得到</p>
+
+  <div class="note">
+    关键点：资源加载错误的 <code>error</code> 事件 <b>不冒泡</b>，所以 <code>window.onerror</code> 和默认的
+    <code>addEventListener('error', fn)</code>（冒泡阶段）<b>都抓不到</b>。必须用第三个参数 <code>true</code>
+    在 <b>捕获阶段</b> 监听：<code>window.addEventListener('error', fn, true)</code>。下面两个监听器都装了，面板会告诉你谁抓到了。
+  </div>
+
+  <div class="toolbar">
+    <button id="btn-img" class="danger">① 加载一张坏图片</button>
+    <button id="btn-script" class="danger">② 加载一个坏脚本</button>
+    <button id="btn-css" class="danger">③ 加载一个坏样式表</button>
+  </div>
+
+  <div id="panel">
+    <div class="panel-head">
+      <span>📡 捕获面板（同时 console.log）</span>
+      <span id="count">0 条</span>
+    </div>
+    <div class="empty" id="empty">点击上方按钮加载不存在的资源，看谁能抓到…</div>
+  </div>
+
+  <div id="sink"></div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

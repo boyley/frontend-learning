@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 缓存策略组合 Demo</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <h1>05 · 缓存策略组合（Service Worker）</h1>
+  <p>
+    当前网络状态：<span id="net-status" class="status">检测中…</span><br />
+    Service Worker：<span id="sw-status" class="status">未注册</span>
+  </p>
+
+  <div class="panel">
+    <h2>① 静态资源（cache-first）</h2>
+    <p>style.css / app.js 已被预缓存。<b>断网后刷新页面，样式与脚本仍在 → 离线可访问。</b></p>
+    <button id="btn-reload">刷新页面（测离线）</button>
+  </div>
+
+  <div class="panel">
+    <h2>② 数据请求（network-first）</h2>
+    <p>点击按钮请求一个「时间接口」。在线时拿实时数据并写入缓存；断网时退回上次缓存的数据。</p>
+    <button id="btn-fetch">请求数据（/api/time）</button>
+    <button id="btn-clear">清空日志</button>
+  </div>
+
+  <h2>运行日志</h2>
+  <div id="log" class="log"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

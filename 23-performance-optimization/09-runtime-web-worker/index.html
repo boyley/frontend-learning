@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Worker：主线程卸载对比 Demo</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; background: #f5f7fa; color: #1a1a1a; }
+    header { background: #6a1b9a; color: #fff; padding: 20px 24px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .9; font-size: 13px; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 24px; }
+    @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+
+    /* 左侧「主线程流畅度探针」区：一个持续旋转的方块 + 计数器 + FPS */
+    .probe { background: #fff; border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; }
+    .probe h2 { font-size: 14px; margin: 0 0 16px; color: #666; }
+    .spinner {
+      width: 80px; height: 80px; margin: 0 auto 16px;
+      background: linear-gradient(135deg, #ab47bc, #6a1b9a);
+      border-radius: 14px;
+      /* 若主线程被长任务阻塞，这个动画会「僵住」，非常直观 */
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .probe .big { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .probe .label { font-size: 12px; color: #999; margin-bottom: 12px; }
+
+    /* 右侧操作区 */
+    .panel { background: #fff; border: 2px solid #ddd; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .panel h2 { font-size: 16px; margin: 0 0 6px; }
+    .panel .desc { font-size: 13px; color: #666; margin: 0 0 14px; line-height: 1.6; }
+    button { font-size: 15px; padding: 10px 18px; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-bad { background: #d93025; }
+    .btn-good { background: #188038; }
+    .result { margin-top: 14px; font-size: 14px; line-height: 1.7; min-height: 24px; }
+    .bad { color: #d93025; font-weight: 600; }
+    .good { color: #188038; font-weight: 600; }
+    .tip { background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.7; color: #5f4300; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Web Worker · 主线程卸载对比 Demo</h1>
+    <p>同一个 CPU 密集计算（统计 300 万以内素数），对比「主线程直接算」与「Worker 计算」时主线程的流畅度差异。</p>
+  </header>
+
+  <div class="wrap">
+    <p class="tip">
+      👀 <b>观察方法</b>：盯着左侧<b>旋转方块</b>、<b>计数器（每 100ms +1）</b>和 <b>FPS</b>。<br>
+      点「主线程直接算」→ 方块僵住、计数器停更、FPS 掉到个位数（页面卡死几秒）。<br>
+      点「Web Worker 计算」→ 方块照转、计数器照涨、FPS 保持约 60（主线程毫无阻塞）。
+    </p>
+
+    <div class="layout">
+      <!-- 左：流畅度探针 -->
+      <div class="probe">
+        <h2>主线程流畅度探针</h2>
+        <div class="spinner"></div>
+        <div class="big" id="counter">0</div>
+        <div class="label">计数器（每 100ms +1）</div>
+        <div class="big" id="fps">–</div>
+        <div class="label">FPS（每秒帧数）</div>
+      </div>
+
+      <!-- 右：两种方式 -->
+      <div>
+        <div class="panel">
+          <h2>A. 主线程直接算 ❌</h2>
+          <p class="desc">把 CPU 密集计算放在主线程，形成<b>长任务（Long Task）</b>，独占主线程数秒，UI 全冻结。</p>
+          <button class="btn-bad" id="btnMain">主线程直接算</button>
+          <div class="result" id="mainResult"></div>
+        </div>
+
+        <div class="panel">
+          <h2>B. Web Worker 计算 ✅</h2>
+          <p class="desc">把计算 <code>postMessage</code> 给 worker 线程执行，主线程只负责收发消息，UI 始终流畅。</p>
+          <button class="btn-good" id="btnWorker">Web Worker 计算</button>
+          <div class="result" id="workerResult"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主线程脚本 -->
+  <script src="app.js"></script>
+</body>
+</html>

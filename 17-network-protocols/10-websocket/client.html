@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebSocket 聊天室 Demo</title>
+  <style>
+    body { font-family: -apple-system, "PingFang SC", sans-serif; max-width: 640px; margin: 24px auto; padding: 0 16px; }
+    h1 { font-size: 20px; }
+    #status { padding: 4px 10px; border-radius: 4px; font-size: 13px; color: #fff; }
+    .on { background: #2e9e4f; } .off { background: #b23; } .connecting { background: #d89000; }
+    #log { border: 1px solid #ddd; border-radius: 6px; height: 320px; overflow-y: auto; padding: 8px; margin: 12px 0; background: #fafafa; font-size: 14px; }
+    .msg { margin: 4px 0; } .system { color: #888; font-style: italic; } .self { color: #2e6fd8; }
+    .row { display: flex; gap: 8px; }
+    input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    button { padding: 8px 16px; border: 0; border-radius: 6px; background: #2e6fd8; color: #fff; cursor: pointer; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>WebSocket 聊天室 <span id="status" class="connecting">连接中…</span></h1>
+  <div id="log"></div>
+  <div class="row">
+    <input id="input" placeholder="输入消息，回车发送…" autocomplete="off" />
+    <button id="send">发送</button>
+  </div>
+
+  <script>
+    // ==========================================================================
+    // 浏览器端使用【原生 WebSocket API】，无需任何库。
+    // 关键点：客户端发出的每一帧数据，浏览器底层都会自动加掩码（mask），
+    //        这是 RFC 6455 强制要求（防止代理缓存投毒），你在 JS 里感知不到，
+    //        但抓包会看到客户端→服务端的帧 MASK 位为 1、带 4 字节 masking-key。
+    // ==========================================================================
+
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+
+    const WS_URL = 'ws://localhost:3000/chat';
+    let ws = null;
+    let reconnectTimer = null;
+    let reconnectDelay = 1000; // 断线重连的退避起点
+
+    function log(text, cls = '') {
+      const div = document.createElement('div');
+      div.className = 'msg ' + cls;
+      div.textContent = text;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = cls;
+    }
+
+    // --- 建立连接 ---------------------------------------------------------------
+    function connect() {
+      setStatus('连接中…', 'connecting');
+      ws = new WebSocket(WS_URL);
+
+      // 握手成功（服务端回了 101），连接进入 OPEN 状态
+      ws.onopen = () => {
+        setStatus('已连接', 'on');
+        reconnectDelay = 1000; // 连上就重置退避
+        log('已连接到服务器', 'system');
+        sendBtn.disabled = false;
+      };
+
+      // 收到服务端推送的消息（可能是别人广播的、系统消息）
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'system') {
+          log('【系统】' + data.text, 'system');
+        } else {
+          log(`${data.from}: ${data.text}`);
+        }
+      };
+
+      // 连接关闭：可能是服务端关的、网络断的。这里做【断线重连】。
+      ws.onclose = () => {
+        setStatus('已断开', 'off');
+        sendBtn.disabled = true;
+        log(`连接断开，${reconnectDelay / 1000}s 后重连…`, 'system');
+        // 指数退避重连，避免服务器刚挂就被雪崩式重连打爆
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000); // 最多退避到 30s
+      };
+
+      ws.onerror = () => {
+        // error 之后通常紧跟 close，这里只记录，重连逻辑交给 onclose
+        log('连接发生错误', 'system');
+      };
+    }
+
+    // --- 发送消息 ---------------------------------------------------------------
+    function send() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(text); // 底层自动封成带掩码的 text 帧
+        log('我: ' + text, 'self');
+        inputEl.value = '';
+      } else {
+        log('未连接，无法发送', 'system');
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+    // 注意：浏览器原生 WebSocket 无法主动发 ping 帧（API 未暴露），
+    // 心跳靠【服务端发 ping、浏览器自动回 pong】完成。若想让客户端也探活，
+    // 通常在应用层自定义一个 {type:'ping'} 消息定时发。这里由服务端主导心跳。
+
+    connect();
+  </script>
+</body>
+</html>

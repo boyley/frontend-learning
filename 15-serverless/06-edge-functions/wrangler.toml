@@ -1,0 +1,8 @@
+# Cloudflare Worker 配置（wrangler CLI 使用）
+# 对照官方：https://developers.cloudflare.com/workers/wrangler/configuration/
+name = "edge-demo"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-09-01"
+
+# 本地开发： npx wrangler dev        （在本地模拟边缘运行时）
+# 部署上线： npx wrangler deploy     （推送到 Cloudflare 全球边缘网络）

@@ -1,0 +1,16 @@
+{
+  "name": "03-next-getting-started",
+  "version": "1.0.0",
+  "private": true,
+  "description": "第一个 Next.js 应用（App Router，最小可运行）",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^16.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

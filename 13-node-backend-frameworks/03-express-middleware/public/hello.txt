@@ -1,0 +1,2 @@
+这是 public/hello.txt，通过 express.static 提供的静态文件。
+访问路径：http://localhost:3004/static/hello.txt

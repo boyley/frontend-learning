@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · 导航守卫 / 权限拦截</title>
+  <style>
+    body { font-family: system-ui, "PingFang SC", sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; align-items: center; }
+    a.link { padding: 6px 12px; border: 1px solid #0ea5e9; border-radius: 6px; color: #0ea5e9; text-decoration: none; font-size: 14px; }
+    a.link:hover { background: #e0f2fe; }
+    button { padding: 6px 12px; border-radius: 6px; cursor: pointer; border: 1px solid #ccc; background: #fff; }
+    #app { border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px; min-height: 80px; }
+    .status { font-size: 13px; padding: 4px 10px; border-radius: 999px; }
+    .in { background: #dcfce7; color: #166534; } .out { background: #fee2e2; color: #991b1b; }
+    #log { font-family: ui-monospace, monospace; font-size: 12px; background: #f9fafb; border: 1px solid #eee; border-radius: 6px; padding: 8px 10px; margin-top: 12px; white-space: pre-wrap; max-height: 160px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>05 · 导航守卫 / 权限拦截</h1>
+
+  <nav>
+    登录态：<span id="statusText" class="status out">未登录</span>
+    <button onclick="toggleLogin()">切换登录 / 退出</button>
+  </nav>
+  <nav>
+    <a class="link" href="#/">Home（公开）</a>
+    <a class="link" href="#/profile">Profile（公开）</a>
+    <a class="link" href="#/admin">后台 Admin（需登录）</a>
+    <a class="link" href="#/login">登录页</a>
+  </nav>
+
+  <div id="app"></div>
+  <div id="log"></div>
+
+  <script>
+    const state = { loggedIn: false };
+    const logBox = document.getElementById('log');
+    const log = (m) => { logBox.textContent += m + '\n'; logBox.scrollTop = logBox.scrollHeight; };
+
+    /* 带 meta + beforeEach 守卫的 hash 路由 */
+    class GuardedRouter {
+      constructor(outlet) {
+        this.routes = {}; this.meta = {}; this.outlet = outlet; this.guard = null;
+        window.addEventListener('hashchange', () => this.resolve());
+        window.addEventListener('load', () => this.resolve());
+      }
+      on(path, handler, meta = {}) { this.routes[path] = handler; this.meta[path] = meta; return this; }
+      beforeEach(fn) { this.guard = fn; return this; }
+      resolve() {
+        const path = location.hash.slice(1) || '/';
+        const to = { path, meta: this.meta[path] || {} };
+        // ★ 守卫：渲染前先问 beforeEach
+        if (this.guard) {
+          const decision = this.guard(to);
+          if (decision === false) { log('✋ 守卫取消导航，停留原地'); return; }
+          if (typeof decision === 'string' && decision !== path) {
+            log(`↩️ 守卫重定向：${path} → ${decision}`);
+            location.hash = decision;   // 重定向（会再次触发 resolve）
+            return;
+          }
+        }
+        log(`✅ 放行并渲染：${path}`);
+        const h = this.routes[path] || this.routes['*'];
+        this.outlet.innerHTML = h ? h() : '<h2>404</h2>';
+      }
+    }
+
+    const router = new GuardedRouter(document.getElementById('app'));
+    router
+      .on('/',        () => '<h2>🏠 Home</h2><p>公开页面，人人可访问。</p>')
+      .on('/profile', () => '<h2>👤 Profile</h2><p>公开的个人资料页。</p>')
+      .on('/admin',   () => '<h2>🔐 Admin 后台</h2><p>恭喜，你已登录，成功进入受保护页面。</p>', { requiresAuth: true })
+      .on('/login',   () => '<h2>🔑 登录页</h2><p>点上方「切换登录」模拟登录，再访问后台。</p>')
+      .on('*',        () => '<h2>404</h2>')
+      .beforeEach((to) => {
+        log(`→ 导航到 ${to.path}，requiresAuth=${!!to.meta.requiresAuth}，loggedIn=${state.loggedIn}`);
+        if (to.meta.requiresAuth && !state.loggedIn) return '/login'; // 未登录拦截
+        return true;
+      });
+
+    function toggleLogin() {
+      state.loggedIn = !state.loggedIn;
+      const el = document.getElementById('statusText');
+      el.textContent = state.loggedIn ? '已登录' : '未登录';
+      el.className = 'status ' + (state.loggedIn ? 'in' : 'out');
+      log('🔄 登录态变为：' + (state.loggedIn ? '已登录' : '未登录'));
+    }
+  </script>
+</body>
+</html>

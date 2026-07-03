@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化后 · 资源优化（after）</title>
+
+  <!--
+    ✅ 正面教材：这个页面演示「做了资源优化」的写法。
+    对比点（对照 before.html 看）：
+      1. 图片：用 <picture> + 多个 <source type>，按 AVIF → WebP → JPG 顺序降级；
+         首屏图加 fetchpriority="high"，首屏外图加 loading="lazy" + decoding="async"；
+         全部写 width/height（或用 aspect-ratio 预留位置）避免 CLS。
+      2. 字体：@font-face 设 font-display: swap（先用 fallback 字体显示文字，
+         字体到达后再替换，避免 FOIT）。
+      3. 用 <link rel="preload" as="font" crossorigin> 让关键字体尽早被发现、尽早开始下载。
+    说明：为保证「离线双击即可运行」，真实 avif/webp 二进制无法内置，
+         这里用内联 SVG（data URI）演示 <picture> 的「结构与属性」是否写对；
+         真实体积对比数据见 README 表格。
+  -->
+
+  <!--
+    ✅ 关键字体预加载：
+      - as="font" 告诉浏览器这是字体资源，可用更高优先级抓取
+      - type 指明格式，浏览器可跳过不支持的格式
+      - crossorigin 是字体 preload 的「硬性要求」：字体请求默认带 CORS 语义，
+        preload 不写 crossorigin 会导致重复下载（预载一份 + 实际用又一份）
+      这里指向占位地址仅演示写法（离线打开不会真的命中）。
+  -->
+  <link rel="preload" href="./fonts/DemoWebFont.woff2" as="font" type="font/woff2" crossorigin />
+
+  <style>
+    /* ✅ 正面：font-display: swap
+       字体下载期间先用 fallback 字体（sans-serif）把文字「立即显示出来」，
+       字体到达后再无缝替换 -> 避免 FOIT，用户始终看得到文字。 */
+    @font-face {
+      font-family: "DemoWebFont";
+      src: url("./fonts/DemoWebFont.woff2") format("woff2");
+      font-display: swap;   /* 关键：swap 而非默认 block */
+      /* size-adjust 可让 fallback 字体的字形尺寸更接近真字体，减小替换瞬间的 CLS */
+      size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      /* ✅ 提供完整 fallback 链：真字体没到也能用系统字体正常显示 */
+      font-family: "DemoWebFont", system-ui, -apple-system, "PingFang SC", sans-serif;
+      line-height: 1.6;
+      color: #222;
+    }
+    header {
+      padding: 24px;
+      background: #15803d;
+      color: #fff;
+    }
+    .content { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+    /* ✅ 用 aspect-ratio + width 预留图片空间，
+       图片没到之前浏览器就已按 16:9 留好位置 -> 消除 CLS。
+       同时 <img> 上仍写 width/height 双保险。 */
+    .hero-img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      display: block;
+      background: #f1f5f9; /* 占位底色，加载前不是空白 */
+    }
+
+    .filler { height: 900px; background: linear-gradient(#f0fdf4, #dcfce7); }
+    .tag { display: inline-block; background: #dcfce7; color: #15803d;
+           padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">AFTER · 已优化</span>
+    <h1>优化后：picture 多格式 + swap 字体 + 懒加载</h1>
+  </header>
+
+  <div class="content">
+    <p>下面的图片用 <code>&lt;picture&gt;</code> 提供 AVIF → WebP → JPG 三级
+       <code>&lt;source&gt;</code>，浏览器会挑「自己支持的第一个」；
+       首屏图 <code>fetchpriority="high"</code>，首屏外图 <code>loading="lazy"</code>。</p>
+
+    <!--
+      ✅ 正面写法：<picture> 多格式降级
+        - 浏览器从上往下检查每个 <source> 的 type，选中「第一个自己支持的」；
+          都不支持时兜底用最后的 <img>（这里是 jpg）。
+        - AVIF 压缩率最高但兼容稍新；WebP 兼容更广；JPG 是最终兜底。
+        - 首屏 LCP 图片：fetchpriority="high" 提升优先级；decoding="async" 不阻塞解析。
+        - width/height 属性让浏览器提前算出宽高比、预留空间 -> 防 CLS。
+      为离线可运行，这里三个 source 的 srcset 都用内联 SVG 占位，
+      真实项目里应替换成 hero.avif / hero.webp / hero.jpg。
+    -->
+    <picture>
+      <!-- 1️⃣ 首选 AVIF：现代格式，压缩率最高 -->
+      <source
+        type="image/avif"
+        srcset="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%2316a34a'/%3E%3Ctext x='50%25' y='50%25' font-size='90' fill='white' text-anchor='middle' dominant-baseline='middle'%3EAVIF %E6%A0%BC%E5%BC%8F%EF%BC%88%E9%A6%96%E9%80%89%EF%BC%89%3C/text%3E%3C/svg%3E" />
+      <!-- 2️⃣ 次选 WebP：兼容更广 -->
+      <source
+        type="image/webp"
+        srcset="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%230891b2'/%3E%3Ctext x='50%25' y='50%25' font-size='90' fill='white' text-anchor='middle' dominant-baseline='middle'%3EWebP %E6%A0%BC%E5%BC%8F%EF%BC%88%E6%AC%A1%E9%80%89%EF%BC%89%3C/text%3E%3C/svg%3E" />
+      <!-- 3️⃣ 兜底 <img>：JPG，老浏览器也能显示；LCP 首屏图用 high 优先级 -->
+      <img
+        class="hero-img"
+        width="1600" height="900"
+        fetchpriority="high"
+        decoding="async"
+        src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%23f59e0b'/%3E%3Ctext x='50%25' y='50%25' font-size='90' fill='white' text-anchor='middle' dominant-baseline='middle'%3EJPG %E5%85%9C%E5%BA%95%3C/text%3E%3C/svg%3E"
+        alt="首屏 LCP 图片，picture 多格式 + 高优先级 + 固定宽高" />
+    </picture>
+
+    <div class="filler">↑ 这块是首屏内容，下面那张「首屏外」的图用 loading="lazy" 延迟加载。</div>
+
+    <!--
+      ✅ 首屏外图片：loading="lazy" 让它「快进入视口时」才下载，节省首屏带宽；
+         decoding="async" 解码不阻塞主线程；同样写 width/height 防 CLS。
+    -->
+    <picture>
+      <source
+        type="image/avif"
+        srcset="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%237c3aed'/%3E%3Ctext x='50%25' y='50%25' font-size='64' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%E9%A6%96%E5%B1%8F%E5%A4%96 · lazy · AVIF%3C/text%3E%3C/svg%3E" />
+      <img
+        class="hero-img"
+        width="1600" height="900"
+        loading="lazy"
+        decoding="async"
+        src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%232563eb'/%3E%3Ctext x='50%25' y='50%25' font-size='64' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%E9%A6%96%E5%B1%8F%E5%A4%96 · lazy · JPG%3C/text%3E%3C/svg%3E"
+        alt="首屏外图片，懒加载" />
+    </picture>
+  </div>
+
+  <script>
+    // 📊 打印字体加载时序，对照 before.html 的 FOIT。
+    const t0 = performance.now();
+    console.log("[after] 页面开始渲染：font-display:swap 已生效，" +
+      "文字用 fallback 字体『立即可见』，真字体到达后再无缝替换。");
+
+    document.fonts.ready.then(() => {
+      const dt = (performance.now() - t0).toFixed(1);
+      console.log(`[after] document.fonts.ready 触发，用时 ${dt}ms。` +
+        "整个过程用户始终看得到文字（无 FOIT）。");
+    });
+
+    // 也可以观察某张图的解码/加载时机
+    window.addEventListener("load", () => {
+      console.log("[after] window load：首屏外图片若仍未进入视口，Network 里应看不到它的请求（懒加载生效）。");
+    });
+  </script>
+</body>
+</html>

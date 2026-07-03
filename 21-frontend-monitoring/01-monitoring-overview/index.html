@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · 前端监控体系总览</title>
+  <style>
+    /* ============ 全局基础样式 ============ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f1420;
+      color: #e6e9ef;
+      line-height: 1.6;
+      padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .subtitle { color: #8b93a7; margin-bottom: 24px; font-size: 14px; }
+
+    /* ============ 三大类全景卡片 ============ */
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: #1a2130;
+      border: 1px solid #2a3346;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .card h2 { font-size: 17px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .card .tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+    .card.error   { border-top: 3px solid #ff6b6b; }
+    .card.perf    { border-top: 3px solid #4dabf7; }
+    .card.action  { border-top: 3px solid #51cf66; }
+    .card.error   .tag { background: #ff6b6b22; color: #ff8787; }
+    .card.perf    .tag { background: #4dabf722; color: #74c0fc; }
+    .card.action  .tag { background: #51cf6622; color: #69db7c; }
+    .card ul { list-style: none; margin-top: 6px; }
+    .card li { padding: 5px 0; font-size: 13px; color: #b6bccb; border-bottom: 1px dashed #2a3346; }
+    .card li:last-child { border-bottom: none; }
+    .card li::before { content: "▸ "; color: #5a6478; }
+
+    /* ============ 一体化 SDK 交互区 ============ */
+    .toolbar { margin-bottom: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    button {
+      background: #2b3550;
+      color: #e6e9ef;
+      border: 1px solid #3a465f;
+      padding: 9px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background .15s;
+    }
+    button:hover { background: #38466a; }
+    .hint { color: #8b93a7; font-size: 13px; }
+
+    /* ============ 捕获面板 ============ */
+    #panel {
+      background: #121826;
+      border: 1px solid #2a3346;
+      border-radius: 12px;
+      padding: 14px;
+      min-height: 120px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .panel-head { font-size: 14px; color: #8b93a7; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 9px 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #1a2130;
+      border-left: 3px solid #5a6478;
+      font-size: 13px;
+      animation: fade .25s ease;
+    }
+    @keyframes fade { from { opacity: 0; transform: translateY(-4px);} to {opacity:1;transform:none;} }
+    .row.error   { border-left-color: #ff6b6b; }
+    .row.perf    { border-left-color: #4dabf7; }
+    .row.action  { border-left-color: #51cf66; }
+    .row .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+    .row.error   .badge { background: #ff6b6b22; color: #ff8787; }
+    .row.perf    .badge { background: #4dabf722; color: #74c0fc; }
+    .row.action  .badge { background: #51cf6622; color: #69db7c; }
+    .row .time { color: #5a6478; font-size: 11px; flex-shrink: 0; }
+    .row .body { flex: 1; word-break: break-all; }
+    .row .body b { color: #e6e9ef; }
+    .empty { color: #5a6478; font-size: 13px; text-align: center; padding: 24px; }
+  </style>
+</head>
+<body>
+  <h1>01 · 前端监控体系总览</h1>
+  <p class="subtitle">错误监控 / 性能监控 / 行为监控 —— 三大类各抓一条，直观看到「监控在监控什么」</p>
+
+  <!-- ======== 三大类全景图（纯 HTML/CSS 展示每类抓什么） ======== -->
+  <section class="overview">
+    <div class="card error">
+      <h2>🐞 错误监控 <span class="tag">Error</span></h2>
+      <ul>
+        <li>JS 运行时错误</li>
+        <li>资源加载错误（img/script/link）</li>
+        <li>接口请求错误（4xx/5xx）</li>
+        <li>白屏 / 崩溃</li>
+      </ul>
+    </div>
+    <div class="card perf">
+      <h2>⚡ 性能监控 <span class="tag">Performance</span></h2>
+      <ul>
+        <li>Web Vitals（LCP/FID/CLS）</li>
+        <li>页面加载耗时（首屏/DOMReady）</li>
+        <li>资源加载耗时</li>
+        <li>接口响应耗时</li>
+      </ul>
+    </div>
+    <div class="card action">
+      <h2>👣 行为监控 <span class="tag">Behavior</span></h2>
+      <ul>
+        <li>PV / UV</li>
+        <li>点击 / 交互</li>
+        <li>路由跳转</li>
+        <li>页面停留时长</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ======== 一体化 mini SDK 交互区 ======== -->
+  <div class="toolbar">
+    <button id="btn-error">① 触发一个错误（错误监控）</button>
+    <span class="hint">页面加载会自动采一条性能数据；点击页面任意处会采一条行为数据。</span>
+  </div>
+
+  <!-- ======== 捕获面板：三类监控采到的事件都塞进这里 ======== -->
+  <div id="panel">
+    <div class="panel-head">
+      <span>📡 捕获面板（同时 console.log）</span>
+      <span id="count">0 条</span>
+    </div>
+    <div class="empty" id="empty">等待采集… 点击上方按钮 / 点击页面 / 刷新页面试试</div>
+  </div>
+
+  <!-- 经典 script 引入，保证 file:// 直接打开可运行，禁止 ESM import -->
+  <script src="demo.js"></script>
+</body>
+</html>

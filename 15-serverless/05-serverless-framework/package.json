@@ -1,0 +1,16 @@
+{
+  "name": "serverless-framework-demo",
+  "version": "1.0.0",
+  "description": "15-serverless/05 · Serverless Framework 配置与部署示例",
+  "private": true,
+  "scripts": {
+    "invoke": "serverless invoke local --function hello",
+    "offline": "serverless offline",
+    "deploy": "serverless deploy",
+    "remove": "serverless remove"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0"
+  }
+}

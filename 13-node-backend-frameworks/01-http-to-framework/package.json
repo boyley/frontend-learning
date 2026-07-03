@@ -1,0 +1,11 @@
+{
+  "name": "01-http-to-framework",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node native-server.js",
+    "mini": "node mini-framework.js"
+  },
+  "engines": { "node": ">=18" }
+}

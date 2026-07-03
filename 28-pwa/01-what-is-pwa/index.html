@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · PWA 是什么</title>
+  <!-- 关联 manifest：让浏览器知道这是一个"可安装的 Web 应用" -->
+  <link rel="manifest" href="./manifest.json" />
+  <!-- 主题色：安装后应用标题栏 / 地址栏配色 -->
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2.5rem 1.5rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .5rem; font-size: 1.8rem; }
+    header p { margin: 0; opacity: .9; }
+    main { max-width: 860px; margin: 0 auto; padding: 1.5rem; }
+    .cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 1.5rem 0; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.2rem; }
+    .card h3 { margin: 0 0 .5rem; color: #93c5fd; }
+    .status { display: grid; gap: .6rem; background: #1e293b; border-radius: 12px; padding: 1.2rem; margin: 1.2rem 0; }
+    .row { display: flex; align-items: center; gap: .6rem; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #64748b; flex: none; }
+    .dot.on { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+    .dot.off { background: #ef4444; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .7rem 1.3rem; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .tip { font-size: .9rem; opacity: .75; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📱 PWA 是什么</h1>
+    <p>用 Web 技术构建、体验却像原生 App 的应用</p>
+  </header>
+
+  <main>
+    <p>
+      <b>PWA（Progressive Web App，渐进式 Web 应用）</b>是"用 Web 平台技术构建、但能提供接近平台原生应用体验"的应用（MDN 定义）。
+      它同时拥有<strong>网页的可链接（URL 直达、无需应用商店）</strong>与<strong>原生应用的可安装、可离线、能后台运行</strong>两类特性。
+    </p>
+
+    <div class="cards">
+      <div class="card"><h3>🔗 可链接</h3><p>一个 URL 即可访问，搜索引擎可索引，跨平台单一代码库运行。</p></div>
+      <div class="card"><h3>⬇️ 可安装</h3><p>凭 <code>manifest.json</code> 安装到桌面/主屏，独立窗口启动，像原生应用。</p></div>
+      <div class="card"><h3>📴 可离线</h3><p>凭 <code>Service Worker</code> + Cache API 拦截请求，断网也能打开。</p></div>
+    </div>
+
+    <div class="status">
+      <div class="row"><span id="d-sw" class="dot"></span><span>Service Worker：<b id="t-sw">检测中…</b></span></div>
+      <div class="row"><span id="d-net" class="dot"></span><span>网络状态：<b id="t-net">检测中…</b></span></div>
+      <div class="row"><span id="d-install" class="dot"></span><span>可安装性：<b id="t-install">检测中…</b></span></div>
+    </div>
+
+    <button id="btnInstall" disabled>⬇️ 安装到桌面</button>
+    <p class="tip">
+      提示：请用 <code>http://localhost</code> 打开本页（<code>file://</code> 下 Service Worker 无法注册）。
+      断网体验：注册成功后在 DevTools → Network 勾选 Offline 再刷新，页面仍可打开。
+    </p>
+  </main>
+
+  <script>
+    // ---------- 1) 注册 Service Worker（获得离线能力）----------
+    const dSw = document.getElementById('d-sw'), tSw = document.getElementById('t-sw');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => { dSw.className = 'dot on'; tSw.textContent = '已注册 ✅（可离线）'; })
+        .catch((e) => { dSw.className = 'dot off'; tSw.textContent = '注册失败：' + e.message; });
+    } else {
+      dSw.className = 'dot off'; tSw.textContent = '当前浏览器不支持';
+    }
+
+    // ---------- 2) 网络状态（在线/离线）----------
+    const dNet = document.getElementById('d-net'), tNet = document.getElementById('t-net');
+    const renderNet = () => {
+      const on = navigator.onLine;
+      dNet.className = 'dot ' + (on ? 'on' : 'off');
+      tNet.textContent = on ? '在线 🌐' : '离线 📴（仍在运行，说明已缓存）';
+    };
+    renderNet();
+    addEventListener('online', renderNet);
+    addEventListener('offline', renderNet);
+
+    // ---------- 3) 可安装性：监听 beforeinstallprompt ----------
+    const dIn = document.getElementById('d-install'), tIn = document.getElementById('t-install');
+    const btn = document.getElementById('btnInstall');
+    let deferredPrompt = null;
+    tIn.textContent = '等待浏览器判定（满足条件后可安装）';
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();          // 阻止默认迷你提示，改为自定义按钮
+      deferredPrompt = e;
+      dIn.className = 'dot on'; tIn.textContent = '满足安装条件 ✅';
+      btn.disabled = false;
+    });
+    btn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();     // 弹出系统安装对话框
+      const { outcome } = await deferredPrompt.userChoice;
+      tIn.textContent = outcome === 'accepted' ? '已安装 🎉' : '用户取消安装';
+      deferredPrompt = null; btn.disabled = true;
+    });
+    window.addEventListener('appinstalled', () => { tIn.textContent = '已安装 🎉'; });
+  </script>
+</body>
+</html>

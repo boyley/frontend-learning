@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化前 · 资源未优化（before）</title>
+
+  <!--
+    ⚠️ 反面教材：这个页面故意演示「没做资源优化」的写法。
+    对比点（对照 after.html 看）：
+      1. 图片：单一大图，没有 <picture> 多格式降级，没有 loading="lazy"，
+         没有 width/height（会引发 CLS 布局抖动）。
+      2. 字体：@font-face 默认 font-display 行为接近 block，
+         字体下载完成前文字「隐形」（FOIT: Flash Of Invisible Text）。
+      3. 没有 preload，关键字体要等 CSS 解析后才被发现，开始得晚。
+  -->
+
+  <style>
+    /* ❌ 反面：font-display 默认（block）
+       浏览器会给字体一段「阻塞期」，这期间用该字体的文字完全不显示（FOIT），
+       在慢网/字体下载慢时，用户会看到一片空白，直到字体到达才闪现出来。
+       这里用一个真实存在但通常本机没有的字体名，配合下方 JS 模拟「慢字体」。 */
+    @font-face {
+      font-family: "DemoWebFont";
+      /* 指向一个不存在的本地字体文件：浏览器会尝试下载 -> 失败/超时期间文字隐形 */
+      src: url("./__not_exist__.woff2") format("woff2");
+      /* 注意：这里没有写 font-display，等同于 font-display: auto（多数浏览器按 block 处理） */
+    }
+
+    body {
+      margin: 0;
+      font-family: "DemoWebFont", sans-serif; /* 依赖 Web 字体 -> 触发 FOIT */
+      line-height: 1.6;
+      color: #222;
+    }
+    header {
+      padding: 24px;
+      background: #b91c1c;
+      color: #fff;
+    }
+    .content { max-width: 720px; margin: 0 auto; padding: 16px; }
+
+    /* ❌ 反面：图片没有固定尺寸容器，图片一到达就把下方内容「顶下去」-> CLS */
+    .hero-img { width: 100%; display: block; }
+
+    .filler { height: 900px; background: linear-gradient(#f8fafc, #e2e8f0); }
+    .tag { display: inline-block; background: #fee2e2; color: #b91c1c;
+           padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">BEFORE · 未优化</span>
+    <h1>优化前：大图 + FOIT 字体 + 无懒加载</h1>
+  </header>
+
+  <div class="content">
+    <p>下面这张「大图」用一张 1600×900 的 SVG 占位图模拟一张未压缩的大 PNG/JPG。
+       它没有 <code>&lt;picture&gt;</code> 多格式降级、没有 <code>width/height</code>、
+       也没有 <code>loading="lazy"</code>。</p>
+
+    <!--
+      ❌ 反面写法：
+        - 单一 <img>，只有一种格式，浏览器无法按支持度挑选 AVIF/WebP
+        - 没有 width/height 属性 -> 图片加载完成前浏览器不知道要预留多高
+          -> 图片到达瞬间把下方文字挤走，产生 CLS（累计布局偏移）
+        - 没有 loading="lazy" -> 即使在首屏外也会立即下载，抢占带宽
+      这里用 data URI 内联一张 SVG 当「大图」，保证离线可运行。
+    -->
+    <img
+      class="hero-img"
+      src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%23dc2626'/%3E%3Ctext x='50%25' y='50%25' font-size='90' fill='white' text-anchor='middle' dominant-baseline='middle'%3E1600%C3%97900 %E5%A4%A7%E5%9B%BE%EF%BC%88%E6%97%A0%E4%BC%98%E5%8C%96%EF%BC%89%3C/text%3E%3C/svg%3E"
+      alt="未优化的大图，无 width/height，无 lazy" />
+
+    <div class="filler">↑ 这块是首屏内容，下面还有一张「首屏外」的图片，本应懒加载但这里没有。</div>
+
+    <!-- ❌ 首屏外的图也立即加载，没有 loading="lazy" -->
+    <img
+      class="hero-img"
+      src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect width='1600' height='900' fill='%239333ea'/%3E%3Ctext x='50%25' y='50%25' font-size='70' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%E9%A6%96%E5%B1%8F%E5%A4%96%E7%9A%84%E5%9B%BE%EF%BC%88%E4%B9%9F%E7%AB%8B%E5%8D%B3%E5%8A%A0%E8%BD%BD%EF%BC%89%3C/text%3E%3C/svg%3E"
+      alt="首屏外图片，没有懒加载" />
+  </div>
+
+  <script>
+    // 📊 用 JS 打印字体加载时序，直观感受 FOIT。
+    // document.fonts 是 CSS Font Loading API，能观察字体加载状态。
+    const t0 = performance.now();
+    console.log("[before] 页面开始渲染，此刻使用 Web 字体的文字可能处于「隐形期」(FOIT)");
+
+    // 监听字体加载完成事件
+    document.fonts.ready.then(() => {
+      const dt = (performance.now() - t0).toFixed(1);
+      console.log(`[before] document.fonts.ready 触发，用时 ${dt}ms。` +
+        "由于未设置 font-display:swap，字体到达前文字一直不可见（FOIT）。");
+    });
+  </script>
+</body>
+</html>

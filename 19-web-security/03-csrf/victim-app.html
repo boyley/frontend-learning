@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>目标应用（已登录）· CSRF 演示 · 仅供学习</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 24px auto; padding: 0 16px; line-height:1.6; }
+  .box { border:1px solid #ddd; border-radius:8px; padding:16px; margin:12px 0; }
+  .email { font-size:20px; font-weight:bold; color:#2563eb; }
+  input[type=email] { padding:6px; width:60%; }
+  button { padding:6px 14px; cursor:pointer; }
+  .warn { background:#fef9c3; padding:8px 12px; border-radius:6px; font-size:13px; }
+  label { display:flex; align-items:center; gap:8px; }
+</style>
+</head>
+<body>
+  <h1>🏦 我的账户（模拟已登录）</h1>
+  <p class="warn">⚠️ 仅供学习，勿用于攻击真实站点。用 localStorage 模拟服务器会话与数据。</p>
+
+  <div class="box">
+    当前绑定邮箱：<span class="email" id="curEmail">me@example.com</span>
+  </div>
+
+  <div class="box">
+    <label>
+      <input type="checkbox" id="csrfProtect"> 开启 CSRF Token 防御
+    </label>
+    <p style="font-size:13px;color:#666">开启后，修改邮箱必须携带正确的一次性 token；攻击者的跨站表单拿不到该 token，请求被拒。</p>
+  </div>
+
+  <div class="box">
+    <h3>修改邮箱</h3>
+    <form id="changeForm">
+      <input type="email" name="email" placeholder="新邮箱" value="new@example.com">
+      <input type="hidden" name="_csrf" id="csrfField">
+      <button type="submit">保存</button>
+    </form>
+    <p id="msg" style="color:#16a34a"></p>
+  </div>
+
+  <script>
+    // ---- 模拟服务器状态：会话中的 CSRF token + 当前邮箱 ----
+    const KEY_EMAIL = 'csrf_demo_email';
+    const KEY_TOKEN = 'csrf_demo_token';
+
+    function getEmail() { return localStorage.getItem(KEY_EMAIL) || 'me@example.com'; }
+    function renderEmail() { document.getElementById('curEmail').textContent = getEmail(); }
+
+    // 服务器为当前会话生成一次性 token（真实场景由后端下发并存会话）
+    function issueToken() {
+      const t = 'tok_' + Math.random().toString(36).slice(2);
+      localStorage.setItem(KEY_TOKEN, t);        // 服务器记住
+      document.getElementById('csrfField').value = t;  // 只写进本页面的表单
+      return t;
+    }
+    issueToken();
+    renderEmail();
+
+    // ---- 处理修改邮箱：核心是 token 校验 ----
+    document.getElementById('changeForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const newEmail = fd.get('email');
+      const submittedToken = fd.get('_csrf');
+      const protect = document.getElementById('csrfProtect').checked;
+
+      if (protect) {
+        // ✅ 校验 token：与会话中记录的一致才放行
+        if (submittedToken !== localStorage.getItem(KEY_TOKEN)) {
+          document.getElementById('msg').style.color = '#dc2626';
+          document.getElementById('msg').textContent = '❌ CSRF token 校验失败，请求被拒绝（攻击被拦截）';
+          return;
+        }
+      }
+      // 执行修改
+      localStorage.setItem(KEY_EMAIL, newEmail);
+      renderEmail();
+      issueToken(); // 用完刷新 token
+      document.getElementById('msg').style.color = '#16a34a';
+      document.getElementById('msg').textContent = '✅ 邮箱已修改为 ' + newEmail;
+    });
+
+    // 该函数模拟「后端处理接口」，供 attacker.html 演示跨站请求调用
+    // 真实世界里攻击者是通过表单 POST 到后端；这里为纯前端演示暴露一个函数
+    window.__changeEmailAPI = function (email, token) {
+      const protect = document.getElementById('csrfProtect').checked;
+      if (protect && token !== localStorage.getItem(KEY_TOKEN)) {
+        return { ok: false, reason: 'CSRF token 校验失败' };
+      }
+      localStorage.setItem(KEY_EMAIL, email);
+      renderEmail();
+      return { ok: true };
+    };
+  </script>
+</body>
+</html>

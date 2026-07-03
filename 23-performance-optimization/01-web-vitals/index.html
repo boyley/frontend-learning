@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Web Vitals 实时测量</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; background: #f5f7fa; color: #1a1a1a; }
+    header { background: #1a73e8; color: #fff; padding: 20px 24px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .9; font-size: 13px; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px; }
+
+    /* 指标仪表盘：四张卡片 */
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .metric { background: #fff; border: 2px solid #ddd; border-radius: 12px; padding: 16px; transition: border-color .3s; }
+    .metric .name { font-size: 13px; color: #666; font-weight: 600; }
+    .metric .value { font-size: 30px; font-weight: 700; margin: 8px 0; font-variant-numeric: tabular-nums; }
+    .metric .badge { display: inline-block; color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 12px; background: #999; }
+    .metric .hint { font-size: 11px; color: #999; margin-top: 8px; line-height: 1.5; }
+
+    .panel { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .panel h2 { font-size: 16px; margin: 0 0 12px; }
+    button { background: #1a73e8; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    button:hover { background: #1666cf; }
+    .lcp-hero { width: 100%; max-width: 640px; height: 260px; border-radius: 12px; object-fit: cover; display: block;
+      /* 用 CSS 生成一张"大图"作为 LCP 候选元素，无需外部图片资源 */
+      background: linear-gradient(135deg, #667eea, #764ba2); }
+    .links a { color: #1a73e8; }
+    code { background: #eef; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Core Web Vitals 实时测量仪表盘</h1>
+    <p>用原生 PerformanceObserver 现场测量 LCP / CLS / INP / FCP —— 免构建，浏览器直接打开即可</p>
+  </header>
+
+  <div class="wrap">
+    <!-- 指标仪表盘：id 必须是 metric-XXX，供 vitals.js 定位 -->
+    <div class="dashboard">
+      <div class="metric" id="metric-LCP">
+        <div class="name">LCP · 最大内容绘制</div>
+        <div class="value">测量中…</div>
+        <span class="badge">等待</span>
+        <div class="hint">加载性能 · good ≤ 2.5s / poor > 4s</div>
+      </div>
+      <div class="metric" id="metric-INP">
+        <div class="name">INP · 交互到下次绘制</div>
+        <div class="value">等待交互</div>
+        <span class="badge">等待</span>
+        <div class="hint">交互响应 · good ≤ 200ms / poor > 500ms（2024 起取代 FID）</div>
+      </div>
+      <div class="metric" id="metric-CLS">
+        <div class="name">CLS · 累积布局偏移</div>
+        <div class="value">测量中…</div>
+        <span class="badge">等待</span>
+        <div class="hint">视觉稳定性 · good ≤ 0.1 / poor > 0.25</div>
+      </div>
+      <div class="metric" id="metric-FCP">
+        <div class="name">FCP · 首次内容绘制（辅助）</div>
+        <div class="value">测量中…</div>
+        <span class="badge">等待</span>
+        <div class="hint">辅助指标 · good ≤ 1.8s</div>
+      </div>
+    </div>
+
+    <!-- LCP 候选：一张较大的"主视觉"，通常是本页最大的可见元素 -->
+    <div class="panel">
+      <h2>页面主视觉（LCP 候选元素）</h2>
+      <div class="lcp-hero" aria-label="主视觉大图"></div>
+    </div>
+
+    <!-- INP 测试区：点击后跑一段可控的主线程任务，观察 INP 数值 -->
+    <div class="panel">
+      <h2>交互测试区（测 INP）</h2>
+      <p>点击下面的按钮会在主线程上执行一段计算，反复点击可观察 INP 数值上升。</p>
+      <button id="lightBtn">轻任务点击（约 30ms）</button>
+      <button id="heavyBtn" style="margin-left:8px;background:#d93025;">重任务点击（约 250ms，会拉高 INP）</button>
+      <p id="clickResult" style="margin-top:12px;color:#555;"></p>
+    </div>
+
+    <div class="panel links">
+      <h2>对比实验</h2>
+      <p>打开下面两个页面对比同一段测量脚本下的数值差异：</p>
+      <p><a href="bad.html">👎 bad.html —— 故意制造 CLS / LCP / INP 问题</a></p>
+      <p><a href="good.html">👍 good.html —— 用最佳实践优化后的版本</a></p>
+    </div>
+  </div>
+
+  <script>
+    // busyWait：同步占用主线程 ms 毫秒，用于放大 INP（模拟长任务）
+    function busyWait(ms) {
+      const end = performance.now() + ms;
+      while (performance.now() < end) { /* 空转，阻塞主线程 */ }
+    }
+    let count = 0;
+    document.getElementById('lightBtn').addEventListener('click', () => {
+      busyWait(30);
+      document.getElementById('clickResult').textContent = '已点击 ' + (++count) + ' 次（轻任务）';
+    });
+    document.getElementById('heavyBtn').addEventListener('click', () => {
+      busyWait(250); // 250ms 长任务 → INP 会进入 needs/poor 档
+      document.getElementById('clickResult').textContent = '已点击 ' + (++count) + ' 次（重任务，注意 INP 徽章变色）';
+    });
+  </script>
+
+  <!-- 测量脚本放在最后，defer 不是必须（末尾即等价于 DOM 就绪后执行）-->
+  <script src="vitals.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 真实用户监控 RUM</title>
+  <style>
+    /* 页面整体排版 */
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f6fa;
+      color: #2c3e50;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.6;
+    }
+    h1 { font-size: 20px; }
+    .desc { color: #666; font-size: 14px; margin-bottom: 16px; }
+    /* 捕获面板：用来展示这一条真实用户数据 */
+    #panel {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-width: 820px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+      overflow-x: auto;
+    }
+    /* 面板里每个字段行 */
+    .panel-title {
+      color: #89b4fa;
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .btn {
+      background: #4c6ef5;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    .btn:hover { background: #3b5bdb; }
+  </style>
+</head>
+<body>
+  <h1>06 · 真实用户监控（Real User Monitoring, RUM）</h1>
+  <p class="desc">
+    下面这条 JSON 就是「一条真实用户数据」——采集自你此刻正在使用的浏览器、设备与网络环境。
+  </p>
+  <button class="btn" id="reportBtn">重新采集并上报一条 RUM 数据</button>
+
+  <!-- 捕获面板：demo.js 会把采集到的 RUM payload 渲染到这里 -->
+  <div id="panel">
+    <div class="panel-title">RUM 采集器初始化中…</div>
+  </div>
+
+  <!-- 经典 script 引入，避免 ESM import，file:// 直接可运行 -->
+  <script src="demo.js"></script>
+</body>
+</html>

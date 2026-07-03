@@ -1,0 +1,18 @@
+{
+  "name": "07-bundle-optimization",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tree-shaking / 按需引入 / 体积分析 对比 demo（Vite 5.x）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "//sideEffects说明": "sideEffects:false 告诉打包器本包所有模块都无副作用，可安全裁剪未用导出。若某文件有副作用（如全局样式、polyfill），需在数组里列出白名单。",
+  "sideEffects": false,
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "rollup-plugin-visualizer": "^5.12.0"
+  }
+}

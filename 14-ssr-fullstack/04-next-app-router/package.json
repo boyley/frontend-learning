@@ -1,0 +1,16 @@
+{
+  "name": "04-next-app-router",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App Router / 文件系统路由演示",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^16.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

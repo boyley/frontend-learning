@@ -1,0 +1,10 @@
+# 依赖
+/node_modules
+
+# Next.js 构建产物
+/.next
+/out
+
+# 日志与环境变量
+npm-debug.log*
+.env*.local

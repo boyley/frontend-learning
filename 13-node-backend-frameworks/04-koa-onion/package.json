@@ -1,0 +1,12 @@
+{
+  "name": "04-koa-onion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "start": "node app.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "koa": "^3.0.0",
+    "@koa/router": "^13.1.0"
+  }
+}

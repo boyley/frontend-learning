@@ -1,0 +1,99 @@
+<meta charset="UTF-8" />
+<title>04 · SourceMap 还原压缩代码定位</title>
+<style>
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.6;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+  .card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 10px; color: #38bdf8; }
+  pre {
+    background: #0b1220;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+    overflow-x: auto;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+    color: #cbd5e1;
+  }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button:hover { background: #1d4ed8; }
+  input {
+    width: 64px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    border: 1px solid #475569;
+    background: #0b1220;
+    color: #e2e8f0;
+    font-size: 13px;
+  }
+  label { font-size: 13px; color: #94a3b8; }
+  /* 捕获面板：demo.js 会把还原结果 append 进来 */
+  #panel {
+    background: #0b1220;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 60px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+  }
+  .row { padding: 8px 10px; border-left: 3px solid #38bdf8; background: #111c33; border-radius: 4px; margin-bottom: 8px; }
+  .row .k { color: #64748b; }
+  .row .from { color: #f87171; }
+  .row .to { color: #4ade80; }
+  .row .name { color: #fbbf24; }
+</style>
+
+<h1>04 · SourceMap 还原压缩代码定位</h1>
+<div class="sub">手写 Base64 VLQ 解码器，把压缩后的 (行:列) 还原到源码位置 —— 完全离线可跑</div>
+
+<div class="card">
+  <h2>被压缩的 min.js（生产环境交付给用户的样子）</h2>
+  <pre id="minSrc"></pre>
+</div>
+
+<div class="card">
+  <h2>随行的 min.js.map（version / sources / names / mappings）</h2>
+  <pre id="mapSrc"></pre>
+</div>
+
+<div class="card">
+  <h2>输入一个压缩后的位置，还原到源码</h2>
+  <div class="controls">
+    <label>生成行 line</label><input id="line" type="number" value="1" min="1" />
+    <label>生成列 col</label><input id="col" type="number" value="8" min="0" />
+    <button id="restoreBtn">还原</button>
+    <button id="presetA">示例：错误堆栈 min.js 1:8</button>
+    <button id="presetB">示例：错误堆栈 min.js 2:2</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>捕获面板 · 还原结果</h2>
+  <div id="panel"></div>
+</div>
+
+<script src="demo.js"></script>

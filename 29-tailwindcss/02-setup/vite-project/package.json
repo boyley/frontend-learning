@@ -1,0 +1,17 @@
+{
+  "name": "tw-vite-setup",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tailwind CSS v4 + Vite 工程化最小示例（CSS-first 配置）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "tailwindcss": "^4.1.0",
+    "vite": "^6.0.0"
+  }
+}

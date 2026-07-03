@@ -1,0 +1,12 @@
+{
+  "name": "13-validation-error",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "start": "node app.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^5.1.0",
+    "zod": "^3.23.0"
+  }
+}

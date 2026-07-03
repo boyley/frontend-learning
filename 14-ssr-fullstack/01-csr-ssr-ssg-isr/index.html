@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · CSR / SSR / SSG / ISR 渲染模式对比 Demo</title>
+  <style>
+    /* ===== 纯样式，无外部依赖，双击即可运行 ===== */
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 24px; background: #0f172a; color: #e2e8f0; line-height: 1.7;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .subtitle { color: #94a3b8; margin: 0 0 20px; font-size: 14px; }
+    .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .panel {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px;
+    }
+    .panel h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+    .tag-ssg { background: #14532d; color: #86efac; }
+    .tag-ssr { background: #1e3a8a; color: #93c5fd; }
+    .tag-csr { background: #7c2d12; color: #fdba74; }
+    .content { background: #0f172a; border-radius: 8px; padding: 12px; min-height: 64px; font-size: 14px; }
+    .meta { font-size: 12px; color: #64748b; margin-top: 10px; }
+    .timeline {
+      margin-top: 24px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px;
+    }
+    .timeline h2 { font-size: 15px; margin: 0 0 10px; }
+    #timeline-log { font-family: ui-monospace, Menlo, monospace; font-size: 13px; white-space: pre-wrap; color: #a5f3fc; }
+    .hint { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+    .loading { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <h1>渲染模式对比 · CSR / SSR / SSG / ISR</h1>
+  <p class="subtitle">双击打开本页；右键「查看网页源代码」可验证：SSG/SSR 面板的正文在源码里，CSR 面板的正文不在（JS 后注入）。</p>
+
+  <div class="panels">
+    <!-- ============ SSG 面板：内容在构建时就写死在 HTML 里 ============ -->
+    <div class="panel">
+      <h2>SSG 静态生成 <span class="tag tag-ssg">构建时</span></h2>
+      <!-- 关键：这段文字直接硬编码在 HTML 中，模拟「构建时已经生成好的静态页」。
+           浏览器一解析 HTML 就能看到，爬虫也能直接读到。 -->
+      <div class="content">
+        <p>📦 这段文字在 <b>构建时</b>就写进了静态 HTML 文件，
+        部署在 CDN 上，用户请求直接命中现成文件，TTFB 极低。</p>
+      </div>
+      <div class="meta">生成时机：build 构建时的一次性快照 · 数据变了需重新构建</div>
+    </div>
+
+    <!-- ============ SSR 面板：内容也在 HTML 里，但标注为「服务端每次请求实时渲染」 ============ -->
+    <div class="panel">
+      <h2>SSR 服务端渲染 <span class="tag tag-ssr">每次请求</span></h2>
+      <!-- 关键：真实 SSR 中，这段 HTML 是服务器针对「本次请求」实时渲染后返回的。
+           这里用页面加载时间近似「服务端渲染时间戳」。同样对爬虫可见。 -->
+      <div class="content">
+        <p>🖥️ 这段文字（在真实项目中）由<b>服务器针对本次请求实时渲染</b>后随 HTML 返回，
+        首屏立刻可见但尚不可交互，随后由 JS 水合。</p>
+        <p class="meta">服务端渲染时间戳：<span id="ssr-time">（模拟）</span></p>
+      </div>
+      <div class="meta">生成时机：每次请求 · 可携带当次动态/用户数据</div>
+    </div>
+
+    <!-- ============ CSR 面板：初始为空，JS 执行后才填充 ============ -->
+    <div class="panel">
+      <h2>CSR 客户端渲染 <span class="tag tag-csr">JS 执行后</span></h2>
+      <!-- 关键：初始 HTML 里没有正文，只有 loading 占位。
+           内容由下方 renderCSR() 在 JS 执行后注入 —— 这正是 CSR 首屏空白、SEO 差的根因。 -->
+      <div class="content" id="csr-content">
+        <p class="loading">⏳ Loading…（JS 尚未注入内容，此刻爬虫看到的就是这个占位）</p>
+      </div>
+      <div class="meta">生成时机：浏览器下载并执行 JS 之后 · 首屏空白/骨架</div>
+    </div>
+  </div>
+
+  <!-- ============ 时间线打印区 ============ -->
+  <div class="timeline">
+    <h2>⏱️ 渲染时间线（同步打印到浏览器控制台 Console）</h2>
+    <div id="timeline-log">收集中…</div>
+    <p class="hint">观察：SSG/SSR 的内容「一开始就在」，而 CSR 的内容是脚本执行后才出现的那一行。</p>
+  </div>
+
+  <script>
+    // ===================================================================
+    // 用 performance.now() 记录关键时刻，模拟并对比三种渲染模式的时间线。
+    // performance.now() 返回从页面开始加载起的高精度毫秒数。
+    // ===================================================================
+
+    // 脚本开始执行的时刻（此时 SSG/SSR 的静态内容其实早已被浏览器解析显示）
+    const tScriptStart = performance.now();
+
+    const logs = [];
+    function addLine(label, t) {
+      const line = `[+${t.toFixed(1)}ms] ${label}`;
+      logs.push(line);
+      console.log(line);
+      document.getElementById('timeline-log').textContent = logs.join('\n');
+    }
+
+    // 1) HTML 解析完成 —— 此刻 SSG/SSR 面板的正文已经在页面上（因为写死在 HTML 里）
+    addLine('HTML 解析完成 → SSG/SSR 面板内容此刻已可见（写在 HTML 中）', 0);
+
+    // 2) JS 开始执行
+    addLine('JS 开始执行', tScriptStart);
+
+    // 模拟「服务端渲染时间戳」：真实 SSR 里是服务器生成 HTML 的时间
+    document.getElementById('ssr-time').textContent = new Date().toLocaleTimeString('zh-CN');
+
+    // 3) CSR：模拟「下载 JS → 前端取数 → 注入 DOM」的延迟，用 setTimeout 模拟异步取数
+    function renderCSR() {
+      const el = document.getElementById('csr-content');
+      el.innerHTML =
+        '<p>🌐 这段文字是 <b>JS 执行后</b>才被注入 DOM 的（模拟前端取数后渲染）。' +
+        '首屏看不到它，SEO 爬虫（若不执行 JS）也读不到。</p>';
+      const tCSR = performance.now();
+      addLine('CSR 内容注入完成 → 此刻 CSR 面板正文才出现', tCSR);
+      addLine('结论：SSG/SSR 内容「早已存在」，CSR 内容「后注入」', performance.now());
+    }
+
+    // 模拟 CSR 的额外等待（下载 bundle + 请求 API），故意延迟 800ms 让差异肉眼可见
+    setTimeout(renderCSR, 800);
+  </script>
+</body>
+</html>

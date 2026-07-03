@@ -1,0 +1,17 @@
+{
+  "name": "05-koa-vs-express",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node express-demo.js",
+    "express": "node express-demo.js",
+    "koa": "node koa-demo.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^5.1.0",
+    "koa": "^3.0.0",
+    "@koa/router": "^13.1.0"
+  }
+}

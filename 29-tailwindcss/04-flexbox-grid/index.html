@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>04 · Flexbox 与 Grid 布局工具类</title>
+  <!-- v4 Play CDN：浏览器现场编译，双击即看效果（勿上生产） -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-8 font-sans text-slate-800">
+  <h1 class="text-3xl font-bold mb-8">用工具类做 Flex / Grid 布局</h1>
+
+  <!-- ① Flex 横向导航：flex 开启弹性盒，justify-between 两端对齐，items-center 垂直居中 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">① Flex 导航栏（flex + justify-between + items-center）</h2>
+    <nav class="flex items-center justify-between bg-white rounded-xl shadow px-6 py-3">
+      <span class="font-bold text-violet-600">LOGO</span>
+      <!-- gap-6 控制子项间距，无需给每个 li 加 margin -->
+      <ul class="flex gap-6 text-sm text-slate-600">
+        <li class="hover:text-violet-600 cursor-pointer">首页</li>
+        <li class="hover:text-violet-600 cursor-pointer">文档</li>
+        <li class="hover:text-violet-600 cursor-pointer">关于</li>
+      </ul>
+      <button class="bg-violet-600 text-white text-sm px-4 py-1.5 rounded-lg">登录</button>
+    </nav>
+  </section>
+
+  <!-- ② Flex 弹性伸缩：flex-1 让中间栏吃掉剩余空间，两侧固定宽 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">② 弹性伸缩（flex-1 / 固定宽）</h2>
+    <div class="flex gap-3 h-24">
+      <div class="w-24 bg-sky-500 text-white rounded grid place-items-center">w-24 固定</div>
+      <!-- flex-1 = flex:1 1 0%，自动占满剩余宽度 -->
+      <div class="flex-1 bg-sky-600 text-white rounded grid place-items-center">flex-1 自适应</div>
+      <div class="w-24 bg-sky-500 text-white rounded grid place-items-center">w-24 固定</div>
+    </div>
+  </section>
+
+  <!-- ③ 主轴方向与换行：flex-col 竖向，flex-wrap 溢出换行 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">③ 方向与换行（flex-col / flex-wrap）</h2>
+    <div class="flex flex-wrap gap-2">
+      <span class="bg-emerald-200 px-3 py-1 rounded-full text-sm">flex-wrap</span>
+      <span class="bg-emerald-200 px-3 py-1 rounded-full text-sm">会在容器放不下时</span>
+      <span class="bg-emerald-200 px-3 py-1 rounded-full text-sm">自动折到下一行</span>
+      <span class="bg-emerald-200 px-3 py-1 rounded-full text-sm">而不是溢出</span>
+      <span class="bg-emerald-200 px-3 py-1 rounded-full text-sm">试着缩小窗口看看</span>
+    </div>
+  </section>
+
+  <!-- ④ Grid 网格：grid-cols-3 三等分列，gap-4 行列间距 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">④ Grid 卡片墙（grid-cols-3 + gap）</h2>
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl shadow p-4 h-24 grid place-items-center">1</div>
+      <div class="bg-white rounded-xl shadow p-4 h-24 grid place-items-center">2</div>
+      <div class="bg-white rounded-xl shadow p-4 h-24 grid place-items-center">3</div>
+      <!-- col-span-2 让这个卡片横跨两列 -->
+      <div class="bg-violet-600 text-white rounded-xl shadow p-4 h-24 grid place-items-center col-span-2">col-span-2 横跨两列</div>
+      <div class="bg-white rounded-xl shadow p-4 h-24 grid place-items-center">5</div>
+    </div>
+  </section>
+
+  <!-- ⑤ Grid 圣杯布局：用 grid 一次画出「头/侧栏/主体/脚」 -->
+  <section>
+    <h2 class="text-xl font-semibold mb-3">⑤ Grid 经典页面骨架</h2>
+    <div class="grid grid-cols-4 grid-rows-[auto_1fr_auto] gap-2 h-64 text-white text-sm">
+      <header class="col-span-4 bg-slate-700 rounded grid place-items-center">Header（col-span-4）</header>
+      <aside class="bg-slate-500 rounded grid place-items-center">Aside</aside>
+      <main class="col-span-3 bg-slate-400 rounded grid place-items-center text-slate-800">Main（col-span-3）</main>
+      <footer class="col-span-4 bg-slate-700 rounded grid place-items-center">Footer</footer>
+    </div>
+  </section>
+</body>
+</html>

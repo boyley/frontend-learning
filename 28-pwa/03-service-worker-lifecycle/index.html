@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · Service Worker 生命周期</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2.5rem 1.5rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .5rem; font-size: 1.7rem; }
+    header p { margin: 0; opacity: .9; }
+    main { max-width: 860px; margin: 0 auto; padding: 1.5rem; }
+    .phases { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 1.2rem 0; }
+    .phase { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: .8rem; text-align: center; opacity: .4; transition: .3s; }
+    .phase.active { opacity: 1; border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,.4); }
+    .phase b { display: block; color: #93c5fd; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .6rem 1.1rem; border-radius: 8px; font-size: .95rem; cursor: pointer; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button.ghost { background: #334155; }
+    #logs { background: #020617; border: 1px solid #334155; border-radius: 10px; padding: 1rem; height: 280px; overflow-y: auto; font-family: ui-monospace, Menlo, monospace; font-size: .82rem; }
+    #logs div { padding: .15rem 0; border-bottom: 1px dashed #1e293b; }
+    .t-install { color: #fbbf24; } .t-activate { color: #22c55e; } .t-fetch { color: #60a5fa; } .t-msg { color: #f472b6; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .tip { font-size: .88rem; opacity: .75; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>♻️ Service Worker 生命周期</h1>
+    <p>install → (waiting) → activate → controlling → fetch</p>
+  </header>
+  <main>
+    <p>Service Worker 有一套<strong>严格的生命周期</strong>，用来保证「同一时刻只有一个版本控制页面」。下面的状态条会随事件点亮，右侧日志由 <code>sw.js</code> 通过 <code>postMessage</code> 实时推送。</p>
+
+    <div class="phases">
+      <div class="phase" data-p="install"><b>① install</b>预缓存资源</div>
+      <div class="phase" data-p="waiting"><b>② waiting</b>等待旧版退出</div>
+      <div class="phase" data-p="activate"><b>③ activate</b>清理旧缓存</div>
+      <div class="phase" data-p="controlling"><b>④ controlling</b>接管页面</div>
+      <div class="phase" data-p="redundant"><b>⑤ redundant</b>被新版替换</div>
+    </div>
+
+    <div class="toolbar">
+      <button id="btnUpdate" class="ghost">🔄 检查更新（registration.update）</button>
+      <button id="btnSkip" disabled>⏭️ 跳过等待（skipWaiting）</button>
+      <button id="btnUnregister" class="ghost">🗑️ 注销 SW</button>
+    </div>
+    <p class="tip">体验「更新流程」：把 <code>sw.js</code> 里的 <code>VERSION = 'v1'</code> 改成 <code>'v2'</code> 保存，回到本页点「检查更新」→ 新 SW 进入 <b>waiting</b>（旧版仍在控制）→ 点「跳过等待」让它立即 activate。</p>
+
+    <h3>📜 生命周期日志</h3>
+    <div id="logs"></div>
+  </main>
+
+  <script>
+    const logsEl = document.getElementById('logs');
+    const phaseEls = {};
+    document.querySelectorAll('.phase').forEach(el => phaseEls[el.dataset.p] = el);
+    function lightUp(p) { if (phaseEls[p]) phaseEls[p].classList.add('active'); }
+    function addLog(text, cls='') {
+      const d = document.createElement('div');
+      d.className = cls;
+      d.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+      logsEl.prepend(d);
+    }
+
+    const btnSkip = document.getElementById('btnSkip');
+    let waitingWorker = null;
+
+    // 监听 SW 主动推送的生命周期日志
+    navigator.serviceWorker?.addEventListener('message', (e) => {
+      if (e.data?.type === 'sw-log') {
+        const t = e.data.text;
+        let cls = 't-msg';
+        if (t.includes('install')) { cls = 't-install'; lightUp('install'); if (t.includes('waiting')) lightUp('waiting'); }
+        else if (t.includes('activate')) { cls = 't-activate'; lightUp('activate'); lightUp('controlling'); }
+        else if (t.includes('fetch')) cls = 't-fetch';
+        addLog(`SW(${e.data.version})：${t}`, cls);
+      }
+    });
+
+    async function main() {
+      if (!('serviceWorker' in navigator)) { addLog('当前浏览器不支持 Service Worker'); return; }
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      addLog('页面：register() 完成，等待生命周期事件…');
+
+      // 若已有 waiting 中的 SW（说明有新版本待激活）
+      function checkWaiting(r) {
+        if (r.waiting) { waitingWorker = r.waiting; btnSkip.disabled = false; lightUp('waiting'); addLog('页面：检测到新版本处于 waiting，可点「跳过等待」', 't-install'); }
+      }
+      checkWaiting(reg);
+
+      // updatefound：发现新 SW 开始安装
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        addLog('页面：updatefound → 新 SW 开始 installing', 't-install');
+        nw.addEventListener('statechange', () => {
+          addLog(`页面：新 SW 状态 → ${nw.state}`);
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) checkWaiting(reg);
+        });
+      });
+
+      // controllerchange：控制权交给了新 SW（skipWaiting 后触发），常配合刷新
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        addLog('页面：controllerchange → 新 SW 已接管，1.2s 后自动刷新', 't-activate');
+        lightUp('redundant');
+        setTimeout(() => location.reload(), 1200);
+      });
+
+      document.getElementById('btnUpdate').onclick = async () => {
+        addLog('页面：手动 registration.update() 检查更新…');
+        await reg.update();
+      };
+      btnSkip.onclick = () => {
+        if (waitingWorker) { waitingWorker.postMessage('SKIP_WAITING'); addLog('页面：已通知 waiting 中的 SW 执行 skipWaiting'); btnSkip.disabled = true; }
+      };
+      document.getElementById('btnUnregister').onclick = async () => {
+        await reg.unregister(); addLog('页面：已注销 SW（下次刷新回到无 SW 状态）'); lightUp('redundant');
+      };
+    }
+    main();
+  </script>
+</body>
+</html>

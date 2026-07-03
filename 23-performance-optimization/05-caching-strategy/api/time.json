@@ -1,0 +1,5 @@
+{
+  "message": "这是一条来自 /api/ 的数据（network-first 策略）",
+  "server": "static-demo",
+  "note": "在线时由网络返回并写入缓存；断网后再次请求会退回这份缓存数据"
+}

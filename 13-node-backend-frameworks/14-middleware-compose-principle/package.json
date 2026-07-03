@@ -1,0 +1,9 @@
+{
+  "name": "14-middleware-compose-principle",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "start": "node demo.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

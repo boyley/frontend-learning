@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XSS 漏洞版（错误示范）· 仅供学习</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; line-height:1.6; }
+  .danger { background:#fee2e2; border:1px solid #fca5a5; padding:10px 14px; border-radius:8px; }
+  .warn { background:#fef9c3; padding:8px 12px; border-radius:6px; font-size:13px; }
+  input { width:100%; padding:8px; box-sizing:border-box; }
+  button { padding:8px 16px; margin-top:8px; cursor:pointer; }
+  #output { margin-top:16px; padding:12px; border:1px dashed #dc2626; border-radius:8px; min-height:40px; }
+  code { background:#f1f5f9; padding:2px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+  <h1>❌ XSS 漏洞版（错误示范）</h1>
+  <p class="warn">⚠️ 仅供学习，勿用于攻击真实站点。本页故意写成有漏洞，用于对照 <code>safe.html</code>。</p>
+
+  <div class="danger">
+    <strong>试试注入：</strong>在输入框粘贴下面任意一条，点击「提交」即会执行脚本：
+    <ul>
+      <li><code>&lt;img src=x onerror=alert('XSS')&gt;</code></li>
+      <li><code>&lt;svg onload=alert(document.domain)&gt;</code></li>
+    </ul>
+  </div>
+
+  <h3>模拟评论 / 搜索回显（存储/反射型）</h3>
+  <input id="input" placeholder="输入内容，比如 <img src=x onerror=alert(1)>">
+  <button onclick="submit()">提交</button>
+  <div id="output">这里会显示你的输入……</div>
+
+  <script>
+    // ❌❌❌ 危险示范：直接把用户输入作为 HTML 插入，浏览器会解析并执行其中的脚本/事件
+    function submit() {
+      const val = document.getElementById('input').value;
+      // innerHTML 会把 <img onerror> 当成真的元素创建，onerror 触发时执行 JS —— 这就是 XSS
+      document.getElementById('output').innerHTML = val;
+    }
+
+    // ❌ DOM 型 XSS 演示：直接把 URL 的 hash 写进页面
+    // 访问 vulnerable.html#<img src=x onerror=alert('hash-XSS')> 会触发
+    if (location.hash.length > 1) {
+      const fromHash = decodeURIComponent(location.hash.slice(1));
+      document.getElementById('output').innerHTML = '来自 URL hash: ' + fromHash;
+    }
+  </script>
+</body>
+</html>

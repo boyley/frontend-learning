@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XSS 安全版（正确做法）· 仅供学习</title>
+<!-- 纵深防御：即使有注入点，CSP 也阻止内联脚本执行 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; object-src 'none'; base-uri 'none'">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; line-height:1.6; }
+  .safe { background:#dcfce7; border:1px solid #86efac; padding:10px 14px; border-radius:8px; }
+  .warn { background:#fef9c3; padding:8px 12px; border-radius:6px; font-size:13px; }
+  input { width:100%; padding:8px; box-sizing:border-box; }
+  button { padding:8px 16px; margin-top:8px; cursor:pointer; }
+  #output { margin-top:16px; padding:12px; border:1px dashed #16a34a; border-radius:8px; min-height:40px; }
+  code { background:#f1f5f9; padding:2px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+  <h1>✅ XSS 安全版（正确做法）</h1>
+  <p class="warn">⚠️ 仅供学习。与 <code>vulnerable.html</code> 功能相同，但做了防御，注入无效。</p>
+
+  <div class="safe">
+    <strong>同样注入试试：</strong><code>&lt;img src=x onerror=alert('XSS')&gt;</code><br>
+    结果：标签被当作<strong>纯文本原样显示</strong>，脚本不执行。
+  </div>
+
+  <h3>模拟评论 / 搜索回显（已防御）</h3>
+  <input id="input" placeholder="输入内容，比如 <img src=x onerror=alert(1)>">
+  <button id="btn">提交</button>
+  <div id="output">这里会显示你的输入……</div>
+
+  <script>
+    // ✅ 防御一：textContent 只写文本，浏览器不解析 HTML，标签原样显示
+    function submitSafe() {
+      const val = document.getElementById('input').value;
+      document.getElementById('output').textContent = val;
+    }
+
+    // ✅ 防御二：若确实需要拼 HTML 片段，先做上下文转义
+    function escapeHtml(s) {
+      return s.replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#x27;');
+    }
+
+    // ✅ 防御三：安全读取 hash —— 同样用 textContent
+    if (location.hash.length > 1) {
+      const fromHash = decodeURIComponent(location.hash.slice(1));
+      document.getElementById('output').textContent = '来自 URL hash: ' + fromHash;
+    }
+
+    // 用 addEventListener 而非内联 onclick，配合 CSP 更规范
+    document.getElementById('btn').addEventListener('click', submitSafe);
+  </script>
+</body>
+</html>

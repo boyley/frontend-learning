@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 动态路由 + 懒加载</title>
+  <style>
+    body { font-family: system-ui, "PingFang SC", sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+    a.link { padding: 6px 12px; border: 1px solid #16a34a; border-radius: 6px; color: #16a34a; text-decoration: none; font-size: 14px; }
+    a.link:hover { background: #dcfce7; }
+    #app { border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px; min-height: 90px; }
+    .bar { font-family: ui-monospace, monospace; background: #f3f4f6; padding: 6px 10px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
+    .loading { color: #6b7280; font-style: italic; }
+    .params { background: #eef2ff; border: 1px solid #c7d2fe; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    code { background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>06 · 动态路由匹配 + 路由懒加载（Dynamic &amp; Lazy Route）</h1>
+
+  <p style="font-size:13px;color:#555">
+    本 demo 用 <b>hash 模式</b>（可直接双击打开）。演示两件事：<br>
+    ① <b>动态路由</b>：<code>/user/:id</code> 用一条规则匹配 <code>/user/1</code>、<code>/user/2</code>…并解析出 <code>params.id</code>。<br>
+    ② <b>路由懒加载</b>：组件用 <code>() =&gt; loadAsync()</code> 异步加载，进入时才拉取，先显示「加载中」。
+  </p>
+
+  <nav>
+    <a class="link" href="#/">Home</a>
+    <a class="link" href="#/user/1">User 1</a>
+    <a class="link" href="#/user/2">User 2</a>
+    <a class="link" href="#/post/hello-world">Post: hello-world</a>
+    <a class="link" href="#/settings">Settings(懒加载)</a>
+    <a class="link" href="#/x/y">未知(404)</a>
+  </nav>
+
+  <div class="bar">当前 hash = <span id="hashText"></span></div>
+  <div id="app"></div>
+
+  <script>
+    /* ============================================================
+       手写「动态路由 + 懒加载」mini-router
+       - 动态段 :id 编译成正则，捕获组按顺序还原为 params
+       - component 支持「同步函数」或「返回 Promise 的异步函数」
+       ============================================================ */
+
+    // —— 模拟异步组件（真实项目里就是 () => import('./Xxx.js') 的代码分割块）——
+    // 用 Promise + 延时假装是「网络拉取一个 JS chunk」，第二次进入走缓存瞬间完成。
+    function fakeChunk(renderFn, ms = 600) {
+      let cached = null;                       // 模拟浏览器/打包器对 chunk 的缓存
+      return () => cached
+        ? Promise.resolve(cached)
+        : new Promise((resolve) => {
+            setTimeout(() => { cached = renderFn; resolve(renderFn); }, ms);
+          });
+    }
+
+    class MiniRouter {
+      constructor(outlet) {
+        this.routes = [];                      // [{ pattern, regex, keys, component, lazy }]
+        this.outlet = outlet;
+        window.addEventListener('hashchange', () => this.resolve());
+      }
+
+      // path 支持动态段，如 '/user/:id'；component 可同步或异步(懒加载)
+      on(path, component, { lazy = false } = {}) {
+        // 把 '/user/:id' 编译成正则 ^/user/([^/]+)$，并记录参数名 keys=['id']
+        const keys = [];
+        const regexStr = path.replace(/:([^/]+)/g, (_, key) => {
+          keys.push(key);
+          return '([^/]+)';                    // 一个动态段 = 一个捕获组（不含 /）
+        });
+        this.routes.push({
+          pattern: path,
+          regex: new RegExp('^' + regexStr + '$'),
+          keys,
+          component,
+          lazy,
+        });
+        return this;
+      }
+
+      // 用注册顺序逐条尝试匹配，返回 { route, params }
+      match(path) {
+        for (const route of this.routes) {
+          const m = route.regex.exec(path);
+          if (m) {
+            const params = {};
+            route.keys.forEach((k, i) => (params[k] = decodeURIComponent(m[i + 1])));
+            return { route, params };
+          }
+        }
+        return null;
+      }
+
+      async resolve() {
+        const path = location.hash.slice(1) || '/';
+        document.getElementById('hashText').textContent = location.hash || '(空)';
+        const hit = this.match(path);
+        if (!hit) { this.outlet.innerHTML = '<h2>404</h2><p>没有匹配的路由。</p>'; return; }
+
+        const { route, params } = hit;
+        let render = route.component;
+
+        if (route.lazy) {
+          // 懒加载：先渲染 loading，等 Promise 解析出真正的渲染函数
+          this.outlet.innerHTML = '<p class="loading">⏳ 正在加载路由组件 chunk…（首次约 0.6s，再次进入走缓存瞬间完成）</p>';
+          const token = path;                  // 防竞态：解析回来时若已切走则丢弃
+          render = await route.component();
+          if (location.hash.slice(1) !== token) return;
+        }
+
+        this.outlet.innerHTML = render(params);
+      }
+    }
+
+    const router = new MiniRouter(document.getElementById('app'));
+    router
+      .on('/', () =>
+        '<h2>🏠 Home</h2><p>点上面链接体验：<b>/user/:id</b> 动态匹配、<b>/settings</b> 懒加载。</p>')
+      // —— 动态路由：一条规则吃下所有 /user/xxx ——
+      .on('/user/:id', (params) =>
+        `<h2>👤 User</h2>
+         <div class="params">params = ${JSON.stringify(params)}</div>
+         <p>这是用户 <b>#${params.id}</b> 的页面。切到 User 2 试试——同一条 <code>/user/:id</code> 规则匹配，params.id 变了。</p>`)
+      // —— 动态段可以是任意 slug ——
+      .on('/post/:slug', (params) =>
+        `<h2>📝 Post</h2>
+         <div class="params">params = ${JSON.stringify(params)}</div>
+         <p>文章 slug = <b>${params.slug}</b></p>`)
+      // —— 懒加载路由：component 传「返回 Promise 的函数」，lazy:true ——
+      .on('/settings',
+        fakeChunk(() =>
+          '<h2>⚙️ Settings</h2><p>我是被<b>懒加载</b>进来的组件。首次进入有 loading，之后被缓存。</p><p>真实项目里这里是 <code>() =&gt; import("./Settings.vue")</code>，打包时会单独切出一个 chunk。</p>'),
+        { lazy: true });
+
+    router.resolve(); // 首次进入按当前 hash 渲染
+  </script>
+</body>
+</html>

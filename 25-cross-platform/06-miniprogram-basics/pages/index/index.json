@@ -1,0 +1,5 @@
+{
+  "//": "页面级配置，可覆盖 app.json 的 window 设置",
+  "navigationBarTitleText": "首页",
+  "usingComponents": {}
+}

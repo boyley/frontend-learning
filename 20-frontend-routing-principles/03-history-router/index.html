@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · 手写 History 路由</title>
+  <style>
+    body { font-family: system-ui, "PingFang SC", sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+    a.link { padding: 6px 12px; border: 1px solid #16a34a; border-radius: 6px; color: #16a34a; text-decoration: none; font-size: 14px; }
+    a.link:hover { background: #dcfce7; }
+    button { padding: 6px 12px; border: 1px solid #6366f1; background: #fff; color: #4338ca; border-radius: 6px; cursor: pointer; }
+    #app { border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px; min-height: 90px; }
+    .bar { font-family: ui-monospace, monospace; background: #f3f4f6; padding: 6px 10px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
+    .warn { background: #fef3c7; border: 1px solid #fcd34d; padding: 10px 12px; border-radius: 6px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>03 · 手写 History 路由（干净 URL，无 #）</h1>
+
+  <div class="warn">⚠️ 请用本地服务器访问（<code>python3 -m http.server 8080</code>），不要用 file:// 直接打开，否则 pushState 会报 SecurityError。</div>
+
+  <!-- data-link 标记为「站内链接」，由路由统一拦截 -->
+  <nav>
+    <a class="link" data-link href="/">Home</a>
+    <a class="link" data-link href="/about">About</a>
+    <a class="link" data-link href="/list">List</a>
+    <a class="link" data-link href="/nope">未知(404)</a>
+  </nav>
+  <nav>
+    <button onclick="router.push('/about')">router.push('/about')</button>
+    <button onclick="history.back()">history.back()</button>
+    <button onclick="history.forward()">history.forward()</button>
+  </nav>
+
+  <div class="bar">当前 location.pathname = <span id="pathText"></span></div>
+  <div id="app"></div>
+
+  <script>
+    /* ============================================================
+       手写 HistoryRouter —— 核心 pushState + popstate
+       关键：pushState 不触发 popstate，push 后必须手动 resolve！
+       ============================================================ */
+    class HistoryRouter {
+      constructor(outlet) {
+        this.routes = {};
+        this.outlet = outlet;
+        // ① 监听前进/后退：只有 back/forward/go 或用户点浏览器按钮才触发
+        window.addEventListener('popstate', () => this.resolve());
+        // ② 全局拦截站内 <a data-link>，改用 pushState 导航（否则会真实刷新）
+        document.addEventListener('click', (e) => {
+          const a = e.target.closest('a[data-link]');
+          if (!a) return;
+          e.preventDefault();                       // 阻止浏览器默认整页跳转
+          this.push(a.getAttribute('href'));
+        });
+      }
+      on(path, handler) { this.routes[path] = handler; return this; }
+      resolve() {                                    // 匹配 + 渲染
+        const path = location.pathname;              // history 模式读 pathname
+        document.getElementById('pathText').textContent = path;
+        const handler = this.routes[path] || this.routes['*'];
+        this.outlet.innerHTML = handler ? handler() : '<h2>404</h2>';
+      }
+      push(path) {
+        history.pushState(null, '', path);           // 改 URL，不刷新、不触发事件
+        this.resolve();                              // ⚠️ 必须手动渲染
+      }
+      replace(path) {
+        history.replaceState(null, '', path);        // 替换当前记录（不新增历史）
+        this.resolve();
+      }
+    }
+
+    const router = new HistoryRouter(document.getElementById('app'));
+    router
+      .on('/',      () => '<h2>🏠 Home</h2><p>History 路由首页。URL 干净、没有 #。</p>')
+      .on('/about', () => '<h2>ℹ️ About</h2><p>地址栏显示 <code>/about</code>，页面没有刷新。</p>')
+      .on('/list',  () => '<h2>📋 List</h2><ol><li>Alpha</li><li>Beta</li><li>Gamma</li></ol>')
+      .on('*',      () => '<h2>404</h2><p>未匹配路由。生产环境需服务器把此类路径回退到 index.html。</p>');
+
+    router.resolve();  // 首次进入渲染当前 URL
+  </script>
+</body>
+</html>

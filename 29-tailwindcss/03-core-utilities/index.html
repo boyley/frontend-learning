@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · 核心工具类：间距 / 尺寸 / 颜色 / 字体</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-8 font-sans text-slate-800">
+  <h1 class="text-3xl font-bold mb-8">最常用的四类工具类</h1>
+
+  <!-- ① 间距 spacing：p=padding, m=margin, gap；数字 × 0.25rem -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">① 间距 Spacing（p / m / gap）</h2>
+    <p class="text-sm text-slate-500 mb-4">规则：<code class="bg-slate-200 px-1 rounded">p-4</code> = padding 4×0.25rem = 1rem。p/m 后可加方向：t上 r右 b下 l左 x左右 y上下。</p>
+    <div class="flex gap-4 flex-wrap">
+      <div class="bg-violet-200 p-2">p-2</div>
+      <div class="bg-violet-300 p-4">p-4</div>
+      <div class="bg-violet-400 p-6 text-white">p-6</div>
+      <div class="bg-violet-500 px-8 py-2 text-white">px-8 py-2</div>
+    </div>
+  </section>
+
+  <!-- ② 尺寸 sizing：w=width, h=height；数字/分数/关键字 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">② 尺寸 Sizing（w / h）</h2>
+    <p class="text-sm text-slate-500 mb-4"><code class="bg-slate-200 px-1 rounded">w-32</code>=8rem，<code class="bg-slate-200 px-1 rounded">w-1/2</code>=50%，<code class="bg-slate-200 px-1 rounded">w-full</code>=100%。</p>
+    <div class="space-y-2">
+      <div class="h-8 w-24 bg-sky-400 rounded grid place-items-center text-white text-sm">w-24</div>
+      <div class="h-8 w-48 bg-sky-500 rounded grid place-items-center text-white text-sm">w-48</div>
+      <div class="h-8 w-1/2 bg-sky-600 rounded grid place-items-center text-white text-sm">w-1/2</div>
+      <div class="h-8 w-full bg-sky-700 rounded grid place-items-center text-white text-sm">w-full</div>
+    </div>
+  </section>
+
+  <!-- ③ 颜色 color：bg-*(背景) / text-*(文字) / border-*(边框)；色阶 50~950 -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-3">③ 颜色 Color（bg / text / border）</h2>
+    <p class="text-sm text-slate-500 mb-4">同一色相 11 级色阶：数字越大越深。<code class="bg-slate-200 px-1 rounded">bg-rose-500</code></p>
+    <div class="flex flex-wrap gap-1">
+      <div class="w-14 h-14 bg-rose-100 grid place-items-center text-xs">100</div>
+      <div class="w-14 h-14 bg-rose-300 grid place-items-center text-xs">300</div>
+      <div class="w-14 h-14 bg-rose-500 grid place-items-center text-xs text-white">500</div>
+      <div class="w-14 h-14 bg-rose-700 grid place-items-center text-xs text-white">700</div>
+      <div class="w-14 h-14 bg-rose-900 grid place-items-center text-xs text-white">900</div>
+    </div>
+    <p class="mt-4 text-emerald-600 border-l-4 border-emerald-500 pl-3">text-emerald-600 + border-emerald-500 的文字与左边框</p>
+  </section>
+
+  <!-- ④ 字体 typography：字号/字重/行高/对齐 -->
+  <section>
+    <h2 class="text-xl font-semibold mb-3">④ 字体 Typography（text / font / leading）</h2>
+    <p class="text-xs">text-xs 最小</p>
+    <p class="text-base">text-base 基准 16px</p>
+    <p class="text-2xl font-bold">text-2xl + font-bold 大标题</p>
+    <p class="text-lg font-light italic tracking-wide text-slate-500">text-lg font-light italic tracking-wide 细斜体带字间距</p>
+    <p class="text-sm leading-loose max-w-sm mt-2 text-slate-600">leading-loose 宽行高：这段文字行与行之间更松，适合正文长文本阅读，配合 max-w-sm 限制行宽。</p>
+  </section>
+</body>
+</html>

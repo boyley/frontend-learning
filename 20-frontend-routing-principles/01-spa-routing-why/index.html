@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · SPA 为何需要前端路由</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 20px; }
+    .badge { display: inline-block; padding: 10px 16px; border-radius: 8px; color: #fff; font-weight: 700; letter-spacing: 1px; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+    a.link, button.link { padding: 6px 12px; border: 1px solid #4f46e5; border-radius: 6px; color: #4f46e5; background: #fff; cursor: pointer; text-decoration: none; font-size: 14px; }
+    a.link:hover, button.link:hover { background: #eef2ff; }
+    #view { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; min-height: 80px; }
+    .tip { color: #6b7280; font-size: 13px; }
+    section { margin: 18px 0; }
+    .k { font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>01 · SPA 为何需要前端路由</h1>
+
+  <p class="tip">下面这个「随机色块」在页面加载时生成一次。<b>前端路由</b>切换时它<b>不变</b>（页面没刷新）；<b>后端路由</b>跳转时它<b>会变</b>（页面重新加载）。</p>
+  <div id="badge" class="badge">页面实例色块</div>
+
+  <section>
+    <div class="k">① 前端路由（拦截跳转 + 改 hash，不刷新）</div>
+    <nav id="spaNav">
+      <a class="link" href="#/home" data-to="/home">Home</a>
+      <a class="link" href="#/about" data-to="/about">About</a>
+      <a class="link" href="#/contact" data-to="/contact">Contact</a>
+    </nav>
+  </section>
+
+  <section>
+    <div class="k">② 后端路由（模拟：真实跳转，整页刷新）</div>
+    <nav>
+      <!-- 加 ?p= 参数模拟「向服务器请求新页面」，会整页刷新 -->
+      <a class="link" href="?p=home">Home</a>
+      <a class="link" href="?p=about">About</a>
+      <a class="link" href="?p=contact">Contact</a>
+    </nav>
+  </section>
+
+  <div id="view"></div>
+
+  <script>
+    // ===== 生成「页面实例色块」：只在本次页面加载时执行一次 =====
+    // 若页面被刷新（后端路由），脚本重跑，颜色会变；前端路由不刷新，颜色不变。
+    const badge = document.getElementById('badge');
+    const color = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+    badge.style.background = color;
+    badge.textContent = '页面实例色块 ' + color;
+
+    // ===== 前端路由核心：拦截 <a> 默认跳转，只改 hash =====
+    const view = document.getElementById('view');
+    document.getElementById('spaNav').addEventListener('click', (e) => {
+      const a = e.target.closest('a[data-to]');
+      if (!a) return;
+      e.preventDefault();               // ← 关键：阻止浏览器默认整页跳转
+      location.hash = a.dataset.to;      // 只改 hash，浏览器不会发请求、不会刷新
+    });
+
+    // ===== 监听 hash 变化 → 前端匹配路由表 → 局部渲染 =====
+    const routes = {
+      '/home': '<h2>🏠 Home</h2><p>这是前端渲染的 Home。注意上方色块没变 —— 页面从未刷新。</p>',
+      '/about': '<h2>ℹ️ About</h2><p>切换到 About，依然是同一个页面实例。</p>',
+      '/contact': '<h2>✉️ Contact</h2><p>Contact 内容由 JS 在前端渲染。</p>',
+    };
+    function render() {
+      const path = location.hash.slice(1) || '/home';   // '#/home' → '/home'
+      view.innerHTML = routes[path] || '<h2>404</h2><p>未匹配的路由：' + path + '</p>';
+    }
+    window.addEventListener('hashchange', render);       // 感知 URL 变化
+    window.addEventListener('DOMContentLoaded', render); // 首次渲染
+    render();
+
+    // ===== 若带 ?p= 参数（后端路由模拟），提示已整页刷新 =====
+    const p = new URLSearchParams(location.search).get('p');
+    if (p) {
+      view.innerHTML = '<h2>后端路由（模拟）：' + p + '</h2><p>刚才发生了<b>整页刷新</b>，色块颜色已改变。真实后端路由会向服务器请求新 HTML。</p>';
+    }
+  </script>
+</body>
+</html>

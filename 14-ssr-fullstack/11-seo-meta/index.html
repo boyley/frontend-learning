@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CSR 空壳 vs SSR 完整 HTML · 爬虫看到了什么</title>
+  <style>
+    /* 免构建 demo：仅用原生 HTML/CSS，双击即可打开 */
+    :root { --bad:#d64545; --good:#2f9e44; --ink:#1f2933; --muted:#697386; --line:#e3e8ef; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           color: var(--ink); background: #f7f9fc; line-height: 1.6; }
+    header { padding: 28px 20px; background: #fff; border-bottom: 1px solid var(--line); }
+    header h1 { margin: 0 0 6px; font-size: 22px; }
+    header p { margin: 0; color: var(--muted); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .card h2 { margin: 0; padding: 14px 16px; font-size: 16px; color: #fff; }
+    .card.csr h2 { background: var(--bad); }
+    .card.ssr h2 { background: var(--good); }
+    pre { margin: 0; padding: 16px; background: #0f172a; color: #e2e8f0; overflow-x: auto;
+          font-size: 12.5px; line-height: 1.7; font-family: "SF Mono", Menlo, Consolas, monospace; }
+    pre .tag  { color: #7dd3fc; }
+    pre .attr { color: #fca5a5; }
+    pre .str  { color: #86efac; }
+    pre .cmt  { color: #64748b; font-style: italic; }
+    pre .hl   { background: rgba(250, 204, 21, .18); display: inline-block; width: 100%; }
+    .verdict { padding: 14px 16px; border-top: 1px solid var(--line); font-size: 14px; }
+    .verdict.bad  { color: var(--bad); }
+    .verdict.good { color: var(--good); }
+    .note { margin-top: 20px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+    .note h3 { margin: 0 0 8px; font-size: 15px; }
+    .note p { margin: 8px 0; color: var(--ink); }
+    code.inline { background: #eef2f7; padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>爬虫 / 社交抓取器到底看到了什么？</h1>
+    <p>下面是两种应用「服务器直出的原始 HTML 源码」对照。抓取器通常<strong>不执行 JS</strong>，它拿到的就是这份源码本身。</p>
+  </header>
+
+  <div class="wrap">
+    <div class="cols">
+
+      <!-- ============ 左：CSR 空壳 ============ -->
+      <section class="card csr">
+        <h2>❌ CSR 应用返回的 HTML（空壳）</h2>
+<pre><span class="cmt">&lt;!-- 服务器直出：正文根本不在源码里 --&gt;</span>
+<span class="tag">&lt;!doctype html&gt;</span>
+<span class="tag">&lt;html&gt;</span>
+  <span class="tag">&lt;head&gt;</span>
+    <span class="tag">&lt;title&gt;</span>My App<span class="tag">&lt;/title&gt;</span>  <span class="cmt">&lt;!-- 通用标题，非本页专属 --&gt;</span>
+    <span class="cmt">&lt;!-- 没有 description、没有 og:image --&gt;</span>
+  <span class="tag">&lt;/head&gt;</span>
+  <span class="tag">&lt;body&gt;</span>
+<span class="hl">    <span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="str">"root"</span><span class="tag">&gt;&lt;/div&gt;</span>  <span class="cmt">← 空的！</span></span>
+    <span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"/bundle.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+    <span class="cmt">&lt;!-- 正文/meta 要等这段 JS 下载+执行+取数
+         之后才被塞进 #root。抓取器不跑 JS = 看不到 --&gt;</span>
+  <span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></pre>
+        <div class="verdict bad">
+          抓取器解析结果：标题是通用的「My App」、无描述、无 OG 图、无正文。
+          <strong>SEO 收录残缺，分享卡片没图没标题。</strong>
+        </div>
+      </section>
+
+      <!-- ============ 右：SSR 完整 ============ -->
+      <section class="card ssr">
+        <h2>✅ SSR / SSG 应用返回的 HTML（完整）</h2>
+<pre><span class="cmt">&lt;!-- 服务器直出：正文与 meta 已全部在源码里 --&gt;</span>
+<span class="tag">&lt;!doctype html&gt;</span>
+<span class="tag">&lt;html&gt;</span>
+  <span class="tag">&lt;head&gt;</span>
+<span class="hl">    <span class="tag">&lt;title&gt;</span>iPhone 20 Pro 开箱评测<span class="tag">&lt;/title&gt;</span></span>
+<span class="hl">    <span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="str">"description"</span> <span class="attr">content</span>=<span class="str">"全网首发详评…"</span><span class="tag">&gt;</span></span>
+<span class="hl">    <span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="str">"og:title"</span> <span class="attr">content</span>=<span class="str">"开箱评测"</span><span class="tag">&gt;</span></span>
+<span class="hl">    <span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="str">"og:image"</span> <span class="attr">content</span>=<span class="str">"…/og.png"</span><span class="tag">&gt;</span></span>
+  <span class="tag">&lt;/head&gt;</span>
+  <span class="tag">&lt;body&gt;</span>
+<span class="hl">    <span class="tag">&lt;article&gt;</span>
+      <span class="tag">&lt;h1&gt;</span>iPhone 20 Pro 开箱评测<span class="tag">&lt;/h1&gt;</span>
+      <span class="tag">&lt;p&gt;</span>今天我们拿到了…<span class="tag">&lt;/p&gt;</span>  <span class="cmt">← 正文已在！</span>
+    <span class="tag">&lt;/article&gt;</span></span>
+    <span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"/bundle.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+    <span class="cmt">&lt;!-- JS 仅用于「水合」让页面可交互，
+         内容早已随 HTML 直出 --&gt;</span>
+  <span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></pre>
+        <div class="verdict good">
+          抓取器解析结果：本页专属标题、描述、OG 大图、完整正文一次拿全。
+          <strong>SEO 收录完整，分享卡片有图有标题。</strong>无需执行任何 JS。
+        </div>
+      </section>
+
+    </div>
+
+    <div class="note">
+      <h3>为什么 CSR 站的分享卡片常常「只有一个链接，没图没标题」？</h3>
+      <p>
+        当你把链接粘到微信 / 微博 / Slack / Discord 时，平台的抓取器会请求你的页面并读取
+        <code class="inline">og:title</code> / <code class="inline">og:image</code> 来生成卡片。这些抓取器
+        <strong>几乎都不执行 JavaScript</strong>。
+      </p>
+      <p>
+        CSR 站的 OG 标签是 JS 运行后才插入 <code class="inline">&lt;head&gt;</code> 的——抓取器看不到，于是卡片空白。
+        SSR/SSG 站的 OG 标签随 HTML 直出，抓取器一读就有，卡片完整。
+      </p>
+      <p style="color:var(--muted)">
+        动手验证：对任意网页「右键 → 查看网页源代码」，在源码里搜 <code class="inline">og:image</code> 和正文关键字。
+        搜得到 = 服务端直出（SEO 友好）；搜不到但页面上有 = JS 后插入（抓取器可能看不到）。
+      </p>
+    </div>
+  </div>
+</body>
+</html>

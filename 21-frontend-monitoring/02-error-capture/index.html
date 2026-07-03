@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · JS 错误捕获</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f1420; color: #e6e9ef; line-height: 1.6; padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .subtitle { color: #8b93a7; margin-bottom: 24px; font-size: 14px; }
+
+    .toolbar { margin-bottom: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      background: #2b3550; color: #e6e9ef; border: 1px solid #3a465f;
+      padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px;
+      transition: background .15s;
+    }
+    button:hover { background: #38466a; }
+    button.danger { border-color: #7a3b3b; }
+    button.danger:hover { background: #5a2f2f; }
+
+    /* ============ 捕获面板 ============ */
+    #panel {
+      background: #121826; border: 1px solid #2a3346; border-radius: 12px;
+      padding: 14px; min-height: 140px; max-height: 480px; overflow-y: auto;
+    }
+    .panel-head { font-size: 14px; color: #8b93a7; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .row {
+      padding: 11px 12px; border-radius: 8px; margin-bottom: 9px;
+      background: #1a2130; border-left: 3px solid #ff6b6b; font-size: 13px;
+      animation: fade .25s ease;
+    }
+    @keyframes fade { from { opacity: 0; transform: translateY(-4px);} to {opacity:1;transform:none;} }
+    .row .head { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+    .row .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #ff6b6b22; color: #ff8787; white-space: nowrap; }
+    .row.promise .badge { background: #cc5de822; color: #da77f2; }
+    .row.promise { border-left-color: #cc5de8; }
+    .row.resource .badge { background: #ffa94d22; color: #ffc078; }
+    .row .via { font-size: 11px; color: #5a6478; }
+    .row .time { font-size: 11px; color: #5a6478; margin-left: auto; }
+    .row .msg { color: #ffd8d8; font-weight: 600; word-break: break-all; }
+    .row .meta { color: #8b93a7; font-size: 12px; margin-top: 4px; }
+    .row pre {
+      margin-top: 6px; background: #0d1220; border: 1px solid #232c3e; border-radius: 6px;
+      padding: 8px; font-size: 11px; color: #90a0b8; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+    }
+    .empty { color: #5a6478; font-size: 13px; text-align: center; padding: 24px; }
+  </style>
+</head>
+<body>
+  <h1>02 · JS 错误捕获</h1>
+  <p class="subtitle">window.onerror + addEventListener('error') + unhandledrejection 三管齐下</p>
+
+  <div class="toolbar">
+    <button id="btn-sync" class="danger">① 触发同步错误</button>
+    <button id="btn-promise" class="danger">② 触发未捕获 Promise</button>
+    <button id="btn-throw" class="danger">③ 手动 throw</button>
+  </div>
+
+  <div id="panel">
+    <div class="panel-head">
+      <span>📡 捕获面板（同时 console.log）</span>
+      <span id="count">0 条</span>
+    </div>
+    <div class="empty" id="empty">点击上方按钮制造错误，看被谁捕获…</div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

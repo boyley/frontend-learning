@@ -1,0 +1,28 @@
+{
+  "name": "02 · Web App Manifest 演示",
+  "short_name": "Manifest",
+  "description": "演示 manifest.json 各字段如何决定安装后的外观与启动方式",
+  "id": "/28-pwa/02-web-app-manifest/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#7c3aed",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["education", "utilities"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "查看 Manifest 字段",
+      "short_name": "字段表",
+      "url": "./index.html#fields",
+      "description": "快速跳转到字段说明"
+    }
+  ]
+}

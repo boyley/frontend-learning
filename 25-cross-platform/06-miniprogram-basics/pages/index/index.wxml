@@ -1,0 +1,37 @@
+<!-- pages/index/index.wxml —— 视图层模板（WXML = WeChat XML）
+     用小程序组件标签（view/text/button），不是 HTML 标签
+     {{}} 做数据绑定，wx:for / wx:if 做逻辑控制，bind* 绑定事件 -->
+
+<view class="card">
+  <!-- {{title}} 绑定逻辑层 data.title -->
+  <text class="h1">{{title}}</text>
+</view>
+
+<!-- 计数器：bindtap 绑定事件，事件经 Native 中转到逻辑层 -->
+<view class="card">
+  <text class="count">点击了 {{count}} 次</text>
+  <view class="row">
+    <button size="mini" type="primary" bindtap="onAdd">加一</button>
+    <button size="mini" bindtap="onReset">重置</button>
+    <button size="mini" bindtap="onShowInfo">查看</button>
+  </view>
+</view>
+
+<!-- 列表渲染：wx:for 遍历数组，wx:key 提升 diff 性能 -->
+<view class="card">
+  <text class="label">待办列表（wx:for）</text>
+  <view wx:for="{{todos}}" wx:key="*this" class="todo">
+    <text>• {{item}}</text>
+  </view>
+
+  <!-- 受控输入：value 绑定 data，bindinput 回传 -->
+  <view class="row">
+    <input class="input" placeholder="新增待办" value="{{inputValue}}" bindinput="onInput" />
+    <button size="mini" type="primary" bindtap="onAddTodo">添加</button>
+  </view>
+</view>
+
+<!-- 条件渲染：wx:if -->
+<view class="card" wx:if="{{count >= 5}}">
+  <text class="tip">🎉 已点击超过 5 次！（wx:if 条件渲染）</text>
+</view>

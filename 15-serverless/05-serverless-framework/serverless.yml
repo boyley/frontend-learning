@@ -1,0 +1,51 @@
+# ================================================================
+# 05 · Serverless Framework 配置文件 serverless.yml
+# ----------------------------------------------------------------
+# 这是 Serverless Framework 的核心：一个 YAML 描述「服务」的全部——
+# 用哪个云、有哪些函数、每个函数被什么事件触发、要什么资源。
+# `serverless deploy` 会把它翻译成云厂商的基础设施（在 AWS 上即
+# CloudFormation 模板：Lambda + API Gateway + IAM 角色等），一键创建。
+# 对照官方：https://www.serverless.com/framework/docs
+# ================================================================
+
+# ① service：服务名。一个 service = 一次可独立部署的单元（一组函数 + 资源）
+service: serverless-framework-demo
+
+# ② frameworkVersion：锁定框架大版本，避免不同机器行为不一致
+frameworkVersion: '3'
+
+# ③ provider：云厂商与运行环境的公共配置
+provider:
+  name: aws               # 目标云：aws / tencent / aliyun 等
+  runtime: nodejs18.x     # 运行时（语言 + 版本）
+  region: ap-southeast-1  # 部署地域（就近数据源可降延迟）
+  memorySize: 128         # 每个函数默认内存（MB），越大 CPU 越强、单价越高
+  timeout: 10             # 默认超时（秒），超时即被强制终止
+  environment:            # 注入到所有函数的环境变量
+    STAGE: dev
+
+# ④ functions：本服务包含哪些函数，各自的入口与触发事件
+functions:
+  # 函数名: hello
+  hello:
+    handler: src/handler.hello   # 文件路径.导出名 → src/handler.js 的 exports.hello
+    events:
+      - httpApi:                  # 事件源：HTTP API 网关
+          path: /hello
+          method: get
+  # 函数名: echo
+  echo:
+    handler: src/handler.echo
+    events:
+      - httpApi:
+          path: /echo
+          method: post
+  # 函数名: cron —— 定时触发（每 5 分钟跑一次），演示事件驱动的另一面
+  cron:
+    handler: src/handler.cron
+    events:
+      - schedule: rate(5 minutes)
+
+# ⑤ plugins：插件，扩展框架能力（此处用离线插件在本地模拟网关）
+plugins:
+  - serverless-offline

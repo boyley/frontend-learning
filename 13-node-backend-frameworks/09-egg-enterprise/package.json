@@ -1,0 +1,21 @@
+{
+  "name": "09-egg-enterprise",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "egg": {
+    "declarations": false
+  },
+  "scripts": {
+    "dev": "egg-bin dev --port 3009",
+    "start": "egg-scripts start --title=egg-server-09 --port 3009",
+    "stop": "egg-scripts stop --title=egg-server-09"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "egg": "^3.34.0"
+  },
+  "devDependencies": {
+    "egg-bin": "^6.13.0"
+  }
+}

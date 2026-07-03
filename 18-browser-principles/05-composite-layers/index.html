@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>合成层 / GPU 加速对比 demo</title>
+  <style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; margin: 20px; }
+    h1 { font-size: 20px; }
+    .track { position: relative; height: 60px; background: #eceff1; border-radius: 8px; margin: 14px 0; overflow: hidden; }
+    .label { position: absolute; left: 8px; top: 6px; font-size: 12px; color: #555; z-index: 2; }
+    .block { position: absolute; top: 14px; width: 32px; height: 32px; border-radius: 6px; color: #fff; font-size: 12px; text-align: center; line-height: 32px; }
+
+    /* ❌ 用 left 做动画 —— 每帧回流，主线程一忙就掉帧 */
+    .left { left: 0; background: #e53935; animation: moveLeft 2s infinite alternate ease-in-out; }
+    @keyframes moveLeft { to { left: calc(100% - 40px); } }
+
+    /* ✅ 用 transform 做动画 + will-change —— 独立合成层，GPU 处理 */
+    .right { left: 4px; background: #43a047; will-change: transform; animation: moveRight 2s infinite alternate ease-in-out; }
+    @keyframes moveRight { to { transform: translateX(calc(100vw - 100px)); } }
+
+    button { padding: 8px 14px; border: 0; border-radius: 6px; background: #1976d2; color: #fff; cursor: pointer; font-size: 14px; }
+    p.desc { color: #555; }
+  </style>
+</head>
+<body>
+  <h1>合成层 / GPU 加速：left 动画 vs transform 动画</h1>
+  <p class="desc">点下面按钮让<strong>主线程周期性忙 200ms</strong>（模拟 JS 卡顿）。观察：红块（left，走回流）会明显卡顿掉帧；绿块（transform + will-change，独立合成层）依旧顺滑。</p>
+
+  <button onclick="busy()">让主线程忙起来（每 300ms 卡 200ms，持续 5 秒）</button>
+
+  <div class="track">
+    <span class="label">❌ left 动画（每帧回流，占主线程）</span>
+    <div class="block left">L</div>
+  </div>
+  <div class="track">
+    <span class="label">✅ transform 动画（合成层，GPU，不占主线程）</span>
+    <div class="block right">T</div>
+  </div>
+
+  <p class="desc">打开 F12 → Rendering 面板勾选 “Layer borders”，可见绿块被单独框出为合成层；F12 → Layers 面板可 3D 查看层结构。</p>
+
+  <script>
+    // 周期性阻塞主线程：每 300ms 忙等 200ms，持续 5 秒
+    function busy() {
+      let rounds = 0;
+      const timer = setInterval(() => {
+        const end = performance.now() + 200;
+        while (performance.now() < end) {} // 忙等，霸占主线程
+        if (++rounds >= 16) clearInterval(timer); // 约 5 秒后停止
+      }, 300);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "build-a-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "手写一个可运行的 API 网关：日志 / 鉴权 / 限流 / 路由转发 / 降级",
+  "scripts": {
+    "services": "node services/all-services.js",
+    "start": "node gateway.js",
+    "dev": "node gateway.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy": "^1.18.1"
+  }
+}

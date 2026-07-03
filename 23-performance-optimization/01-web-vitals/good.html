@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>👍 Web Vitals 最佳实践（good）</title>
+
+  <!--
+    ✅ 优化 1：把上面那段慢脚本改为 defer（且逻辑轻量化）。
+    defer 让脚本在 HTML 解析完之后、按顺序执行，不阻塞首屏渲染，
+    FCP / LCP 因此大幅提前。
+  -->
+  <script defer src="noop-defer.js"></script>
+
+  <style>
+    body { font-family: system-ui, "PingFang SC", sans-serif; margin: 0; background: #f2fbf5; color: #1a1a1a; }
+    header { background: #0cce6b; color: #fff; padding: 20px 24px; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 24px; }
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .metric { background: #fff; border: 2px solid #ddd; border-radius: 12px; padding: 14px; }
+    .metric .name { font-size: 12px; color: #666; font-weight: 600; }
+    .metric .value { font-size: 26px; font-weight: 700; margin: 6px 0; font-variant-numeric: tabular-nums; }
+    .metric .badge { display: inline-block; color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 12px; background: #999; }
+    /* ✅ 优化 2：给图片一个固定宽高比容器，加载前就占好位，杜绝 CLS */
+    .article img { display: block; margin: 12px 0; border-radius: 8px; width: 100%; max-width: 640px; height: auto; }
+    button { background: #0cce6b; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; cursor: pointer; }
+    a { color: #1a73e8; }
+  </style>
+</head>
+<body>
+  <header><h1>👍 最佳实践：显式尺寸 + defer + 任务切片</h1></header>
+  <div class="wrap">
+    <div class="dashboard">
+      <div class="metric" id="metric-LCP"><div class="name">LCP</div><div class="value">…</div><span class="badge">等待</span></div>
+      <div class="metric" id="metric-INP"><div class="name">INP</div><div class="value">等待交互</div><span class="badge">等待</span></div>
+      <div class="metric" id="metric-CLS"><div class="name">CLS</div><div class="value">…</div><span class="badge">等待</span></div>
+      <div class="metric" id="metric-FCP"><div class="name">FCP</div><div class="value">…</div><span class="badge">等待</span></div>
+    </div>
+
+    <p>👉 <a href="bad.html">对比看反面教材 bad.html</a> ｜ <a href="index.html">返回实时仪表盘</a></p>
+
+    <div class="article">
+      <h2>一篇稳定不跳动的文章（CLS ≈ 0）</h2>
+      <p>下面的图片都<b>显式写了 width / height 属性</b>，浏览器据此提前算出宽高比、
+         预留好空间，图片到达时不会挤动周围内容，CLS 保持在 0 附近。</p>
+
+      <!-- ✅ 图片写死 width/height，浏览器提前预留空间 -->
+      <img id="img1" width="640" height="220" alt="占位大图" />
+      <div id="lateImages"></div>
+      <p>正文段落 A：无论图片何时加载完成，我都不会被推走。</p>
+      <p>正文段落 B：位置稳如磐石。</p>
+    </div>
+
+    <div class="article">
+      <h2>交互测试（INP 良好）</h2>
+      <p>同样是一段耗时计算，但用 <b>任务切片 + 让出主线程</b> 的方式执行，
+         每小片之间把控制权还给浏览器，交互能被及时响应，INP 保持良好。</p>
+      <button id="smoothBtn">点我（切片执行，不卡）</button>
+      <p id="out" style="color:#555;"></p>
+    </div>
+  </div>
+
+  <script>
+    // 让出主线程：优先用 scheduler.yield()，不支持则退化为 setTimeout(0)
+    function yieldToMain() {
+      if ('scheduler' in window && 'yield' in scheduler) return scheduler.yield();
+      return new Promise((r) => setTimeout(r, 0));
+    }
+
+    // ✅ 把一段"总量约 250ms"的计算切成许多 8ms 的小片，每片之间让出主线程。
+    // 这样任何一次点击/输入都能在两片之间被浏览器处理，INP 保持低位。
+    async function doWorkSliced() {
+      const totalChunks = 30;
+      for (let i = 0; i < totalChunks; i++) {
+        const end = performance.now() + 8; // 每片只干 8ms
+        while (performance.now() < end) { /* 一小段计算 */ }
+        await yieldToMain(); // 关键：把主线程还给浏览器
+      }
+    }
+
+    let n = 0;
+    document.getElementById('smoothBtn').addEventListener('click', async () => {
+      document.getElementById('out').textContent = '计算中（分片进行，页面依然可交互）…';
+      await doWorkSliced();
+      document.getElementById('out').textContent = '已点击 ' + (++n) + ' 次（INP 保持良好，徽章绿色）';
+    });
+
+    // 图片同样用 data URI 模拟，但因为写了 width/height，不会造成偏移
+    function makeImg(w, h, color) {
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">' +
+        '<rect width="100%" height="100%" fill="' + color + '"/></svg>';
+      return 'data:image/svg+xml;base64,' + btoa(svg);
+    }
+    setTimeout(() => { document.getElementById('img1').src = makeImg(640, 220, '#0cce6b'); }, 400);
+    setTimeout(() => {
+      // 后插入的图也带尺寸属性 → 依然不偏移
+      document.getElementById('lateImages').innerHTML =
+        '<img width="640" height="180" src="' + makeImg(640, 180, '#16a085') + '" alt="">';
+    }, 900);
+  </script>
+  <script src="vitals.js"></script>
+</body>
+</html>

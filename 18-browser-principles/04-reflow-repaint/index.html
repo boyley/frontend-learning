@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>回流 / 重绘 / 合成 · 性能对比 demo</title>
+  <style>
+    body { font-family: system-ui, "Microsoft YaHei", sans-serif; margin: 20px; background: #fafafa; }
+    h1 { font-size: 20px; }
+    p.desc { color: #555; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+    button { padding: 8px 14px; border: 0; border-radius: 6px; background: #1976d2; color: #fff; cursor: pointer; font-size: 14px; }
+    button.warn { background: #e53935; }
+    button.ok { background: #43a047; }
+    button:hover { opacity: .9; }
+    #log { white-space: pre-wrap; background: #263238; color: #b2ff59; padding: 12px; border-radius: 8px; min-height: 90px; font-family: Menlo, monospace; font-size: 13px; }
+    /* 用容器承载 1000 个小方块，作为测试对象 */
+    #stage { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 16px; }
+    .box { width: 12px; height: 12px; background: #90caf9; }
+  </style>
+</head>
+<body>
+  <h1>回流(Reflow) / 重绘(Repaint) / 合成(Composite) 性能对比</h1>
+  <p class="desc">对 1000 个方块做不同种类的样式改动，用 <code>performance.now()</code> 测耗时。打开 F12 → Performance 录制更直观。</p>
+
+  <div class="toolbar">
+    <button class="warn" onclick="testReflow()">① 触发回流（改 width）</button>
+    <button onclick="testRepaint()">② 仅重绘（改 background）</button>
+    <button class="ok" onclick="testComposite()">③ 仅合成（改 transform）</button>
+  </div>
+  <div class="toolbar">
+    <button class="warn" onclick="testThrash()">④ 布局抖动（写-读交替）</button>
+    <button class="ok" onclick="testBatch()">⑤ 分离读写（先读后写）</button>
+    <button onclick="reset()">↺ 复位</button>
+  </div>
+
+  <div id="log">点击按钮查看耗时…</div>
+  <div id="stage"></div>
+
+  <script>
+    // ---- 初始化 1000 个方块 ----
+    const stage = document.getElementById('stage');
+    const logEl = document.getElementById('log');
+    let boxes = [];
+    function build() {
+      stage.innerHTML = '';
+      boxes = [];
+      for (let i = 0; i < 1000; i++) {
+        const d = document.createElement('div');
+        d.className = 'box';
+        stage.appendChild(d);
+        boxes.push(d);
+      }
+    }
+    build();
+
+    function log(msg) { logEl.textContent = msg + '\n' + logEl.textContent; }
+    function reset() { build(); log('已复位。'); }
+
+    // ① 回流：改几何属性 width，会重新计算布局
+    function testReflow() {
+      const t = performance.now();
+      boxes.forEach((el, i) => { el.style.width = (12 + (i % 8)) + 'px'; });
+      // 读一次强制刷新，保证布局真正发生
+      void stage.offsetHeight;
+      log('① 回流(改 width) 耗时: ' + (performance.now() - t).toFixed(2) + ' ms  —— 走 Layout+Paint+Composite');
+    }
+
+    // ② 重绘：只改外观，跳过 Layout
+    function testRepaint() {
+      const t = performance.now();
+      boxes.forEach((el, i) => { el.style.background = (i % 2) ? '#ff8a65' : '#4dd0e1'; });
+      void stage.offsetHeight;
+      log('② 重绘(改 background) 耗时: ' + (performance.now() - t).toFixed(2) + ' ms  —— 走 Paint+Composite（更省）');
+    }
+
+    // ③ 合成：只改 transform，主线程几乎不干活
+    function testComposite() {
+      const t = performance.now();
+      boxes.forEach((el, i) => { el.style.transform = 'translateX(' + (i % 5) + 'px)'; });
+      void stage.offsetHeight;
+      log('③ 合成(改 transform) 耗时: ' + (performance.now() - t).toFixed(2) + ' ms  —— 仅 Composite（最省）');
+    }
+
+    // ④ 布局抖动：写完立刻读 offsetWidth，逼浏览器每次同步回流
+    function testThrash() {
+      const t = performance.now();
+      boxes.forEach(el => {
+        el.style.width = (el.offsetWidth + 1) + 'px'; // 写 → 立刻读，强制同步布局
+      });
+      log('④ 布局抖动(写-读交替) 耗时: ' + (performance.now() - t).toFixed(2) + ' ms  ⚠️ 每次都强制同步回流');
+    }
+
+    // ⑤ 分离读写：先批量读，再批量写，只回流一次
+    function testBatch() {
+      const t = performance.now();
+      const widths = boxes.map(el => el.offsetWidth); // 批量读
+      boxes.forEach((el, i) => { el.style.width = (widths[i] + 1) + 'px'; }); // 批量写
+      log('⑤ 分离读写(先读后写) 耗时: ' + (performance.now() - t).toFixed(2) + ' ms  ✅ 只回流一次');
+    }
+  </script>
+</body>
+</html>

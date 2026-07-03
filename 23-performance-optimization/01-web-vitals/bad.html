@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>👎 Web Vitals 反面教材（bad）</title>
+
+  <!--
+    ❌ 反模式 1：在 <head> 里放一段"同步阻塞脚本"，且故意 busy-wait 1.2s。
+    浏览器解析到这里必须等它执行完才能继续构建 DOM / 绘制，
+    直接把 FCP 和 LCP 往后拖。
+  -->
+  <script>
+    (function () {
+      const end = performance.now() + 1200; // 阻塞主线程 1.2 秒
+      while (performance.now() < end) { /* 空转，模拟一段慢同步 JS */ }
+    })();
+  </script>
+
+  <style>
+    body { font-family: system-ui, "PingFang SC", sans-serif; margin: 0; background: #fff4f4; color: #1a1a1a; }
+    header { background: #d93025; color: #fff; padding: 20px 24px; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 24px; }
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .metric { background: #fff; border: 2px solid #ddd; border-radius: 12px; padding: 14px; }
+    .metric .name { font-size: 12px; color: #666; font-weight: 600; }
+    .metric .value { font-size: 26px; font-weight: 700; margin: 6px 0; font-variant-numeric: tabular-nums; }
+    .metric .badge { display: inline-block; color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 12px; background: #999; }
+    .article img { display: block; margin: 12px 0; border-radius: 8px; }
+    button { background: #d93025; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; cursor: pointer; }
+    a { color: #1a73e8; }
+  </style>
+</head>
+<body>
+  <header><h1>👎 反面教材：故意制造 LCP / CLS / INP 问题</h1></header>
+  <div class="wrap">
+    <div class="dashboard">
+      <div class="metric" id="metric-LCP"><div class="name">LCP</div><div class="value">…</div><span class="badge">等待</span></div>
+      <div class="metric" id="metric-INP"><div class="name">INP</div><div class="value">等待交互</div><span class="badge">等待</span></div>
+      <div class="metric" id="metric-CLS"><div class="name">CLS</div><div class="value">…</div><span class="badge">等待</span></div>
+      <div class="metric" id="metric-FCP"><div class="name">FCP</div><div class="value">…</div><span class="badge">等待</span></div>
+    </div>
+
+    <p>👉 <a href="good.html">对比看优化后的 good.html</a> ｜ <a href="index.html">返回实时仪表盘</a></p>
+
+    <div class="article">
+      <h2>一篇会"跳动"的文章（制造 CLS）</h2>
+      <p>下面这些图片 <b>没有写 width/height</b>，浏览器加载前不知道要预留多高，
+         图片一到就把下方文字往下顶 —— 这就是布局偏移 CLS 的来源。</p>
+
+      <!--
+        ❌ 反模式 2：图片不写尺寸。用 data URI 的 SVG 模拟"慢慢到达"的图片，
+        配合下方 JS 延迟插入更多无尺寸图片，制造持续的布局偏移。
+      -->
+      <img id="img1" alt="占位大图" />
+      <p>正文段落 A：内容会被上方突然出现的图片推下去。</p>
+      <div id="lateImages"></div>
+      <p>正文段落 B：如果上面又插入了新图，我又被推得更靠下。</p>
+    </div>
+
+    <div class="article">
+      <h2>交互测试（制造高 INP）</h2>
+      <p>点击按钮后主线程会空转 <b>300ms</b>，页面卡住无法及时响应 —— INP 变差。</p>
+      <button id="jankBtn">点我（卡顿 300ms）</button>
+      <p id="out" style="color:#555;"></p>
+    </div>
+  </div>
+
+  <script>
+    function busyWait(ms) { const e = performance.now() + ms; while (performance.now() < e) {} }
+
+    // 制造 CLS：先给一张"迟到"的大图，再延迟插入两张，持续把内容往下推
+    function makeImg(h, color) {
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="' + h + '">' +
+        '<rect width="100%" height="100%" fill="' + color + '"/></svg>';
+      return 'data:image/svg+xml;base64,' + btoa(svg);
+    }
+    setTimeout(() => { document.getElementById('img1').src = makeImg(220, '#667eea'); }, 400);
+    setTimeout(() => {
+      const box = document.getElementById('lateImages');
+      box.innerHTML = '<img src="' + makeImg(180, '#f39c12') + '" alt=""><img src="' + makeImg(160, '#16a085') + '" alt="">';
+    }, 900);
+
+    // 制造高 INP：点击时长时间阻塞主线程
+    let n = 0;
+    document.getElementById('jankBtn').addEventListener('click', () => {
+      busyWait(300);
+      document.getElementById('out').textContent = '已点击 ' + (++n) + ' 次（每次卡 300ms，看 INP 徽章变红）';
+    });
+  </script>
+  <script src="vitals.js"></script>
+</body>
+</html>

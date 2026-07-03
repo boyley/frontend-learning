@@ -1,0 +1,12 @@
+{
+  "name": "01-testing-pyramid",
+  "version": "1.0.0",
+  "private": true,
+  "description": "测试金字塔：同一份代码在单元层与集成层的测试演示",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0"
+  }
+}

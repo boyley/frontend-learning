@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✅ 已优化 · 按需具名导入</title>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- 入口指向 main-good.js：只 import { unique, capitalize }，未用函数被 tree-shake -->
+  <script type="module" src="/src/main-good.js"></script>
+</body>
+</html>

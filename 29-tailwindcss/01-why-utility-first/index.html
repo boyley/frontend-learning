@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01 · 为什么用原子化 CSS（Utility-First）</title>
+
+  <!--
+    ▼ Tailwind v4 Play CDN（免安装，浏览器直接打开即可）
+    v4 的浏览器版包名是 @tailwindcss/browser，与 v3 的 cdn.tailwindcss.com 不同。
+    仅用于学习/原型，生产环境请用 Vite 工程化构建（见 02-setup）。
+  -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+  <!-- 左侧「传统 CSS / BEM 写法」示例样式，用来和右侧的原子类对比 -->
+  <style>
+    /* 传统做法：为每个组件手写一套语义化 class + 独立 CSS 规则 */
+    .card {
+      max-width: 20rem;
+      background: #fff;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      padding: 1.5rem;
+    }
+    .card__title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+    .card__text {
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .card__btn {
+      margin-top: 1rem;
+      background: #6750a4;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen p-8 font-sans">
+
+  <h1 class="text-3xl font-bold text-slate-800 mb-2">原子化 CSS：同一张卡片，两种写法</h1>
+  <p class="text-slate-500 mb-8">左：传统 CSS + BEM（要来回切换 HTML/CSS 两个文件、还要起名字）。右：Tailwind 原子类（HTML 里一次写完）。</p>
+
+  <div class="grid gap-8 md:grid-cols-2 max-w-4xl">
+
+    <!-- ① 传统 BEM 写法：class 名语义化，但样式散落在 <style> 里 -->
+    <section>
+      <p class="text-sm font-mono text-rose-600 mb-3">① 传统 CSS / BEM（样式在别处）</p>
+      <div class="card">
+        <div class="card__title">按需生成</div>
+        <p class="card__text">改一次样式要在 CSS 文件里找到对应规则，还得给每个元素想语义化的名字。</p>
+        <button class="card__btn">了解更多</button>
+      </div>
+    </section>
+
+    <!-- ② Tailwind 原子类：样式即 class，所见即所得，无需切文件、无需命名 -->
+    <section>
+      <p class="text-sm font-mono text-emerald-600 mb-3">② Tailwind 原子类（样式即 class）</p>
+      <div class="max-w-xs bg-white rounded-xl shadow-md p-6">
+        <div class="text-xl font-bold text-slate-800 mb-2">按需生成</div>
+        <p class="text-slate-500 leading-relaxed">样式直接写在 class 上，所见即所得，改哪块看哪块，不用起名字、不用切文件。</p>
+        <button class="mt-4 bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition">了解更多</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 对比小结 -->
+  <div class="mt-10 max-w-4xl bg-white rounded-xl p-6 shadow-sm">
+    <h2 class="text-lg font-semibold text-slate-800 mb-3">一句话</h2>
+    <p class="text-slate-600 leading-relaxed">
+      原子化 CSS 用一堆<strong class="text-violet-600">单一职责的小工具类</strong>（<code class="bg-slate-100 px-1 rounded">p-6</code>=padding、<code class="bg-slate-100 px-1 rounded">rounded-xl</code>=圆角）拼出界面，
+      把「命名 + 写 CSS + 在两个文件间跳」这三件累人的事，压缩成「在 HTML 里选类名」一件事。
+    </p>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+/* app.wxss —— 全局样式（WXSS = WeChat Style Sheets，CSS 的受限超集）
+   与 CSS 的关键差异：
+   1) 新增尺寸单位 rpx（responsive pixel）：屏幕宽度恒等分为 750rpx，自动做屏幕适配
+   2) 不支持部分选择器（如通配、属性选择器受限），不能用外部 @import 网络字体
+   3) 标签名是小程序组件（view/text），不是 div/span                                   */
+page {
+  background-color: #f5f5f5;
+  font-family: -apple-system, "PingFang SC", sans-serif;
+}
+
+.card {
+  background: #fff;
+  margin: 24rpx;
+  padding: 32rpx;
+  border-radius: 16rpx;
+}

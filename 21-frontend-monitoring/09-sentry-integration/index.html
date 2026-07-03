@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>09 · Sentry 接入示例</title>
+  <style>
+    /* ===== 页面整体排版 ===== */
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #1c1b22;      /* Sentry 品牌深紫底色 */
+      color: #e8e6ee;
+      line-height: 1.6;
+    }
+    h1 { color: #f2b8ff; font-size: 22px; margin: 0 0 4px; }
+    .subtitle { color: #a29bb5; margin: 0 0 20px; font-size: 14px; }
+
+    /* ===== 操作按钮区 ===== */
+    .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    button {
+      background: #6c5fc7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    button:hover { background: #8477d6; }
+    button.danger { background: #e5533d; }
+    button.danger:hover { background: #f26a54; }
+    button.ghost { background: #35333f; }
+    button.ghost:hover { background: #45424f; }
+
+    /* ===== 捕获面板：模拟「上报到 Sentry 的事件」 ===== */
+    #panel {
+      background: #26232f;
+      border: 1px solid #3a3746;
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 120px;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    .event {
+      border-left: 3px solid #6c5fc7;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      background: #2f2c3a;
+      border-radius: 0 6px 6px 0;
+    }
+    .event.exception { border-left-color: #e5533d; }
+    .event.message   { border-left-color: #3fb950; }
+    .event.breadcrumb{ border-left-color: #d29922; opacity: .85; }
+    .event .type { font-weight: bold; color: #f2b8ff; }
+    .event .time { color: #8a879a; float: right; font-size: 11px; }
+    .event pre { margin: 6px 0 0; white-space: pre-wrap; color: #c9c6d6; }
+    .crumbs { margin-top: 6px; }
+    .crumb-tag {
+      display: inline-block; background: #423e52; color: #d29922;
+      border-radius: 4px; padding: 1px 6px; margin: 2px 4px 2px 0; font-size: 11px;
+    }
+    .hint { color: #8a879a; font-size: 12px; margin-top: 16px; }
+    code { background: #35333f; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>09 · Sentry 接入示例</h1>
+  <p class="subtitle">用「mock Sentry」拦截 SDK 调用，把本应上报到 Sentry 的事件渲染到下面的捕获面板</p>
+
+  <div class="toolbar">
+    <button id="btn-error" class="danger">触发一个异常</button>
+    <button id="btn-message">手动 captureMessage</button>
+    <button id="btn-crumb" class="ghost">记录一条面包屑</button>
+  </div>
+
+  <!-- 捕获面板：demo.js 会把事件 append 到这里 -->
+  <div id="panel"></div>
+
+  <p class="hint">
+    真实接入见 README。CDN 引入 <code>bundle.tracing.min.js</code> 后调用
+    <code>Sentry.init({ dsn })</code> 即可，无需改动业务代码结构。
+  </p>
+
+  <!-- 经典 script 引入，避免 ESM import，file:// 直接可用 -->
+  <script src="demo.js"></script>
+</body>
+</html>

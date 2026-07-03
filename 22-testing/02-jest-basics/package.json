@@ -1,0 +1,13 @@
+{
+  "name": "02-jest-basics",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jest 基础：describe/it/expect 与常用 matcher",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0"
+  }
+}

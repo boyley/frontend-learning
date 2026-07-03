@@ -1,0 +1,13 @@
+/*
+  v4 只需一行 @import 就引入整个框架（base + components + utilities 全含）。
+  ——对比 v3 需要写三行 @tailwind base; @tailwind components; @tailwind utilities;
+*/
+@import "tailwindcss";
+
+/*
+  v4 的配置是「CSS-first」：主题令牌直接写在 CSS 的 @theme 里，
+  不再需要 tailwind.config.js。这里加一个自定义品牌色做演示。
+*/
+@theme {
+  --color-brand: #6750a4;
+}

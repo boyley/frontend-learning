@@ -1,0 +1,12 @@
+{
+  "name": "05-async-testing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "异步测试：Promise / async-await / done / 假定时器",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0"
+  }
+}

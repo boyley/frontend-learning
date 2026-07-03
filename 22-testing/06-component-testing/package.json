@@ -1,0 +1,17 @@
+{
+  "name": "06-component-testing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "组件测试：Testing Library + jsdom，按用户视角查询与交互",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0",
+    "jest-environment-jsdom": "^30.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@testing-library/jest-dom": "^6.4.8"
+  }
+}

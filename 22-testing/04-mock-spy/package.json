@@ -1,0 +1,12 @@
+{
+  "name": "04-mock-spy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "mock / stub / spy / jest.fn 演示",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0"
+  }
+}

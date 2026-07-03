@@ -1,0 +1,29 @@
+{
+  "name": "graphql-learning",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "前端学习合集 · 27-graphql · GraphQL 进阶工程（可运行 demo + 原理详解）",
+  "scripts": {
+    "01": "node 01-rest-vs-graphql/demo.mjs",
+    "02": "node 02-schema-types/demo.mjs",
+    "03": "node 03-query/demo.mjs",
+    "04": "node 04-mutation/demo.mjs",
+    "05": "node 05-resolver/demo.mjs",
+    "06": "node 06-apollo-server/server.mjs",
+    "06:client": "node 06-apollo-server/client.mjs",
+    "07": "node 07-apollo-client/client.mjs",
+    "08": "node 08-subscription-caching-n1/demo.mjs",
+    "08:server": "node 08-subscription-caching-n1/server.mjs",
+    "08:sub": "node 08-subscription-caching-n1/subscribe-client.mjs"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "dataloader": "^2.2.3",
+    "graphql": "^16.10.0",
+    "graphql-request": "^7.1.2",
+    "graphql-subscriptions": "^3.0.0",
+    "graphql-ws": "^6.0.8",
+    "ws": "^8.18.0"
+  }
+}

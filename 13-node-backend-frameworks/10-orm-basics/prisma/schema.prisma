@@ -1,0 +1,42 @@
+// ============================================================
+// Prisma schema 示例（schema 驱动的 ORM）
+//
+// Prisma 的核心思想：数据模型只有一份「声明式 schema」，
+// 由它自动生成：① 数据库迁移 SQL  ② 类型安全的 Client（TS/JS 都有类型提示）。
+//
+// 常用命令（本 demo 不强制执行，避免联网 / 生成开销）：
+//   npx prisma migrate dev --name init   # 根据 schema 生成并应用迁移，建表
+//   npx prisma generate                  # 生成 @prisma/client（带类型）
+//   npx prisma studio                    # 可视化查看数据
+// ============================================================
+
+// generator：声明要生成的 client（JS/TS 客户端）
+generator client {
+  provider = "prisma-client-js"
+}
+
+// datasource：数据库连接。这里用 SQLite，文件放在 prisma/dev.db
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// model User ↔ users 表
+model User {
+  id        Int      @id @default(autoincrement()) // 自增主键
+  name      String                                 // NOT NULL
+  email     String   @unique                       // 唯一约束
+  age       Int      @default(18)                  // 默认值
+  posts     Post[]                                  // 一对多：一个 User 有多篇 Post
+  createdAt DateTime @default(now())
+}
+
+// model Post，通过 authorId 外键关联到 User（belongsTo）
+model Post {
+  id       Int     @id @default(autoincrement())
+  title    String
+  content  String?
+  // relation：author 指向 User，本表 authorId 引用 User.id
+  author   User    @relation(fields: [authorId], references: [id])
+  authorId Int
+}

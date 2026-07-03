@@ -1,0 +1,40 @@
+/* pages/index/index.wxss —— 页面样式，尺寸用 rpx 自动适配不同屏宽 */
+.h1 {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+}
+.count {
+  font-size: 36rpx;
+  color: #07c160;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.label {
+  font-size: 28rpx;
+  color: #888;
+  display: block;
+  margin-bottom: 16rpx;
+}
+.todo {
+  font-size: 30rpx;
+  color: #333;
+  padding: 8rpx 0;
+}
+.input {
+  flex: 1;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  padding: 12rpx 20rpx;
+  font-size: 28rpx;
+}
+.tip {
+  font-size: 30rpx;
+  color: #e6a23c;
+}

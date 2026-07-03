@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 · 水合（Hydration）原理 Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 24px; background: #0f172a; color: #e2e8f0; line-height: 1.7;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .subtitle { color: #94a3b8; margin: 0 0 20px; font-size: 14px; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 20px; max-width: 560px;
+    }
+    .badge { font-size: 12px; padding: 3px 10px; border-radius: 999px; font-weight: 600; }
+    .badge-dry { background: #7c2d12; color: #fdba74; }
+    .badge-live { background: #14532d; color: #86efac; }
+    #status { font-weight: 600; margin: 12px 0; }
+    button {
+      font-size: 15px; padding: 10px 18px; border-radius: 8px; border: none;
+      background: #3b82f6; color: #fff; cursor: pointer; font-weight: 600;
+    }
+    button:hover { background: #2563eb; }
+    .count { font-size: 22px; font-weight: 700; margin-left: 12px; color: #a5f3fc; }
+    .mismatch {
+      margin-top: 20px; background: #422006; border: 1px solid #854d0e;
+      border-radius: 10px; padding: 14px; font-size: 13px; color: #fde68a; max-width: 560px;
+    }
+    .mismatch code { background: #1c1917; padding: 1px 6px; border-radius: 4px; color: #fca5a5; }
+    .timeline {
+      margin-top: 20px; background: #1e293b; border: 1px solid #334155;
+      border-radius: 12px; padding: 16px; max-width: 560px;
+    }
+    #timeline-log { font-family: ui-monospace, Menlo, monospace; font-size: 13px; white-space: pre-wrap; color: #a5f3fc; }
+    .row { margin: 6px 0; }
+    .label { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>水合（Hydration）原理 Demo</h1>
+  <p class="subtitle">静态 HTML 先「画」出来（点不动）→ JS 加载后 hydrate() 附加事件 → 变得可交互。打开 F12 看时间线。</p>
+
+  <!-- ================================================================
+       下面这张卡片模拟「服务端已经渲染好的静态 HTML」。
+       它一开始就在页面里、看得见，但按钮没有绑定任何事件 = 非交互预览。
+       ================================================================ -->
+  <div class="card" id="app">
+    <div>
+      状态：<span class="badge badge-dry" id="hydrate-badge">未水合（静态 HTML，点按钮无反应）</span>
+    </div>
+    <div id="status">这段卡片是「服务端渲染」的静态内容，先于 JS 显示。</div>
+
+    <!-- 计数按钮：HTML 里已存在，但事件要等 hydrate() 才绑上 -->
+    <button id="counter-btn">点我计数（水合前无效）</button>
+    <span class="count" id="count-view">0</span>
+
+    <!-- ↓↓↓ 水合不匹配演示点 ↓↓↓
+         这个「服务端渲染时间」是写死在 HTML 里的时间戳（模拟服务器生成 HTML 的时刻）。
+         下方 JS 会另取一个「客户端水合时间」。两者不同——
+         如果在真实 React 里直接用 new Date() 参与渲染，服务端字符串与客户端首渲染就会不一致，
+         触发 hydration mismatch 警告。 -->
+    <div class="row" style="margin-top:14px;">
+      <span class="label">服务端渲染时间（写死在 HTML）：</span>
+      <span id="server-time">2026-06-30 09:00:00</span>
+    </div>
+    <div class="row">
+      <span class="label">客户端水合时间（JS 运行时取）：</span>
+      <span id="client-time">水合后填入…</span>
+    </div>
+  </div>
+
+  <div class="mismatch">
+    ⚠️ <b>水合不匹配（Hydration Mismatch）演示</b>：上面「服务端时间」与「客户端时间」不同。
+    在真实 React 中，若让 <code>new Date()</code> / <code>Math.random()</code> 直接参与渲染，
+    服务端 HTML 与客户端首次渲染结果就会不一致，React 会报警告并丢弃该处服务端 DOM 重画。
+    正确做法：把这类「仅客户端才确定的值」放到 <code>useEffect</code> 里延后设置，
+    或对该单点使用 <code>suppressHydrationWarning</code>。
+  </div>
+
+  <div class="timeline">
+    <h2 style="font-size:15px;margin:0 0 10px;">⏱️ 水合时间线（同步打印到 Console）</h2>
+    <div id="timeline-log">收集中…</div>
+  </div>
+
+  <script>
+    // =====================================================================
+    // 用原生 JS 模拟 React 的 hydrateRoot：复用已有 DOM，只「附加事件」。
+    // =====================================================================
+    const logs = [];
+    function addLine(label) {
+      const line = `[+${performance.now().toFixed(1)}ms] ${label}`;
+      logs.push(line);
+      console.log(line);
+      document.getElementById('timeline-log').textContent = logs.join('\n');
+    }
+
+    // 1) 静态 HTML 已显示（对应 FCP：看得到内容，但按钮还没绑事件）
+    addLine('静态 HTML 已显示 → 用户看得到内容，但按钮点了没反应（非交互预览）');
+
+    // 计数状态：注意水合前这个逻辑还没接上按钮
+    let count = 0;
+
+    // hydrate()：模拟客户端 JS 接管——不重建 DOM，只给已有按钮附加事件处理器
+    function hydrate() {
+      addLine('JS 已加载，开始水合 hydrate() …');
+
+      const btn = document.getElementById('counter-btn');
+      // 关键：复用页面上已存在的按钮节点（不 innerHTML 重建），仅 addEventListener
+      btn.addEventListener('click', () => {
+        count += 1;
+        document.getElementById('count-view').textContent = count;
+      });
+      btn.textContent = '点我计数（已水合，有效）';
+
+      // 填入「客户端水合时间」——与写死的服务端时间不同，演示 mismatch 成因
+      document.getElementById('client-time').textContent =
+        new Date().toLocaleString('zh-CN');
+
+      // 更新状态徽章为「已水合」
+      const badge = document.getElementById('hydrate-badge');
+      badge.textContent = '已水合（事件已附加，可交互）';
+      badge.className = 'badge badge-live';
+      document.getElementById('status').textContent =
+        '✅ 水合完成：事件处理器已附加到原有 DOM 上，现在按钮可以计数了。';
+
+      addLine('水合完成 → 事件已附加，页面可交互（对应 TTI）✅');
+    }
+
+    // 故意延迟 1.5s 再水合，模拟「下载/执行 JS 的耗时」，
+    // 让你有时间在水合前先点一次按钮，亲身验证「点了没反应」。
+    addLine('等待 JS 下载执行中…（此窗口内点按钮无反应，请试试）');
+    setTimeout(hydrate, 1500);
+  </script>
+</body>
+</html>

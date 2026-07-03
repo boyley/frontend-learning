@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 · 上报策略</title>
+  <style>
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0; padding: 24px; background: #0d1117; color: #c9d1d9; line-height: 1.6;
+    }
+    h1 { color: #58a6ff; font-size: 22px; margin: 0 0 4px; }
+    .subtitle { color: #8b949e; margin: 0 0 20px; font-size: 14px; }
+
+    .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+    button {
+      background: #238636; color: #fff; border: none; border-radius: 6px;
+      padding: 10px 16px; font-size: 14px; cursor: pointer; transition: background .15s;
+    }
+    button:hover { background: #2ea043; }
+    button.ghost { background: #21262d; border: 1px solid #30363d; }
+    button.ghost:hover { background: #30363d; }
+
+    .sample-ctl { display: flex; align-items: center; gap: 8px; color: #8b949e; font-size: 13px; }
+    .sample-ctl b { color: #58a6ff; }
+
+    /* 状态栏：显示当前队列缓冲情况 */
+    #status {
+      background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+      padding: 8px 12px; font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+      margin-bottom: 16px; color: #8b949e;
+    }
+    #status .num { color: #d29922; font-weight: bold; }
+
+    /* 网络日志面板：模拟发出的请求 */
+    #panel {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 16px; min-height: 140px;
+      font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px;
+    }
+    .req {
+      border-left: 3px solid #58a6ff; padding: 8px 12px; margin-bottom: 10px;
+      background: #1c2128; border-radius: 0 6px 6px 0;
+    }
+    .req.beacon { border-left-color: #3fb950; }
+    .req.image  { border-left-color: #d29922; }
+    .req.fetch  { border-left-color: #a371f7; }
+    .req .time { color: #6e7681; float: right; font-size: 11px; }
+    .req .transport {
+      display: inline-block; border-radius: 4px; padding: 1px 6px;
+      font-size: 11px; font-weight: bold; margin-right: 8px; color: #0d1117;
+    }
+    .req.beacon .transport { background: #3fb950; }
+    .req.image  .transport { background: #d29922; }
+    .req.fetch  .transport { background: #a371f7; }
+    .req pre { margin: 6px 0 0; white-space: pre-wrap; color: #8b949e; font-size: 12px; }
+    code { background: #21262d; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>10 · 上报策略</h1>
+  <p class="subtitle">mini Reporter：入队 → 采样 → 缓冲 → 触发条件 → 合并 → 选传输 → 发送，直观看到「多条合并成一次、部分被采样丢弃」</p>
+
+  <div class="toolbar">
+    <button id="btn-gen">产生一个事件</button>
+    <button id="btn-gen5" class="ghost">一次产生 5 个</button>
+    <button id="btn-flush" class="ghost">手动 flush</button>
+    <span class="sample-ctl">
+      采样率 <b id="rate-label">1.0</b>
+      <button id="btn-rate" class="ghost">切换采样率</button>
+    </span>
+  </div>
+
+  <div id="status">队列缓冲：<span class="num" id="buf-count">0</span> 条 ·
+    已丢弃（采样）：<span class="num" id="drop-count">0</span> 条 ·
+    达 <span class="num">5</span> 条或 <span class="num">5s</span> 或页面隐藏时自动 flush</div>
+
+  <!-- 网络日志面板：demo.js 把「模拟发出的请求」append 到这里 -->
+  <div id="panel"></div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

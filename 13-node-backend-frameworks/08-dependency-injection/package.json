@@ -1,0 +1,14 @@
+{
+  "name": "08-dependency-injection",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node demo.js",
+    "reflect": "node reflect-demo.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "reflect-metadata": "^0.2.2"
+  }
+}

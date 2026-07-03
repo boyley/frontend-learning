@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浏览器存储机制 Demo · Client-Side Storage</title>
+<style>
+  :root { --bd: #e2e8f0; --bg: #f8fafc; --ac: #4f46e5; --mut: #64748b; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin: 0; padding: 24px; background: var(--bg); color: #1e293b; line-height: 1.6;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--mut); margin: 0 0 20px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  .card { background: #fff; border: 1px solid var(--bd); border-radius: 12px; padding: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 4px; }
+  .card .desc { font-size: 12px; color: var(--mut); margin: 0 0 12px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  input {
+    flex: 1; min-width: 100px; padding: 6px 10px; border: 1px solid var(--bd);
+    border-radius: 6px; font-size: 13px;
+  }
+  button {
+    padding: 6px 12px; border: 0; border-radius: 6px; background: var(--ac);
+    color: #fff; font-size: 13px; cursor: pointer;
+  }
+  button.ghost { background: #eef2ff; color: var(--ac); }
+  button.danger { background: #fee2e2; color: #dc2626; }
+  button:hover { opacity: .9; }
+  pre {
+    background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px;
+    font-size: 12px; margin: 8px 0 0; max-height: 160px; overflow: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .tip { font-size: 12px; color: var(--mut); margin-top: 24px; padding: 12px;
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; }
+  code { background: #eef2ff; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>🗄️ 浏览器存储机制 Demo</h1>
+  <p class="sub">分别演示 localStorage / sessionStorage / Cookie / IndexedDB / Cache Storage。打开 DevTools → Application 面板对照观察。</p>
+
+  <div class="grid">
+
+    <!-- ===================== localStorage ===================== -->
+    <div class="card">
+      <h2>1 · localStorage</h2>
+      <p class="desc">同步、持久（除非手动清）、同源共享、~5-10MB、不随请求发送。</p>
+      <div class="row">
+        <input id="ls-k" placeholder="键 key" value="theme">
+        <input id="ls-v" placeholder="值 value" value="dark">
+      </div>
+      <div class="row">
+        <button onclick="lsSet()">存 setItem</button>
+        <button class="ghost" onclick="lsDel()">删所选键</button>
+        <button class="danger" onclick="localStorage.clear(); renderLS()">clear 全清</button>
+      </div>
+      <pre id="ls-out"></pre>
+    </div>
+
+    <!-- ===================== sessionStorage ===================== -->
+    <div class="card">
+      <h2>2 · sessionStorage</h2>
+      <p class="desc">同步、仅当前标签页会话（关标签页即清）、新开标签页不共享。</p>
+      <div class="row">
+        <input id="ss-k" placeholder="键 key" value="step">
+        <input id="ss-v" placeholder="值 value" value="checkout-1">
+      </div>
+      <div class="row">
+        <button onclick="ssSet()">存 setItem</button>
+        <button class="ghost" onclick="ssDel()">删所选键</button>
+        <button class="danger" onclick="sessionStorage.clear(); renderSS()">clear 全清</button>
+      </div>
+      <pre id="ss-out"></pre>
+    </div>
+
+    <!-- ===================== Cookie ===================== -->
+    <div class="card">
+      <h2>3 · Cookie</h2>
+      <p class="desc">~4KB、随每次同源请求自动发送、可设 Max-Age / SameSite。（本地 file:// 未加 Secure/HttpOnly）</p>
+      <div class="row">
+        <input id="ck-k" placeholder="键 key" value="sid">
+        <input id="ck-v" placeholder="值 value" value="abc123">
+      </div>
+      <div class="row">
+        <button onclick="ckSet()">写 Cookie(1h)</button>
+        <button class="ghost" onclick="ckDel()">删所选键</button>
+      </div>
+      <pre id="ck-out"></pre>
+    </div>
+
+    <!-- ===================== IndexedDB ===================== -->
+    <div class="card">
+      <h2>4 · IndexedDB</h2>
+      <p class="desc">异步、事务型 NoSQL、可存大量结构化数据 / Blob。用原生 API + 游标遍历。</p>
+      <div class="row">
+        <input id="idb-text" placeholder="笔记内容 text" value="学会了 IndexedDB">
+      </div>
+      <div class="row">
+        <button onclick="idbAdd()">add 增</button>
+        <button class="ghost" onclick="idbRender()">读全部</button>
+        <button class="danger" onclick="idbClear()">clear 全清</button>
+      </div>
+      <pre id="idb-out"></pre>
+    </div>
+
+    <!-- ===================== Cache Storage ===================== -->
+    <div class="card">
+      <h2>5 · Cache Storage（可选）</h2>
+      <p class="desc">存 Request/Response 对，PWA 离线基石。并显示 storage 配额估算。</p>
+      <div class="row">
+        <button onclick="cachePut()">写一条缓存</button>
+        <button class="ghost" onclick="cacheRender()">读缓存 & 配额</button>
+        <button class="danger" onclick="cacheClear()">删缓存</button>
+      </div>
+      <pre id="cache-out"></pre>
+    </div>
+
+  </div>
+
+  <div class="tip">
+    💡 <b>观察建议</b>：F12 → <code>Application</code> 面板可看到每种存储的真实内容。
+    试试：localStorage 存一条后<b>刷新/重开浏览器仍在</b>；sessionStorage 存一条后<b>关标签页再开就没了</b>；
+    在 <code>Network</code> 面板看请求头里 Cookie 被自动带上；改 <code>document.cookie</code> 后对照 Application → Cookies。
+  </div>
+
+<script>
+// ========================================================================
+// 工具：把 Storage 里所有键值渲染成文本
+// ========================================================================
+function dumpStorage(store) {
+  if (store.length === 0) return '（空）';
+  let s = '';
+  for (let i = 0; i < store.length; i++) {
+    const k = store.key(i);
+    s += `${k} = ${store.getItem(k)}\n`;
+  }
+  return s.trim();
+}
+
+// ========================================================================
+// 1 · localStorage —— 同步 API，持久
+// ========================================================================
+function lsSet() {
+  const k = document.getElementById('ls-k').value.trim();
+  if (!k) return;
+  localStorage.setItem(k, document.getElementById('ls-v').value); // 只能存字符串
+  renderLS();
+}
+function lsDel() {
+  localStorage.removeItem(document.getElementById('ls-k').value.trim());
+  renderLS();
+}
+function renderLS() { document.getElementById('ls-out').textContent = dumpStorage(localStorage); }
+
+// ========================================================================
+// 2 · sessionStorage —— 同名 API，区别仅生命周期
+// ========================================================================
+function ssSet() {
+  const k = document.getElementById('ss-k').value.trim();
+  if (!k) return;
+  sessionStorage.setItem(k, document.getElementById('ss-v').value);
+  renderSS();
+}
+function ssDel() {
+  sessionStorage.removeItem(document.getElementById('ss-k').value.trim());
+  renderSS();
+}
+function renderSS() { document.getElementById('ss-out').textContent = dumpStorage(sessionStorage); }
+
+// ========================================================================
+// 3 · Cookie —— 字符串拼接，注意属性与手动解析
+// ========================================================================
+function ckSet() {
+  const k = document.getElementById('ck-k').value.trim();
+  if (!k) return;
+  const v = encodeURIComponent(document.getElementById('ck-v').value);
+  // path=/ 全站可读；max-age=3600 存活 1 小时；SameSite=Lax 防 CSRF
+  // 线上真实场景认证 Cookie 还应加 Secure（HTTPS）与 HttpOnly（服务器下发，JS 不可读）
+  document.cookie = `${k}=${v}; path=/; max-age=3600; SameSite=Lax`;
+  renderCK();
+}
+function ckDel() {
+  const k = document.getElementById('ck-k').value.trim();
+  // 删除 = 把 max-age 设为 0（同 path）
+  document.cookie = `${k}=; path=/; max-age=0`;
+  renderCK();
+}
+function renderCK() {
+  // document.cookie 是一整串 "a=1; b=2"，需自己 split 解析（读不到 HttpOnly 的）
+  const raw = document.cookie;
+  document.getElementById('ck-out').textContent = raw
+    ? raw.split('; ').map(p => {
+        const i = p.indexOf('=');
+        return `${p.slice(0, i)} = ${decodeURIComponent(p.slice(i + 1))}`;
+      }).join('\n')
+    : '（无 JS 可读 Cookie）';
+}
+
+// ========================================================================
+// 4 · IndexedDB —— 异步、事务、对象仓库、游标、版本升级
+// ========================================================================
+const DB_NAME = 'demo-db', STORE = 'notes', DB_VER = 1;
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    // 只有版本号变化时才进这里 —— 建对象仓库 / 索引的唯一时机
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const store = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('by_time', 'time'); // 建一个索引示例
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+async function idbAdd() {
+  const text = document.getElementById('idb-text').value.trim();
+  if (!text) return;
+  const db = await openDB();
+  const tx = db.transaction(STORE, 'readwrite'); // 所有写操作都在事务里
+  tx.objectStore(STORE).add({ text, time: Date.now() });
+  tx.oncomplete = () => { db.close(); idbRender(); };
+}
+async function idbRender() {
+  const db = await openDB();
+  const store = db.transaction(STORE, 'readonly').objectStore(STORE);
+  const rows = [];
+  // 用游标遍历，避免一次性把所有记录读进内存
+  store.openCursor().onsuccess = (e) => {
+    const cursor = e.target.result;
+    if (cursor) {
+      const r = cursor.value;
+      rows.push(`#${r.id}  ${r.text}  (${new Date(r.time).toLocaleTimeString()})`);
+      cursor.continue();
+    } else {
+      document.getElementById('idb-out').textContent = rows.length ? rows.join('\n') : '（空）';
+      db.close();
+    }
+  };
+}
+async function idbClear() {
+  const db = await openDB();
+  const tx = db.transaction(STORE, 'readwrite');
+  tx.objectStore(STORE).clear();
+  tx.oncomplete = () => { db.close(); idbRender(); };
+}
+
+// ========================================================================
+// 5 · Cache Storage + 配额估算
+// ========================================================================
+const CACHE_NAME = 'demo-cache-v1';
+async function cachePut() {
+  if (!('caches' in window)) { document.getElementById('cache-out').textContent = '当前环境不支持 Cache API'; return; }
+  const cache = await caches.open(CACHE_NAME);
+  // 手动构造一对 Request / Response 存入
+  await cache.put(
+    new Request('/demo/hello.txt'),
+    new Response('你好，我是缓存的响应体 @ ' + new Date().toLocaleTimeString(),
+      { headers: { 'Content-Type': 'text/plain' } })
+  );
+  cacheRender();
+}
+async function cacheRender() {
+  const out = document.getElementById('cache-out');
+  if (!('caches' in window)) { out.textContent = '当前环境不支持 Cache API'; return; }
+  const cache = await caches.open(CACHE_NAME);
+  const keys = await cache.keys();
+  let lines = ['缓存条目：'];
+  for (const req of keys) {
+    const res = await cache.match(req);
+    lines.push(`  ${req.url} → ${await res.text()}`);
+  }
+  if (keys.length === 0) lines.push('  （空）');
+  // 配额估算
+  if (navigator.storage && navigator.storage.estimate) {
+    const { usage, quota } = await navigator.storage.estimate();
+    lines.push('', `已用 ${(usage/1024).toFixed(1)} KB / 配额 ${(quota/1024/1024).toFixed(0)} MB`);
+  }
+  out.textContent = lines.join('\n');
+}
+async function cacheClear() {
+  if ('caches' in window) await caches.delete(CACHE_NAME);
+  cacheRender();
+}
+
+// ========================================================================
+// 跨标签页通信：其它标签页改动 localStorage 会触发 storage 事件
+// ========================================================================
+window.addEventListener('storage', (e) => {
+  console.log('[storage 事件] 另一个标签页改了 localStorage：', e.key, e.oldValue, '→', e.newValue);
+  renderLS();
+});
+
+// ========================================================================
+// 初始渲染
+// ========================================================================
+renderLS(); renderSS(); renderCK(); idbRender(); cacheRender();
+</script>
+</body>
+</html>

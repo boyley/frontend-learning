@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <!-- CSP：限制页面只能跑自己的脚本，Electron 安全最佳实践 -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>Electron 进程模型入门</title>
+  <style>
+    body { font-family: -apple-system, "PingFang SC", sans-serif; padding: 40px; background: #f5f6fa; color: #2f3542; }
+    .card { background: #fff; padding: 28px; border-radius: 12px; max-width: 560px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    h1 { margin-top: 0; }
+    code { background: #eef; padding: 2px 6px; border-radius: 4px; }
+    .row { margin: 8px 0; }
+    .k { color: #747d8c; display: inline-block; width: 90px; }
+  </style>
+</head>
+<body>
+  <!-- 这段 HTML 跑在【渲染进程 Renderer Process】里，本质是一个 Chromium 页面 -->
+  <div class="card">
+    <h1>👋 Electron 进程模型</h1>
+    <p>本页面运行在 <b>渲染进程</b>（Chromium）。下面的版本号由 <b>预加载脚本</b> 经 <code>contextBridge</code> 注入，页面并没有直接访问 Node。</p>
+    <div class="row"><span class="k">Electron</span><b id="electron"></b></div>
+    <div class="row"><span class="k">Chromium</span><b id="chrome"></b></div>
+    <div class="row"><span class="k">Node</span><b id="node"></b></div>
+    <div class="row"><span class="k">平台</span><b id="platform"></b></div>
+  </div>
+
+  <script>
+    // window.appInfo 来自 preload.js 的 contextBridge，而非直接 require('electron')
+    const v = window.appInfo.versions;
+    document.getElementById('electron').textContent = v.electron;
+    document.getElementById('chrome').textContent = v.chrome;
+    document.getElementById('node').textContent = v.node;
+    document.getElementById('platform').textContent = window.appInfo.platform;
+  </script>
+</body>
+</html>

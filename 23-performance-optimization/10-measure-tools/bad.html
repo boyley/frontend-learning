@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>❌ 待测页（未优化）· 供 Lighthouse 对比</title>
+
+  <!-- ❌ 反模式 1：head 里的同步脚本，busy-wait 阻塞渲染 900ms。
+       Lighthouse 会体现为 FCP/LCP 变差、TBT 升高。 -->
+  <script>
+    const t0 = Date.now();
+    while (Date.now() - t0 < 900) { /* 同步空转，阻塞首屏渲染 */ }
+  </script>
+</head>
+<body>
+  <h1>未优化页面</h1>
+  <p>这是一个故意写差的页面，用来在 Lighthouse 里和 <code>good.html</code> 对比分数。</p>
+
+  <!-- ❌ 反模式 2：图片不写 width/height，加载后挤动下方内容 → CLS。 -->
+  <img
+    src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='340'><rect width='600' height='340' fill='%23d93025'/><text x='50%25' y='50%25' fill='white' font-size='28' text-anchor='middle'>LCP 大图（无尺寸）</text></svg>"
+    alt="示例大图" />
+
+  <p>正文内容会因为上方图片没有预留尺寸而在图片加载时向下跳动。</p>
+
+  <!-- ❌ 反模式 3：点击后主线程空转 250ms，形成长任务 → INP/TBT 变差。 -->
+  <button id="btn">点我（会卡 250ms）</button>
+  <script>
+    document.getElementById('btn').addEventListener('click', () => {
+      const t0 = performance.now();
+      while (performance.now() - t0 < 250) { /* 长任务，独占主线程 */ }
+      alert('处理完成（期间主线程被阻塞）');
+    });
+  </script>
+</body>
+</html>

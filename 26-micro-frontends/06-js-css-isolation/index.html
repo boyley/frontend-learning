@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS 沙箱 / CSS 隔离 · 可运行 Demo</title>
+    <style>
+      body {
+        font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        max-width: 880px;
+        margin: 24px auto;
+        padding: 0 16px;
+        line-height: 1.7;
+        color: #222;
+      }
+      h1 { font-size: 22px; }
+      section {
+        border: 1px solid #e2e2e2;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 20px 0;
+        background: #fafafa;
+      }
+      h2 { font-size: 17px; margin-top: 0; color: #2c5aa0; }
+      button {
+        padding: 6px 14px;
+        margin: 4px 6px 4px 0;
+        border: none;
+        border-radius: 4px;
+        background: #2c5aa0;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:hover { background: #1e3f73; }
+      pre {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      /* 这是「外部」的同名 class，用来和 Shadow DOM 内部同名 class 做对比 */
+      .box {
+        padding: 10px;
+        border: 2px dashed #888;
+        color: #333;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>微前端核心：JS 沙箱 / CSS 隔离（真实可运行）</h1>
+    <p>
+      多个子应用共享同一个 <code>window</code> / <code>document</code>，全局变量与 CSS
+      会互相污染。下面三个例子分别演示：<b>Proxy 代理沙箱</b>、<b>快照沙箱</b>、<b>Shadow DOM 样式隔离</b>。
+      点按钮，结果会打印到黑框里。
+    </p>
+
+    <!-- ================= 例 1：Proxy 代理沙箱 ================= -->
+    <section>
+      <h2>① Proxy 代理沙箱 ProxySandbox</h2>
+      <p>
+        用 <code>Proxy</code> 拦截 window 的读写：写操作落在 <code>fakeWindow</code> 上，
+        <b>不污染真实 window</b>；支持多实例（每个子应用一个独立 fakeWindow）。
+      </p>
+      <button onclick="runProxySandbox()">运行 Proxy 沙箱</button>
+      <pre id="out-proxy">点上面按钮运行…</pre>
+    </section>
+
+    <!-- ================= 例 2：快照沙箱 ================= -->
+    <section>
+      <h2>② 快照沙箱 SnapshotSandbox</h2>
+      <p>
+        激活时给整个 window 拍一张「快照」，子应用运行期间可随意改真实 window；
+        卸载时对比快照，把被改动/新增的属性<b>还原</b>。兼容不支持 Proxy 的老环境，
+        缺点：直接操作真实 window，<b>同一时刻只能有一个沙箱激活</b>。
+      </p>
+      <button onclick="runSnapshotSandbox()">运行 快照沙箱</button>
+      <pre id="out-snapshot">点上面按钮运行…</pre>
+    </section>
+
+    <!-- ================= 例 3：Shadow DOM ================= -->
+    <section>
+      <h2>③ Shadow DOM 样式隔离（strictStyleIsolation）</h2>
+      <p>
+        外部有一个 <code>.box</code>（灰色虚线框）。我们用 <code>attachShadow</code>
+        创建一个 Shadow DOM，内部也放一个 <code>.box</code> 并写<b>完全不同</b>的样式。
+        由于 Shadow DOM 天然隔离，内部样式不会外泄、外部样式也进不去。
+      </p>
+      <div class="box">我是【外部】的 .box（灰色虚线、白底）——我的样式不会被下面影响</div>
+      <button onclick="runShadowDom()">创建 Shadow DOM 并对比</button>
+      <div id="shadow-host" style="margin-top:10px"></div>
+      <pre id="out-shadow">点上面按钮运行…</pre>
+    </section>
+
+    <script>
+      // 小工具：把文本追加打印到指定的 <pre> 里
+      function log(id, text) {
+        const el = document.getElementById(id);
+        el.textContent += (el.textContent.endsWith('…') ? '' : '\n') + text;
+      }
+      function clear(id) {
+        document.getElementById(id).textContent = '';
+      }
+
+      // ====================================================================
+      // 例 1：Proxy 代理沙箱
+      // 思路：给子应用一个假的 window（fakeWindow）。子应用所有 window.xxx = ...
+      // 的写操作，被 Proxy 的 set 拦截，写进 fakeWindow，不碰真实 window。
+      // 读操作 get 时：fakeWindow 有就返回自己的，没有就回退到真实 window。
+      // ====================================================================
+      function createProxySandbox() {
+        const fakeWindow = {}; // 子应用私有的「假 window」
+        const proxy = new Proxy(fakeWindow, {
+          // 拦截写：value 只落在 fakeWindow，真实 window 毫发无伤
+          set(target, key, value) {
+            target[key] = value;
+            return true; // Proxy set 必须返回 true 表示成功
+          },
+          // 拦截读：优先读 fakeWindow，读不到再回退真实 window
+          get(target, key) {
+            if (key in target) return target[key];
+            const real = window[key];
+            // 像 alert / console 这种真实 window 上的函数，要绑定 this=window 再返回，
+            // 否则子应用调用时 this 指向 proxy 会报错
+            return typeof real === 'function' ? real.bind(window) : real;
+          },
+          // 拦截 in 判断，让 'xxx' in proxyWindow 也能正确工作
+          has(target, key) {
+            return key in target || key in window;
+          },
+        });
+        return proxy;
+      }
+
+      function runProxySandbox() {
+        clear('out-proxy');
+        const proxyWindow = createProxySandbox();
+
+        // 子应用往「它以为的 window」上写一个全局变量
+        proxyWindow.appName = '我是子应用A的全局变量';
+        log('out-proxy', '在 proxyWindow 上写: appName = "我是子应用A的全局变量"');
+        log('out-proxy', 'proxyWindow.appName  = ' + proxyWindow.appName);
+        // 关键证明：真实 window 上根本没有 appName
+        log('out-proxy', 'window.appName（真实）= ' + window.appName + '  ← undefined，真实 window 未被污染！');
+
+        // 再演示多实例：第二个子应用有自己独立的 fakeWindow
+        const proxyWindow2 = createProxySandbox();
+        proxyWindow2.appName = '我是子应用B的全局变量';
+        log('out-proxy', '\n多实例验证：');
+        log('out-proxy', '子应用A.appName = ' + proxyWindow.appName);
+        log('out-proxy', '子应用B.appName = ' + proxyWindow2.appName + '  ← 两个沙箱互不干扰');
+
+        // 读回退演示：fakeWindow 没有 location，会回退到真实 window
+        log('out-proxy', '\n读回退：proxyWindow.location.host = ' + proxyWindow.location.host + '  ← 自动回退到真实 window');
+      }
+
+      // ====================================================================
+      // 例 2：快照沙箱
+      // activate(): 遍历真实 window 拍快照 snapshot；
+      // 运行期间：子应用直接改真实 window（会临时污染）；
+      // deactivate(): 对比当前 window 与 snapshot，恢复被改的、删除新增的。
+      // ====================================================================
+      function createSnapshotSandbox() {
+        let snapshot = {}; // 激活时的 window 快照
+        return {
+          activate() {
+            snapshot = {};
+            // 遍历真实 window 自身的可枚举属性，逐个记录当前值
+            for (const key in window) {
+              if (Object.prototype.hasOwnProperty.call(window, key)) {
+                snapshot[key] = window[key];
+              }
+            }
+          },
+          deactivate() {
+            const restored = [];
+            const removed = [];
+            // 1) 恢复：快照里有、但现在被改动的属性
+            for (const key in snapshot) {
+              if (window[key] !== snapshot[key]) {
+                window[key] = snapshot[key];
+                restored.push(key);
+              }
+            }
+            // 2) 删除：子应用运行期间新增、快照里没有的属性
+            for (const key in window) {
+              if (
+                Object.prototype.hasOwnProperty.call(window, key) &&
+                !Object.prototype.hasOwnProperty.call(snapshot, key)
+              ) {
+                delete window[key];
+                removed.push(key);
+              }
+            }
+            return { restored, removed };
+          },
+        };
+      }
+
+      function runSnapshotSandbox() {
+        clear('out-snapshot');
+        const sandbox = createSnapshotSandbox();
+
+        // 先给真实 window 一个初始值，观察它会被还原
+        window.theme = 'light';
+        log('out-snapshot', '激活前：window.theme = ' + window.theme);
+
+        // === 激活：拍快照 ===
+        sandbox.activate();
+        log('out-snapshot', '→ activate() 已拍下 window 快照');
+
+        // === 子应用运行：修改 + 新增全局变量（真实 window 被临时污染）===
+        window.theme = 'dark';        // 修改已有
+        window.subAppData = 'hello';  // 新增
+        log('out-snapshot', '子应用运行中：window.theme 改为 "' + window.theme + '"，新增 window.subAppData = "' + window.subAppData + '"');
+
+        // === 卸载：还原 ===
+        const result = sandbox.deactivate();
+        log('out-snapshot', '→ deactivate() 还原被改动的属性: [' + result.restored.join(', ') + ']');
+        log('out-snapshot', '→ deactivate() 删除新增的属性: [' + result.removed.join(', ') + ']');
+        log('out-snapshot', '\n还原后：window.theme = ' + window.theme + '  ← 恢复成 light');
+        log('out-snapshot', '还原后：window.subAppData = ' + window.subAppData + '  ← 变回 undefined，干净了');
+
+        // 清理演示用的属性
+        delete window.theme;
+      }
+
+      // ====================================================================
+      // 例 3：Shadow DOM 样式隔离
+      // attachShadow({mode:'open'}) 创建一个隔离的 DOM 子树，
+      // 里面的 <style> 只作用于 shadow 内部；外部 CSS 也进不来。
+      // ====================================================================
+      function runShadowDom() {
+        clear('out-shadow');
+        const host = document.getElementById('shadow-host');
+        host.innerHTML = ''; // 支持重复点击，先清空
+
+        // 创建 Shadow Root（open 表示外部 JS 可通过 host.shadowRoot 访问）
+        const shadow = host.attachShadow({ mode: 'open' });
+
+        // 往 shadow 内部注入「同名 .box」但样式完全不同的内容
+        shadow.innerHTML = `
+          <style>
+            /* 这个 .box 只在 Shadow DOM 内部生效，不会影响外部同名 .box */
+            .box {
+              padding: 10px;
+              border: 3px solid #e0532f;
+              background: #fff3e0;
+              color: #e0532f;
+              font-weight: bold;
+              border-radius: 6px;
+            }
+          </style>
+          <div class="box">我是【Shadow DOM 内部】的 .box（橙色实线、橙底）——样式被隔离</div>
+        `;
+
+        log('out-shadow', '已创建 Shadow DOM。请对比页面上两个 .box：');
+        log('out-shadow', '外部 .box：灰色虚线、白底、黑字（未受影响）');
+        log('out-shadow', 'Shadow 内 .box：橙色实线、橙底、橙字（样式未外泄）');
+        log('out-shadow', '\n证明：两个元素 class 同名，样式却互不干扰 —— 这就是 strictStyleIsolation 的原理。');
+
+        // 用 JS 证明隔离：外部 document.querySelector('.box') 选不到 shadow 内部的节点
+        const outerBoxes = document.querySelectorAll('.box').length;
+        const innerBoxes = shadow.querySelectorAll('.box').length;
+        log('out-shadow', '\ndocument.querySelectorAll(".box") 命中 ' + outerBoxes + ' 个（只含外部，选不到 shadow 内部）');
+        log('out-shadow', 'shadow.querySelectorAll(".box") 命中 ' + innerBoxes + ' 个（shadow 内部独立作用域）');
+      }
+    </script>
+  </body>
+</html>

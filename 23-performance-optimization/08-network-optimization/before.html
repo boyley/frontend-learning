@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化前 · 无任何资源提示（before）</title>
+
+  <!--
+    ⚠️ 反面教材：这个页面「什么资源提示都不用」。
+    对照 after.html 看差异：
+      - <head> 里没有 preconnect / dns-prefetch / preload / prefetch。
+      - 首屏大图 hero.svg 用普通 <img>，没有 fetchpriority，浏览器按默认优先级、
+        且要等 HTML 解析到这里才发现它、才开始下载（发现得晚）。
+      - 依赖 CSS/JS 才用到的资源（字体、样式、脚本）都要等「解析到用它的地方」才被发现。
+    页面底部用 PerformanceObserver('resource') 把每个资源的耗时列出来，
+    可在 DevTools → Network 面板对照观察真实的发起时机与优先级。
+  -->
+
+  <!-- ❌ 没有任何 <link rel="preconnect/dns-prefetch/preload/prefetch"> -->
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; background: #f5f7fa; color: #1a1a1a; }
+    header { padding: 20px 24px; background: #b91c1c; color: #fff; }
+    header h1 { margin: 6px 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .92; font-size: 13px; line-height: 1.6; }
+    .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #fee2e2; color: #b91c1c; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .hero { width: 100%; height: auto; display: block; border-radius: 12px; }
+    .tip { background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.8; color: #5f4300; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; }
+    th { background: #fafafa; color: #666; font-weight: 600; }
+    td:first-child { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+    .table-scroll { overflow-x: auto; border-radius: 12px; }
+    #protoNote { display: none; margin-top: 10px; font-size: 12px; color: #b91c1c; }
+    h2 { font-size: 15px; margin: 24px 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">BEFORE · 无资源提示</span>
+    <h1>优化前：不使用任何 Resource Hints</h1>
+    <p>所有资源都要等 HTML/CSS 解析到「用它的地方」才被发现，连接也要现用现建。</p>
+  </header>
+
+  <div class="wrap">
+    <!-- ❌ 首屏大图：普通 <img>，无 fetchpriority、无 preload，发现和下载都偏晚 -->
+    <img class="hero" src="./assets/hero.svg" alt="首屏大图（未做任何加载优化）" />
+
+    <p class="tip">
+      👀 <b>观察方法</b>：打开 <b>DevTools → Network</b>，勾选 Disable cache，节流选 Slow 4G，刷新本页。<br>
+      注意 <code>hero.svg</code> 的 <b>Priority</b> 列与发起时机；再对照 <code>after.html</code>，
+      后者用 preload + fetchpriority 让它更早、更高优先级地下载。
+    </p>
+
+    <h2>📊 Resource Timing（本页加载的资源耗时）</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>资源</th><th>类型</th><th>DNS(ms)</th><th>TCP(ms)</th><th>TTFB(ms)</th><th>总耗时(ms)</th><th>传输体积</th>
+          </tr>
+        </thead>
+        <tbody id="resTbody"></tbody>
+      </table>
+    </div>
+    <div id="protoNote">⚠️ 你正用 file:// 打开，transferSize 与部分子时段可能为 0；用本地服务器（python3 -m http.server）打开更准确。</div>
+  </div>
+
+  <script>
+    // ❌ 反面：这些「间接资源」都是运行到这里才动态创建、才被发现的，没有提前 preload。
+    //    在真实项目里它们往往藏在 CSS（字体）或 JS（异步 chunk）里，发现得很晚。
+    // 动态加载本地样式与脚本，让它们出现在 Resource Timing 里。
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = './assets/theme.css';   // 没有被 preload，等到此刻才请求
+    document.head.appendChild(link);
+
+    const s = document.createElement('script');
+    s.src = './assets/widget.js';        // 没有被 preload
+    document.body.appendChild(s);
+  </script>
+
+  <!-- 资源耗时观察器（共用） -->
+  <script src="./net-observer.js"></script>
+</body>
+</html>

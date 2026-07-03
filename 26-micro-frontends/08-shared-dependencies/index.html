@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>依赖共享 / 版本管理 · import maps 演示</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f4f6fb; color: #1f2933; line-height: 1.6; padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .subtitle { color: #64748b; margin-bottom: 20px; }
+    .card {
+      background: #fff; border-radius: 14px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.05); margin-bottom: 20px;
+    }
+    .card h2 { font-size: 18px; margin-bottom: 10px; }
+    code, pre { font-family: "SFMono-Regular", Consolas, monospace; }
+    pre {
+      background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 10px;
+      overflow-x: auto; font-size: 12.5px; line-height: 1.6;
+    }
+    .log {
+      background: #0f172a; border-radius: 10px; padding: 14px; min-height: 220px;
+      font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; line-height: 1.9;
+    }
+    .log .line { color: #cbd5e1; }
+    .log .who { font-weight: 700; margin-right: 6px; }
+    .log .who-main .who { color: #fbbf24; }
+    .log .who-A .who { color: #4ade80; }
+    .log .who-B .who { color: #60a5fa; }
+    .log .who-C .who { color: #f87171; }
+    .note {
+      background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 14px;
+      border-radius: 8px; font-size: 13.5px; color: #7c2d12;
+    }
+  </style>
+
+  <!-- =============================================================== -->
+  <!--  ★ 核心：浏览器原生 import maps                                 -->
+  <!--  把“裸模块名”映射到真实 URL。子应用 A、B、主入口都写            -->
+  <!--    import * as shared from 'shared-lib'                          -->
+  <!--  这里统一决定 'shared-lib' 指向哪个文件 => 全站共享同一份实例。 -->
+  <!--  想升级/换实现，只改这一处映射即可（这就是 import map 的价值）。-->
+  <!-- =============================================================== -->
+  <script type="importmap">
+  {
+    "imports": {
+      "shared-lib": "./shared.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h1>微前端 · 依赖共享 / 版本管理</h1>
+  <p class="subtitle">用浏览器原生 import maps 让多个子应用共享同一份依赖实例（单例），并对比“各自加载副本”的区别。</p>
+
+  <div class="card">
+    <h2>🗺️ 本页用的 import map</h2>
+    <pre>&lt;script type="importmap"&gt;
+{
+  "imports": {
+    "shared-lib": "./shared.js"   // 裸名 shared-lib 统一映射到这一个文件
+  }
+}
+&lt;/script&gt;</pre>
+    <p style="margin-top:10px;font-size:14px">
+      子应用 A、子应用 B、主入口都 <code>import ... from 'shared-lib'</code>，因此拿到<b>同一个 URL、同一份单例</b>。<br>
+      子应用 C 故意不走 import map，直接 <code>import './shared-standalone.js'</code>（另一个文件）——它是<b>独立副本</b>，用来做反面对比。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>📜 运行结果（看 instanceId 是否相同、count 是否互通）</h2>
+    <div class="log" id="log"></div>
+    <p class="note" style="margin-top:12px">
+      预期：<b>A / B / main 的 instanceId 完全相同</b>，共享 count 累加到 3（A 加 2 次、B 加 1 次，B 还能读到 A 加过的值）；
+      而 <b>C 的 instanceId 不同</b>、count 从 0 独立开始 —— 证明 C 多加载了一份重复依赖，状态互不相通。
+      打开浏览器控制台还能看到 <code>[shared.js] 模块被执行</code> 只打印一次（同一 URL 只执行一次），
+      <code>[shared-standalone.js]</code> 单独打印一次。
+    </p>
+  </div>
+
+  <!-- 主入口：type="module" 才能用 import / import map -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>Electron IPC 双向通信</title>
+  <style>
+    body { font-family: -apple-system, "PingFang SC", sans-serif; padding: 32px; background: #f5f6fa; color: #2f3542; }
+    .card { background: #fff; padding: 24px; border-radius: 12px; max-width: 720px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    h1 { margin-top: 0; }
+    button { background: #5352ed; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px; }
+    button:hover { background: #3d3ccc; }
+    pre { background: #f1f2f6; padding: 12px; border-radius: 6px; overflow: auto; max-height: 220px; white-space: pre-wrap; }
+    .log { color: #2ed573; font-family: monospace; }
+    input { padding: 6px 10px; border: 1px solid #ced6e0; border-radius: 6px; width: 260px; }
+  </style>
+</head>
+<body>
+  <h1>🔌 Electron IPC 双向通信</h1>
+
+  <!-- 场景 1：invoke/handle 请求-响应，读原生文件 -->
+  <div class="card">
+    <h3>① invoke/handle：调原生对话框 + 读文件</h3>
+    <button id="btnOpen">打开文件（原生对话框）</button>
+    <button id="btnInfo">获取 App 信息</button>
+    <pre id="out">（点击上方按钮，结果由主进程用 Node 读取后返回）</pre>
+  </div>
+
+  <!-- 场景 2：send/on 单向通知 + 主进程主动推送 -->
+  <div class="card">
+    <h3>② send/on：给主进程发消息，主进程回推</h3>
+    <input id="msg" value="Hello from renderer" />
+    <button id="btnLog">send 给主进程</button>
+    <div class="log" id="reply"></div>
+  </div>
+
+  <script>
+    // 所有能力都来自 preload 暴露的 window.api（页面没有直接 require）
+    const out = document.getElementById('out');
+
+    document.getElementById('btnOpen').onclick = async () => {
+      const res = await window.api.openFile(); // await invoke 的返回值
+      out.textContent = res
+        ? `文件：${res.filePath}\n\n${res.content}`
+        : '（已取消）';
+    };
+
+    document.getElementById('btnInfo').onclick = async () => {
+      const info = await window.api.getAppInfo();
+      out.textContent = JSON.stringify(info, null, 2);
+    };
+
+    document.getElementById('btnLog').onclick = () => {
+      window.api.log(document.getElementById('msg').value); // 单向 send
+    };
+
+    // 订阅主进程的主动推送
+    window.api.onMainReply((text) => {
+      document.getElementById('reply').textContent = '⬅ ' + text;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+/* assets/theme.css —— 一个本地样式文件，作为「被动态加载的资源」出现在 Resource Timing 里。
+   after.html 用 <link rel="preload" as="style"> 提前发现它。 */
+.demo-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 600;
+  font-size: 13px;
+}

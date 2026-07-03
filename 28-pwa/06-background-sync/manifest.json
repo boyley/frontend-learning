@@ -1,0 +1,15 @@
+{
+  "name": "06 · 后台同步",
+  "short_name": "后台同步",
+  "description": "Background Sync：离线消息入 IndexedDB 发件箱，网络恢复后台自动发送",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

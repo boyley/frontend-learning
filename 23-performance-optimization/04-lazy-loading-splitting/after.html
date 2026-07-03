@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化后 · 懒加载 + 代码分割（after）</title>
+
+  <!--
+    ✅ 正面教材：演示「图片懒加载 + 代码分割」两类优化。
+    对比点（对照 before.html）：
+      1. 图片懒加载：两种方式并存演示
+         (A) 原生 loading="lazy"：浏览器自动在「接近视口」时才下载；
+         (B) IntersectionObserver：手写版，进视口才把 data-src 换成 src，
+             控制台会打印「第 N 张进入视口才加载」。file:// 下可直接观察。
+      2. 代码分割：一个按钮，点击时 import('./heavy-widget.js') 按需加载重组件，
+         首屏不加载它 —— 减小初始体积。
+         ⚠️ 动态 import 本地模块在 file:// 下会被 Chrome CORS 拦截，
+            这部分需用本地服务器（npx serve / python3 -m http.server）打开才生效。
+  -->
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+           line-height: 1.7; color: #1f2937; background: #f0fdf4; }
+    header { padding: 24px; background: #15803d; color: #fff; }
+    header h1 { margin: 8px 0 0; font-size: 22px; }
+    .tag { display:inline-block; background:#dcfce7; color:#15803d;
+           padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+    .content { max-width: 720px; margin: 0 auto; padding: 16px; }
+    h2 { font-size: 16px; color:#15803d; margin-top: 28px; }
+    .shot { width: 100%; height: auto; display: block; border-radius: 12px;
+            margin: 16px 0; background:#e2e8f0; aspect-ratio: 16/9; } /* aspect-ratio 提前占位防 CLS */
+    .note { padding: 12px 16px; background:#fff; border:1px solid #bbf7d0; border-radius:12px; }
+    code { background:#ecfdf5; padding:1px 6px; border-radius:4px; font-size:90%; }
+    button { font: inherit; cursor: pointer; padding: 10px 18px; border: 0; border-radius: 10px;
+             background:#15803d; color:#fff; font-weight:600; }
+    button:hover { background:#166534; }
+    #widget-box { min-height: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">AFTER · 懒加载 + 代码分割</span>
+    <h1>优化后：进视口才加载图片 + 点击才下载重组件</h1>
+  </header>
+
+  <div class="content">
+    <div class="note">
+      打开 <strong>Console</strong> 滚动页面，会看到「第 N 张进入视口才加载」逐条打印；
+      点击下方按钮才会加载重组件 chunk。用 <strong>DevTools → Network</strong> 更能看清请求时机。
+    </div>
+
+    <!-- ========== 第一部分：代码分割（按需 import）========== -->
+    <h2>① 代码分割：点击才下载重组件</h2>
+    <p>下面按钮点击时才 <code>import('./heavy-widget.js')</code>，重组件是**独立 chunk**，
+       首屏不加载它。（此部分需本地服务器打开才生效，见下方运行说明。）</p>
+    <button id="load-widget">点击按需加载重组件（动态 import）</button>
+    <div id="widget-box"></div>
+
+    <!-- ========== 第二部分：原生 loading="lazy" ========== -->
+    <h2>② 原生懒加载 loading="lazy"</h2>
+    <p>浏览器原生能力，接近视口才下载，无需 JS。首屏 LCP 图**不要**加 lazy（会拖慢 LCP）。</p>
+    <div id="native-gallery"></div>
+
+    <!-- ========== 第三部分：IntersectionObserver 懒加载 ========== -->
+    <h2>③ IntersectionObserver 懒加载（手写版）</h2>
+    <p>图片先只写 <code>data-src</code>，进视口时观察器回调把它换成真正的 <code>src</code>，
+       控制台打印「第 N 张进入视口才加载」。</p>
+    <div id="io-gallery"></div>
+  </div>
+
+  <script>
+    // —— 工具：生成 data:URI 的 SVG 占位图（离线可运行）——
+    function makeSvg(label, color) {
+      const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'>` +
+        `<rect width='1280' height='720' fill='${color}'/>` +
+        `<text x='50%' y='50%' font-size='90' fill='white' text-anchor='middle' ` +
+        `dominant-baseline='middle' font-family='sans-serif'>${label}</text></svg>`;
+      return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+    const colors = ["#dc2626","#ea580c","#d97706","#65a30d","#0891b2","#2563eb","#7c3aed","#db2777"];
+
+    // ========== ① 代码分割：点击才 import ==========
+    document.getElementById("load-widget").addEventListener("click", async () => {
+      console.log("[after] 点击按钮 → 现在才发起 import('./heavy-widget.js')，看 Network 会新增该 chunk 请求");
+      try {
+        // 🔑 动态 import()：返回 Promise，构建工具在此「切一刀」把模块打成独立 chunk，
+        //    运行到才请求。这里点击才触发下载。
+        const mod = await import("./heavy-widget.js");
+        mod.default(document.getElementById("widget-box")); // export default 的函数
+      } catch (err) {
+        // file:// 下 Chrome 会因 CORS 拦截本地模块动态 import，友好提示
+        console.error("[after] 动态 import 失败：", err);
+        document.getElementById("widget-box").innerHTML =
+          `<p style="color:#b91c1c">⚠️ 动态 import 被拦截：file:// 下 Chrome 会因 CORS 阻止本地模块。` +
+          `请用本地服务器打开：<code>python3 -m http.server</code> 或 <code>npx serve</code>。</p>`;
+      }
+    });
+
+    // ========== ② 原生 loading="lazy" ==========
+    const nativeGallery = document.getElementById("native-gallery");
+    colors.forEach((c, i) => {
+      const img = document.createElement("img");
+      img.className = "shot";
+      img.alt = `原生 lazy 第 ${i + 1} 张`;
+      img.loading = "lazy";        // ✅ 原生懒加载
+      img.decoding = "async";      // 解码不阻塞主线程
+      img.src = makeSvg(`原生 lazy · 第 ${i + 1} 张`, c);
+      nativeGallery.appendChild(img);
+    });
+
+    // ========== ③ IntersectionObserver 懒加载 ==========
+    const ioGallery = document.getElementById("io-gallery");
+    colors.forEach((c, i) => {
+      const img = document.createElement("img");
+      img.className = "shot";
+      img.alt = `IO lazy 第 ${i + 1} 张`;
+      img.dataset.index = i + 1;
+      // 🔑 先不给真正 src，只放到 data-src；进视口才赋值
+      img.dataset.src = makeSvg(`IO 懒加载 · 第 ${i + 1} 张`, c);
+      ioGallery.appendChild(img);
+    });
+
+    // 创建观察器：rootMargin 提前 200px 触发（buffer 距离，体验更顺滑）
+    const io = new IntersectionObserver((entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue; // 没进视口跳过
+        const img = entry.target;
+        img.src = img.dataset.src;            // ✅ 进视口才把 data-src 换成 src → 此刻才「加载」
+        console.log(`[after] 第 ${img.dataset.index} 张进入视口才加载（IntersectionObserver）`);
+        observer.unobserve(img);              // 加载过就停止观察，避免重复
+      }
+    }, { rootMargin: "200px 0px", threshold: 0.01 });
+
+    // 把每张 IO 图片交给观察器
+    ioGallery.querySelectorAll("img").forEach((img) => io.observe(img));
+
+    console.log("[after] 懒加载已就绪：滚动看『进入视口才加载』日志；点击按钮才加载重组件 chunk。");
+  </script>
+</body>
+</html>

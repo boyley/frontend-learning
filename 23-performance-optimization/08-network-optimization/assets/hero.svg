@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500">
+  <!-- 一张本地 SVG，充当页面的「首屏大图（LCP 候选元素）」，用于演示 preload + fetchpriority。 -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1565c0"/>
+      <stop offset="1" stop-color="#42a5f5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="500" fill="url(#g)"/>
+  <text x="600" y="250" font-size="52" fill="#fff" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">
+    本地首屏大图 hero.svg（LCP 候选）
+  </text>
+  <text x="600" y="320" font-size="24" fill="#e3f2fd" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">
+    after.html 用 preload + fetchpriority=high 让它更早开始下载
+  </text>
+</svg>

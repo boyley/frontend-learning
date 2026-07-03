@@ -242,4 +242,3 @@ node --allow-natives-syntax demo.js
 - [V8 文档站 · Documentation](https://v8.dev/docs)
 - [Chrome for Developers · JavaScript](https://developer.chrome.com/docs/)
 - [MDN · JavaScript engine 概念](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-```

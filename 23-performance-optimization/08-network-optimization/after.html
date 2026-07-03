@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化后 · 正确使用资源提示（after）</title>
+
+  <!--
+    ✅ 正面教材：在 <head> 尽早声明「资源提示（Resource Hints）」，把「建连」和「资源发现」
+    提前到 HTML 解析早期，缩短关键资源出现在屏幕上的时间（改善 LCP）。
+    四类提示各司其职，下面每一条都标了用途与写法要点。
+  -->
+
+  <!-- ① preconnect：对「确定要用的第三方源」提前完成 DNS + TCP + TLS 三次握手。
+       字体/CDN 这类跨源资源最受益。给字体源加 crossorigin（字体是匿名跨源请求）。 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- ② dns-prefetch：preconnect 的「轻量兜底」，只提前做 DNS 解析（不建连）。
+       给不确定一定会用、或作为老浏览器降级的第三方源用。放在 preconnect 之后。 -->
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+
+  <!-- ③ preload：当前页「关键」资源，高优先级立即取，用来提前发现被 CSS/JS 藏起来的资源。
+       必须写 as（决定优先级和 Accept 头）；字体的 preload 必须加 crossorigin，否则会下载两次。 -->
+  <!-- 首屏大图：提前发现 + 高优先级（配合下方 <img fetchpriority="high">） -->
+  <link rel="preload" as="image" href="./assets/hero.svg" fetchpriority="high" />
+  <!-- 关键样式：本会等 JS 动态插入才发现，preload 让它尽早开始下载 -->
+  <link rel="preload" as="style" href="./assets/theme.css" />
+  <!-- 关键脚本：同理提前发现 -->
+  <link rel="preload" as="script" href="./assets/widget.js" />
+  <!-- 字体 preload 的正确写法示例（跨源字体必须 crossorigin；此源离线不会真的加载，仅演示写法）：
+  <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/demo.woff2" crossorigin /> -->
+
+  <!-- ④ prefetch：预测「用户下一步/下一页」可能用到的资源，浏览器空闲时用最低优先级取，
+       不影响当前页。这里预取一个「下一页可能用到的脚本」（低优先级，不与首屏抢带宽）。 -->
+  <link rel="prefetch" href="./assets/widget.js" as="script" />
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; background: #f5f7fa; color: #1a1a1a; }
+    header { padding: 20px 24px; background: #188038; color: #fff; }
+    header h1 { margin: 6px 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .92; font-size: 13px; line-height: 1.6; }
+    .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #e6f4ea; color: #188038; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .hero { width: 100%; height: auto; display: block; border-radius: 12px; }
+    .tip { background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.8; color: #5f4300; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; }
+    th { background: #fafafa; color: #666; font-weight: 600; }
+    td:first-child { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+    .table-scroll { overflow-x: auto; border-radius: 12px; }
+    #protoNote { display: none; margin-top: 10px; font-size: 12px; color: #b91c1c; }
+    h2 { font-size: 15px; margin: 24px 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">AFTER · 已用资源提示</span>
+    <h1>优化后：preconnect / dns-prefetch / preload / prefetch + fetchpriority</h1>
+    <p>关键资源在 &lt;head&gt; 就被提前发现或提前建连，首屏大图高优先级下载。</p>
+  </header>
+
+  <div class="wrap">
+    <!-- ✅ 首屏 LCP 图：fetchpriority="high" 提优先级；已在 <head> preload 提前发现。
+         首屏图不要加 loading="lazy"（会拖慢 LCP）。 -->
+    <img class="hero" src="./assets/hero.svg" alt="首屏大图（preload + 高优先级）" fetchpriority="high" />
+
+    <p class="tip">
+      👀 <b>观察方法</b>：打开 <b>DevTools → Network</b>，勾选 Disable cache、节流 Slow 4G，刷新本页。<br>
+      对比 <code>before.html</code>：这里 <code>hero.svg</code> 的 <b>Priority = High</b> 且发起更早；
+      <code>theme.css</code>/<code>widget.js</code> 因被 preload，也比 before 更早出现。<br>
+      preconnect 的第三方源会提前出现在连接阶段（<b>Connection</b> 视图可见 DNS/TCP/TLS 已提前完成）。
+    </p>
+
+    <h2>📊 Resource Timing（本页加载的资源耗时）</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>资源</th><th>类型</th><th>DNS(ms)</th><th>TCP(ms)</th><th>TTFB(ms)</th><th>总耗时(ms)</th><th>传输体积</th>
+          </tr>
+        </thead>
+        <tbody id="resTbody"></tbody>
+      </table>
+    </div>
+    <div id="protoNote">⚠️ 你正用 file:// 打开，transferSize 与部分子时段可能为 0；用本地服务器（python3 -m http.server）打开更准确。</div>
+  </div>
+
+  <script>
+    // ✅ 正面：虽然仍在此处动态插入样式/脚本，但它们已在 <head> 被 preload。
+    //    浏览器命中 preload 缓存，几乎立即可用（不用等到这一刻才发起网络请求）。
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = './assets/theme.css';   // 命中上面的 <link rel="preload" as="style">
+    document.head.appendChild(link);
+
+    const s = document.createElement('script');
+    s.src = './assets/widget.js';        // 命中 <link rel="preload" as="script">
+    document.body.appendChild(s);
+  </script>
+
+  <!-- 资源耗时观察器（共用） -->
+  <script src="./net-observer.js"></script>
+</body>
+</html>

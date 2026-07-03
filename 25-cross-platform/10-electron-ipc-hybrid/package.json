@@ -1,0 +1,12 @@
+{
+  "name": "electron-ipc-hybrid-demo",
+  "version": "1.0.0",
+  "description": "Electron IPC 双向通信 + Web/原生混合 demo",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✅ 待测页（已优化）· 供 Lighthouse 对比</title>
+
+  <!-- ✅ 改进 1：脚本改为 defer，不阻塞首屏渲染，DOM 完成后再执行。 -->
+  <script defer src="data:text/javascript,void(0)"></script>
+</head>
+<body>
+  <h1>已优化页面</h1>
+  <p>与 <code>bad.html</code> 内容相同，但修掉了三处性能问题。</p>
+
+  <!-- ✅ 改进 2：图片显式写 width/height，提前占位 → CLS ≈ 0。 -->
+  <img
+    width="600" height="340" fetchpriority="high" decoding="async"
+    src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='340'><rect width='600' height='340' fill='%23188038'/><text x='50%25' y='50%25' fill='white' font-size='28' text-anchor='middle'>LCP 大图（有尺寸）</text></svg>"
+    alt="示例大图" />
+
+  <p>上方图片预留了尺寸，加载时正文不会跳动。</p>
+
+  <!-- ✅ 改进 3：把重活切成小片，每片之间让出主线程，避免长任务。 -->
+  <button id="btn">点我（切片处理，不卡）</button>
+  <script>
+    // 让出主线程：优先用 scheduler.yield()，回退到 setTimeout(0)
+    const yieldToMain = () =>
+      (window.scheduler && scheduler.yield)
+        ? scheduler.yield()
+        : new Promise((r) => setTimeout(r, 0));
+
+    document.getElementById('btn').addEventListener('click', async () => {
+      for (let i = 0; i < 30; i++) {
+        const t0 = performance.now();
+        while (performance.now() - t0 < 8) { /* 每片只干 8ms */ }
+        await yieldToMain(); // 每片之间让浏览器插空处理交互/渲染
+      }
+      alert('处理完成（期间主线程始终可响应）');
+    });
+  </script>
+</body>
+</html>

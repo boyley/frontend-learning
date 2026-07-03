@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<!-- 事件循环深入 · 可运行 demo（免构建，浏览器直接打开） -->
+<!-- 点按钮运行不同经典示例，输出实时渲染成带序号、带颜色的列表 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>事件循环深入 · Demo</title>
+
+<style>
+  :root {
+    --sync: #334155;
+    --micro: #7c3aed;
+    --macro: #dc2626;
+    --raf: #0891b2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font: 15px/1.6 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #1e293b;
+    background: #f8fafc;
+    max-width: 860px;
+    margin-inline: auto;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #64748b; margin: 0 0 20px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  button {
+    padding: 9px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  button:hover { border-color: #6366f1; background: #eef2ff; }
+  button.danger:hover { border-color: #dc2626; background: #fef2f2; }
+  button.ghost { background: #f1f5f9; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0 14px; font-size: 13px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .code {
+    background: #0f172a; color: #e2e8f0; padding: 14px 16px; border-radius: 10px;
+    font: 13px/1.55 "SFMono-Regular", Consolas, monospace; white-space: pre-wrap;
+    overflow-x: auto; margin: 0 0 16px;
+  }
+  #title { font-size: 15px; font-weight: 600; margin: 18px 0 8px; color: #475569; min-height: 20px; }
+  ol#output {
+    list-style: none; margin: 0; padding: 0;
+    border: 1px solid #e2e8f0; border-radius: 10px; background: #fff;
+    min-height: 60px; overflow: hidden;
+  }
+  ol#output li {
+    padding: 7px 14px; border-bottom: 1px solid #f1f5f9;
+    font: 14px/1.5 "SFMono-Regular", Consolas, monospace;
+    animation: pop .18s ease;
+  }
+  ol#output li:last-child { border-bottom: none; }
+  @keyframes pop { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+  .row.sync  { color: var(--sync); }
+  .row.micro { color: var(--micro); background: #faf5ff; }
+  .row.macro { color: var(--macro); background: #fef2f2; }
+  .row.raf   { color: var(--raf);   background: #ecfeff; }
+  .row.note  { color: #94a3b8; font-style: italic; }
+  .empty { color: #94a3b8; padding: 14px; }
+</style>
+
+<h1>事件循环深入 · 可运行 Demo</h1>
+<p class="sub">点按钮运行经典示例，输出按<strong>真实执行顺序</strong>逐条显示。颜色区分：同步 / 微任务 / 宏任务 / rAF。</p>
+
+<div class="legend">
+  <span><i class="dot" style="background:var(--sync)"></i>同步（Call Stack）</span>
+  <span><i class="dot" style="background:var(--micro)"></i>微任务 microtask</span>
+  <span><i class="dot" style="background:var(--macro)"></i>宏任务 macrotask</span>
+  <span><i class="dot" style="background:var(--raf)"></i>requestAnimationFrame</span>
+</div>
+
+<div class="btns">
+  <button id="btn1">例题一：Promise + async/await</button>
+  <button id="btn2">例题二：rAF + 微任务嵌套</button>
+  <button id="btn3" class="danger">微任务饥饿演示</button>
+  <button id="btnClear" class="ghost">清空</button>
+</div>
+
+<div class="code" id="codeBox">点击上方按钮运行示例，这里会显示对应代码。</div>
+
+<div id="title"></div>
+<ol id="output"><li class="empty">（输出会显示在这里）</li></ol>
+
+<script>
+  // ===== 输出工具：同时写入页面列表和 console，序号自增 =====
+  var outputEl = document.getElementById('output');
+  var titleEl = document.getElementById('title');
+  var codeBox = document.getElementById('codeBox');
+  var seq = 0;
+
+  function clearOutput() {
+    seq = 0;
+    outputEl.innerHTML = '';
+  }
+  // type: sync / micro / macro / raf / note
+  function log(msg, type) {
+    seq++;
+    var li = document.createElement('li');
+    li.className = 'row ' + (type || 'sync');
+    li.textContent = seq + '. ' + msg;
+    outputEl.appendChild(li);
+    console.log(seq, msg);
+  }
+  function setTitle(t) { titleEl.textContent = t; }
+  function showCode(c) { codeBox.textContent = c.trim(); }
+
+  // ============ 例题一：Promise + setTimeout + async/await ============
+  function demo1() {
+    clearOutput();
+    setTitle('例题一执行中 …（同步 → 微任务 → 宏任务）');
+    showCode(
+      "console.log('script 开始');\n" +
+      "setTimeout(() => console.log('setTimeout'), 0);\n" +
+      "async function foo() {\n" +
+      "  console.log('async 内 await 前');\n" +
+      "  await Promise.resolve();\n" +
+      "  console.log('await 之后');\n" +
+      "}\n" +
+      "foo();\n" +
+      "Promise.resolve().then(() => console.log('promise.then'));\n" +
+      "console.log('script 结束');"
+    );
+
+    log('script 开始', 'sync');
+
+    setTimeout(function () {
+      log('setTimeout（宏任务）', 'macro');
+    }, 0);
+
+    (async function foo() {
+      log('async 内 await 前（同步）', 'sync');
+      await Promise.resolve();
+      log('await 之后（微任务）', 'micro');
+    })();
+
+    Promise.resolve().then(function () {
+      log('promise.then（微任务）', 'micro');
+    });
+
+    log('script 结束', 'sync');
+  }
+
+  // ======= 例题二：微任务嵌套 + requestAnimationFrame + setTimeout =======
+  function demo2() {
+    clearOutput();
+    setTitle('例题二执行中 …（注意 rAF 在微任务全清后、绘制前）');
+    showCode(
+      "console.log('同步开始');\n" +
+      "setTimeout(() => console.log('setTimeout(宏)'), 0);\n" +
+      "requestAnimationFrame(() => console.log('rAF(渲染前)'));\n" +
+      "Promise.resolve().then(() => {\n" +
+      "  console.log('微任务A');\n" +
+      "  Promise.resolve().then(() => console.log('A里再产生的微任务'));\n" +
+      "});\n" +
+      "Promise.resolve().then(() => console.log('微任务B'));\n" +
+      "console.log('同步结束');"
+    );
+
+    log('同步开始', 'sync');
+
+    setTimeout(function () {
+      log('setTimeout（宏任务）', 'macro');
+    }, 0);
+
+    requestAnimationFrame(function () {
+      log('rAF（渲染前，微任务全清后执行）', 'raf');
+    });
+
+    Promise.resolve().then(function () {
+      log('微任务A', 'micro');
+      // A 内部再产生一个微任务：会在【同一轮】被清掉，不等下一轮
+      Promise.resolve().then(function () {
+        log('A 里再产生的微任务（同轮继续清空）', 'micro');
+      });
+    });
+
+    Promise.resolve().then(function () {
+      log('微任务B', 'micro');
+    });
+
+    log('同步结束', 'sync');
+  }
+
+  // ================ 微任务饥饿演示（starvation） ================
+  // 递归产生微任务，事件循环卡在“清微任务”这一步，宏任务/渲染被饿死。
+  // 为避免真的把页面卡死无法恢复，这里限制次数；跑满后自动结束。
+  function demo3() {
+    clearOutput();
+    setTitle('微任务饥饿演示：主线程被微任务霸占中，页面此刻无法响应 …');
+    showCode(
+      "// 无限（此处限量）递归微任务 → 饿死宏任务与渲染\n" +
+      "function starve() {\n" +
+      "  queueMicrotask(starve); // 每个微任务里又产生新微任务\n" +
+      "}\n" +
+      "starve();\n" +
+      "// 下面的 setTimeout 会被一直推迟，无法及时执行\n" +
+      "setTimeout(() => console.log('我被饿了很久才执行'), 0);"
+    );
+
+    log('同步：注册一个 setTimeout（宏任务）', 'sync');
+    var scheduledAt = performance.now();
+    setTimeout(function () {
+      var waited = Math.round(performance.now() - scheduledAt);
+      log('setTimeout 终于执行！它被微任务饿了约 ' + waited + 'ms', 'macro');
+      setTitle('演示结束：可见宏任务被微任务严重推迟。恢复正常。');
+    }, 0);
+
+    // 递归微任务：真正的无限会锁死页面，这里用计数上限模拟“饥饿”后自动放行
+    var LIMIT = 2000000; // 足够卡顿一小会儿，制造可感知的“饿”
+    var n = 0;
+    function starve() {
+      n++;
+      // 做一点点无用计算，放大主线程占用
+      var s = 0;
+      for (var i = 0; i < 50; i++) s += Math.sqrt(i);
+      if (n < LIMIT) {
+        queueMicrotask(starve); // 关键：微任务里再产生微任务
+      } else {
+        log('微任务递归达到上限，停止产生新微任务（现实中无限则永久卡死）', 'note');
+      }
+    }
+    starve();
+  }
+
+  document.getElementById('btn1').onclick = demo1;
+  document.getElementById('btn2').onclick = demo2;
+  document.getElementById('btn3').onclick = demo3;
+  document.getElementById('btnClear').onclick = function () {
+    clearOutput();
+    setTitle('');
+    outputEl.innerHTML = '<li class="empty">（输出会显示在这里）</li>';
+    codeBox.textContent = '点击上方按钮运行示例，这里会显示对应代码。';
+  };
+</script>

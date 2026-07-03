@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>性能测量仪表盘 · Performance API 现场演示</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif; margin: 0; background: #f5f7fa; color: #1a1a1a; }
+    header { background: #0b5394; color: #fff; padding: 20px 24px; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; opacity: .9; font-size: 13px; }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .card { background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 16px; text-align: center; }
+    .card .k { font-size: 12px; color: #777; margin-bottom: 8px; }
+    .card .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .card .u { font-size: 12px; color: #999; }
+    .good { color: #188038; } .needs { color: #e37400; } .poor { color: #d93025; } .na { color: #9aa0a6; }
+
+    section { background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+    section h2 { font-size: 16px; margin: 0 0 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #eee; }
+    th { color: #555; font-weight: 600; background: #fafafa; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .scroll { overflow-x: auto; }
+
+    button { font-size: 14px; padding: 9px 16px; border: none; border-radius: 8px; color: #fff; background: #0b5394; cursor: pointer; }
+    button:active { transform: translateY(1px); }
+    .tip { background: #e8f0fe; border-left: 4px solid #0b5394; padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.7; color: #174ea6; margin-bottom: 20px; }
+    .muted { color: #888; font-size: 12px; }
+    #longtaskLog li { font-size: 13px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>性能测量仪表盘 · Performance API 现场演示</h1>
+    <p>零依赖，用原生 Performance API 实时读取本页的加载各阶段耗时、资源明细与核心指标（FCP / LCP / Long Task）。</p>
+  </header>
+
+  <div class="wrap">
+    <p class="tip">
+      👀 <b>怎么看</b>：下方卡片是本页真实的加载与渲染指标（<b>Lab 数据</b>，本机一次冷加载的结果）。
+      点「制造一个长任务」按钮，会跑一段 ~300ms 的同步计算，触发 <code>longtask</code> 上报，观察它出现在最下方列表里。<br>
+      提示：<code>file://</code> 下 Navigation Timing 的网络阶段多为 0，想看真实 DNS/TCP/TTFB 请用本地服务器打开（见 README）。
+    </p>
+
+    <!-- 核心指标卡片 -->
+    <div class="cards" id="cards">
+      <div class="card"><div class="k">TTFB 首字节</div><div class="v na" id="ttfb">–</div><div class="u">ms</div></div>
+      <div class="card"><div class="k">FCP 首次内容绘制</div><div class="v na" id="fcp">–</div><div class="u">ms</div></div>
+      <div class="card"><div class="k">LCP 最大内容绘制</div><div class="v na" id="lcp">–</div><div class="u">ms</div></div>
+      <div class="card"><div class="k">DOMContentLoaded</div><div class="v na" id="dcl">–</div><div class="u">ms</div></div>
+      <div class="card"><div class="k">Load 完成</div><div class="v na" id="load">–</div><div class="u">ms</div></div>
+      <div class="card"><div class="k">Long Task 次数</div><div class="v na" id="ltCount">0</div><div class="u">个</div></div>
+    </div>
+
+    <!-- Navigation Timing 各阶段 -->
+    <section>
+      <h2>① Navigation Timing · 导航各阶段耗时</h2>
+      <p class="muted">来源：<code>performance.getEntriesByType('navigation')[0]</code>（Navigation Timing Level 2）。</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>阶段</th><th>计算方式</th><th class="num">耗时 (ms)</th></tr></thead>
+          <tbody id="navBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 长任务演示 -->
+    <section>
+      <h2>② Long Task · 长任务上报</h2>
+      <p class="muted">来源：<code>PerformanceObserver({type:'longtask'})</code>。单个任务执行 &gt; 50ms 即被记录，是拖垮 INP 的元凶。</p>
+      <button id="btnLong">制造一个长任务（同步计算 ~300ms）</button>
+      <ul id="longtaskLog" style="margin-top:14px;"></ul>
+    </section>
+
+    <!-- Resource Timing -->
+    <section>
+      <h2>③ Resource Timing · 资源加载明细</h2>
+      <p class="muted">来源：<code>performance.getEntriesByType('resource')</code>。列出本页加载的每个资源及其耗时/体积。</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>资源</th><th>类型</th><th class="num">传输大小</th><th class="num">耗时 (ms)</th></tr></thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ========================================================================
+    // 工具函数：按阈值给数值上色（对照 web.dev 的 good / needs / poor 阈值）
+    // ========================================================================
+    function paint(el, value, goodMax, poorMin, digits = 0) {
+      if (value == null || Number.isNaN(value)) { el.textContent = '–'; el.className = 'v na'; return; }
+      el.textContent = value.toFixed(digits);
+      el.className = 'v ' + (value <= goodMax ? 'good' : value >= poorMin ? 'poor' : 'needs');
+    }
+    const ms = (x) => Math.max(0, x); // 负值/异常兜底
+
+    // ========================================================================
+    // ① Navigation Timing —— 加载各阶段耗时
+    //    用 performance.getEntriesByType('navigation') 拿到导航条目，
+    //    各阶段 = 相邻时间戳相减。这些是「Lab 数据」：本机一次加载的结果。
+    // ========================================================================
+    function renderNavigation() {
+      const [nav] = performance.getEntriesByType('navigation');
+      if (!nav) return;
+
+      const ttfb = ms(nav.responseStart - nav.requestStart);
+      const dcl  = ms(nav.domContentLoadedEventEnd - nav.startTime);
+      const load = ms(nav.loadEventEnd - nav.startTime);
+
+      // 卡片
+      paint(document.getElementById('ttfb'), ttfb, 800, 1800);   // TTFB good ≤ 800ms
+      paint(document.getElementById('dcl'),  dcl,  2000, 4000);
+      paint(document.getElementById('load'), load, 3000, 6000);
+
+      // 阶段明细表
+      const rows = [
+        ['Redirect 重定向',       'redirectEnd − redirectStart',        ms(nav.redirectEnd - nav.redirectStart)],
+        ['DNS 域名解析',         'domainLookupEnd − domainLookupStart', ms(nav.domainLookupEnd - nav.domainLookupStart)],
+        ['TCP 建连',             'connectEnd − connectStart',           ms(nav.connectEnd - nav.connectStart)],
+        ['TTFB 首字节',          'responseStart − requestStart',        ttfb],
+        ['响应下载',             'responseEnd − responseStart',         ms(nav.responseEnd - nav.responseStart)],
+        ['DOM 解析→可交互',       'domInteractive − responseEnd',        ms(nav.domInteractive - nav.responseEnd)],
+        ['DOMContentLoaded',    'domContentLoadedEventEnd − startTime', dcl],
+        ['Load 完成',            'loadEventEnd − startTime',            load],
+      ];
+      const body = document.getElementById('navBody');
+      body.innerHTML = rows.map(([k, f, v]) =>
+        `<tr><td>${k}</td><td class="muted">${f}</td><td class="num">${v.toFixed(1)}</td></tr>`
+      ).join('');
+    }
+
+    // ========================================================================
+    // ③ Resource Timing —— 逐个资源的加载耗时与体积
+    // ========================================================================
+    function renderResources() {
+      const list = performance.getEntriesByType('resource');
+      const body = document.getElementById('resBody');
+      if (!list.length) {
+        body.innerHTML = `<tr><td colspan="4" class="muted">暂无资源条目（本页依赖极少；用本地服务器打开更明显）。</td></tr>`;
+        return;
+      }
+      body.innerHTML = list.map((r) => {
+        const name = r.name.split('/').pop() || r.name;
+        const size = r.transferSize ? (r.transferSize / 1024).toFixed(1) + ' KB' : '—';
+        return `<tr><td>${name}</td><td class="muted">${r.initiatorType}</td><td class="num">${size}</td><td class="num">${r.duration.toFixed(1)}</td></tr>`;
+      }).join('');
+    }
+
+    // ========================================================================
+    // 用 PerformanceObserver 监听「绘制型」指标：paint(FCP) / LCP / longtask
+    // buffered:true 会回放 observer 创建前就产生的条目，避免漏测早期指标。
+    // ========================================================================
+
+    // FCP —— 从 paint 条目里挑 first-contentful-paint
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          if (e.name === 'first-contentful-paint') {
+            paint(document.getElementById('fcp'), e.startTime, 1800, 3000); // FCP good ≤ 1.8s
+          }
+        }
+      }).observe({ type: 'paint', buffered: true });
+    } catch (_) { /* 个别浏览器不支持则忽略 */ }
+
+    // LCP —— 每次更大的元素绘制都会刷新，取最后一次
+    try {
+      new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1];
+        paint(document.getElementById('lcp'), last.startTime, 2500, 4000); // LCP good ≤ 2.5s
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+    } catch (_) {}
+
+    // Long Task —— 单任务 > 50ms 就上报；累加计数并列出
+    let longtaskCount = 0;
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          longtaskCount++;
+          const el = document.getElementById('ltCount');
+          el.textContent = longtaskCount;
+          el.className = 'v ' + (longtaskCount === 0 ? 'na' : 'poor');
+          const li = document.createElement('li');
+          li.textContent = `#${longtaskCount} 长任务：耗时 ${e.duration.toFixed(0)} ms（发生在 ${e.startTime.toFixed(0)} ms 处）`;
+          li.className = 'poor';
+          document.getElementById('longtaskLog').prepend(li);
+        }
+      }).observe({ type: 'longtask', buffered: true });
+    } catch (_) {
+      document.getElementById('longtaskLog').innerHTML =
+        '<li class="muted">当前浏览器不支持 longtask（Safari/Firefox 部分版本缺失），请用 Chrome/Edge。</li>';
+    }
+
+    // 按钮：跑一段同步计算制造长任务，触发上面的 longtask observer
+    document.getElementById('btnLong').addEventListener('click', () => {
+      const t0 = performance.now();
+      let x = 0;
+      while (performance.now() - t0 < 300) { x += Math.sqrt(x + 1); } // 同步空转 ~300ms
+      // x 只是防止被优化掉，不使用
+      void x;
+    });
+
+    // Navigation / Resource 需等 load 事件后数据才完整
+    window.addEventListener('load', () => {
+      // 用 setTimeout 确保 loadEventEnd 已写入
+      setTimeout(() => { renderNavigation(); renderResources(); }, 0);
+    });
+  </script>
+</body>
+</html>

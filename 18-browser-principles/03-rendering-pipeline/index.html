@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>渲染流水线 Demo · DOM / CSSOM / Timing</title>
+  <!--
+    【流水线知识点】CSS 内联在 <head>：CSS 是渲染阻塞资源，
+    尽早放在头部让浏览器尽快构建完 CSSOM，避免无样式内容闪烁(FOUC)。
+    这里用内联 <style>，同样会被解析进 document.styleSheets(CSSOM 入口)。
+  -->
+  <style>
+    :root { --brand: #2563eb; --bg: #0f172a; --card: #1e293b; --line: #334155; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px; background: var(--bg); color: #e2e8f0;
+      font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+      line-height: 1.6;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .sub { color: #94a3b8; font-size: 13px; margin: 0 0 20px; }
+    button {
+      background: var(--brand); color: #fff; border: 0; border-radius: 8px;
+      padding: 10px 18px; font-size: 14px; cursor: pointer;
+    }
+    button:hover { opacity: .9; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+    .card .k { color: #94a3b8; font-size: 12px; }
+    .card .v { font-size: 22px; font-weight: 700; color: #fff; margin-top: 4px; }
+    .card .u { font-size: 12px; color: #64748b; font-weight: 400; }
+    /* 伪元素也会进入渲染树，用它给标题加个装饰前缀，验证"渲染树含伪元素" */
+    h1::before { content: "🎬 "; }
+    .sample { margin-top: 20px; padding: 12px; border: 1px dashed var(--line); border-radius: 8px; }
+    .hidden-node { display: none; } /* display:none 的节点不进渲染树，但仍在 DOM 里 */
+  </style>
+</head>
+<body>
+  <h1>渲染流水线 Demo</h1>
+  <p class="sub">点按钮，用浏览器原生 API 观察 DOM、CSSOM 的存在与渲染各阶段时机。</p>
+
+  <button id="collectBtn">采集渲染流水线数据</button>
+
+  <div class="grid" id="result"><!-- 结果卡片注入这里 --></div>
+
+  <!-- 一段样本内容，用来撑出一定规模的 DOM 树 -->
+  <div class="sample" id="sample">
+    <p>下面这个隐藏节点 <code>display:none</code>：它<strong>仍在 DOM 里</strong>（会被统计），但<strong>不进渲染树</strong>。</p>
+    <p class="hidden-node">我被 display:none 了，你看不见我，但 querySelectorAll('*') 数得到我。</p>
+  </div>
+
+  <!--
+    【流水线知识点】JS 放在 <body> 尾部：
+    此时 DOM 已基本构建完，脚本能直接拿到节点，也不会阻塞前面内容的解析与首屏渲染。
+    生产中外链脚本更推荐用 <script defer>。
+  -->
+  <script>
+    // ============ 采集函数 ============
+    function collect() {
+      // 1) DOM 的存在与规模：DOM 是 HTML 解析(字节→字符→token→node→树)的产物
+      const domCount = document.getElementsByTagName('*').length; // 元素节点总数
+      const maxDepth = (function depth(node) {                    // DOM 树最大嵌套深度
+        if (!node.children || node.children.length === 0) return 1;
+        let m = 0;
+        for (const c of node.children) m = Math.max(m, depth(c));
+        return m + 1;
+      })(document.documentElement);
+
+      // 2) CSSOM 的存在：document.styleSheets 就是浏览器构建好的 CSSOM 入口
+      const sheetCount = document.styleSheets.length;
+      let ruleCount = 0;
+      for (const sheet of document.styleSheets) {
+        try { ruleCount += sheet.cssRules.length; } // 跨域样式表读 cssRules 会抛错
+        catch (e) { /* 忽略跨域表 */ }
+      }
+
+      // 3) 渲染时机：Navigation Timing Level 2，各里程碑相对导航开始的毫秒数
+      const nav = performance.getEntriesByType('navigation')[0] || {};
+      const paints = performance.getEntriesByType('paint');
+      const fp  = paints.find(e => e.name === 'first-paint');
+      const fcp = paints.find(e => e.name === 'first-contentful-paint');
+
+      const fmt = (v) => (typeof v === 'number' && v > 0) ? v.toFixed(1) : '—';
+
+      // 组织成卡片
+      const cards = [
+        ['DOM 元素节点数', domCount, '个', 'HTML 解析产物'],
+        ['DOM 树最大深度', maxDepth, '层', '影响样式/布局成本'],
+        ['样式表数量', sheetCount, '张', 'CSSOM 入口'],
+        ['CSS 规则总数', ruleCount, '条', '来自 cssRules'],
+        ['domInteractive', fmt(nav.domInteractive), 'ms', 'DOM 解析完成、可交互'],
+        ['DOMContentLoaded', fmt(nav.domContentLoadedEventEnd), 'ms', 'DOM 就绪(不含图片)'],
+        ['loadEvent', fmt(nav.loadEventEnd), 'ms', '全部资源加载完'],
+        ['First Paint', fmt(fp && fp.startTime), 'ms', '首次绘制像素'],
+        ['First Contentful Paint', fmt(fcp && fcp.startTime), 'ms', '首次内容绘制(FCP)'],
+      ];
+
+      const box = document.getElementById('result');
+      box.innerHTML = cards.map(([k, v, u, note]) => `
+        <div class="card">
+          <div class="k">${k}</div>
+          <div class="v">${v} <span class="u">${u}</span></div>
+          <div class="u">${note}</div>
+        </div>
+      `).join('');
+
+      // 顺带在控制台打印完整 Navigation Timing，便于对照 DevTools
+      console.log('[渲染流水线] Navigation Timing:', nav);
+      console.log('[渲染流水线] Paint Timing:', paints);
+    }
+
+    document.getElementById('collectBtn').addEventListener('click', collect);
+    // 页面加载后自动采集一次；load 之后 timing 才完整
+    window.addEventListener('load', () => setTimeout(collect, 0));
+  </script>
+</body>
+</html>

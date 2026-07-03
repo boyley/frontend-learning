@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优化前 · 全部立即加载（before）</title>
+
+  <!--
+    ⚠️ 反面教材：演示「没做懒加载、没做代码分割」的写法。
+    对比点（对照 after.html）：
+      1. 图片：一次性 eager（立即）加载一长列图片，无论在不在视口，
+         首屏就把所有图片全下载，抢占带宽、拖慢首屏 LCP。
+      2. 没有按需分包：所有功能一开始就得加载（本页无重组件按钮，
+         after.html 才演示动态 import 按需加载）。
+    为保证离线可运行，图片用 data: URI 的 SVG 占位图（不联网）。
+  -->
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+           line-height: 1.7; color: #1f2937; background: #fef2f2; }
+    header { padding: 24px; background: #b91c1c; color: #fff; }
+    header h1 { margin: 8px 0 0; font-size: 22px; }
+    .tag { display:inline-block; background:#fee2e2; color:#b91c1c;
+           padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+    .content { max-width: 720px; margin: 0 auto; padding: 16px; }
+    /* 每张图占一屏高度，强制需要滚动，才能体现「首屏外图片也被立即加载」 */
+    .shot { width: 100%; height: auto; display: block; border-radius: 12px;
+            margin: 16px 0; background: #f1f5f9; aspect-ratio: 16/9; }
+    .note { padding: 12px 16px; background:#fff; border:1px solid #fecaca; border-radius:12px; }
+    code { background:#f1f5f9; padding:1px 6px; border-radius:4px; font-size:90%; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">BEFORE · 全部 eager 加载</span>
+    <h1>优化前：一长列图片一次性全下载</h1>
+  </header>
+
+  <div class="content">
+    <div class="note">
+      本页 8 张图片全部用普通 <code>&lt;img src&gt;</code>，<strong>首屏就把全部下载</strong>，
+      即使 7 张在首屏外也一样。打开 <strong>DevTools → Network</strong>（勾 Disable cache）刷新，
+      会看到 8 张图的请求**几乎同时**发出。对照 <code>after.html</code> 看差异。
+    </div>
+
+    <!--
+      ❌ 反面：所有图片都是普通 src，无 loading="lazy"、无 IntersectionObserver。
+      这里用 JS 批量生成 8 张 data:URI 的 SVG 占位图，避免手写一长串。
+    -->
+    <div id="gallery"></div>
+  </div>
+
+  <script>
+    // 生成一张 data:URI 的 SVG 占位图（不同序号不同颜色），保证离线可运行
+    function makeSvg(n, color) {
+      const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'>` +
+        `<rect width='1280' height='720' fill='${color}'/>` +
+        `<text x='50%' y='50%' font-size='120' fill='white' text-anchor='middle' ` +
+        `dominant-baseline='middle' font-family='sans-serif'>第 ${n} 张</text></svg>`;
+      return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+    const colors = ["#dc2626","#ea580c","#d97706","#65a30d","#0891b2","#2563eb","#7c3aed","#db2777"];
+    const gallery = document.getElementById("gallery");
+
+    colors.forEach((c, i) => {
+      const img = document.createElement("img");
+      img.className = "shot";
+      img.alt = `第 ${i + 1} 张图片（eager 立即加载）`;
+      // ❌ 直接给 src：无论在不在视口，浏览器都会立即发起下载
+      img.src = makeSvg(i + 1, c);
+      gallery.appendChild(img);
+    });
+
+    console.log("[before] 8 张图片全部以 eager 方式加载：首屏即请求全部，无懒加载。");
+  </script>
+</body>
+</html>

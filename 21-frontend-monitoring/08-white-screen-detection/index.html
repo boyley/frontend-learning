@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 · 白屏检测</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f1420; color: #e6e9ef; line-height: 1.6; padding: 24px;
+    }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .subtitle { color: #8b93a7; margin-bottom: 20px; font-size: 14px; }
+
+    .toolbar { margin-bottom: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      background: #2b3550; color: #e6e9ef; border: 1px solid #3a465f;
+      padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    button:hover { background: #38466a; }
+    button.danger { border-color: #7a3b3b; }
+    button.danger:hover { background: #5a2f2f; }
+    button.primary { background: #1f6feb; border-color: #1f6feb; }
+    button.primary:hover { background: #388bfd; }
+
+    /* #app 是我们要监控的"页面主体"。正常时有内容；点"制造白屏"会被清空。 */
+    #app {
+      min-height: 220px; background: #16203a; border: 1px solid #2a3346; border-radius: 12px;
+      padding: 20px; margin-bottom: 16px;
+    }
+    #app h2 { color: #74c0fc; margin-bottom: 10px; }
+    #app .card { background: #1f2a44; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    #app.blank { background: #ffffff; } /* 模拟真实白屏：一片空白 */
+
+    /* ============ 检测结果面板 ============ */
+    #panel { background: #121826; border: 1px solid #2a3346; border-radius: 12px; padding: 14px; }
+    .panel-head { font-size: 14px; color: #8b93a7; margin-bottom: 10px; }
+    .row { padding: 11px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; animation: fade .25s ease; }
+    @keyframes fade { from {opacity:0; transform: translateY(-4px);} to {opacity:1; transform:none;} }
+    .row.ok    { background: #10261d; border-left: 3px solid #63e6be; }
+    .row.white { background: #2a1414; border-left: 3px solid #ff6b6b; }
+    .row .verdict { font-weight: 700; }
+    .row.ok .verdict { color: #63e6be; }
+    .row.white .verdict { color: #ff8787; }
+    .row .detail { color: #8b93a7; margin-top: 4px; }
+    .row .time { float: right; color: #566; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h1>08 · 白屏检测</h1>
+  <p class="subtitle">采样点检测 + 根节点检测 + 超时兜底：判断页面是不是"白了屏"</p>
+
+  <div class="toolbar">
+    <button class="danger" id="btn-blank">💥 制造白屏（清空 #app）</button>
+    <button id="btn-restore">恢复页面内容</button>
+    <button class="primary" id="btn-detect">🔍 立即执行一次白屏检测</button>
+  </div>
+
+  <div id="app">
+    <h2>这是页面主体 #app（正常渲染）</h2>
+    <div class="card">商品卡片 1 —— 采样点大概率落在这些内容元素上</div>
+    <div class="card">商品卡片 2 —— 检测时看这些点命中的是"内容"还是"空白容器"</div>
+    <div class="card">商品卡片 3</div>
+  </div>
+
+  <div id="panel">
+    <div class="panel-head">📡 检测结果面板（同时 console.log）</div>
+    <div id="rows"></div>
+  </div>
+
+  <script src="demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · 后台同步</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+    header { padding: 2rem 1.5rem 1.4rem; text-align: center; background: linear-gradient(135deg, #5b21b6, #2563eb); }
+    header h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
+    main { max-width: 760px; margin: 0 auto; padding: 1.5rem; }
+    .add { display: flex; gap: .5rem; margin: 1rem 0; }
+    input { flex: 1; padding: .6rem .8rem; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 1rem; }
+    button { background: #2563eb; color: #fff; border: 0; padding: .6rem 1.1rem; border-radius: 8px; font-size: .95rem; cursor: pointer; }
+    button.ghost { background: #334155; }
+    h3 { margin: 1.2rem 0 .5rem; color: #93c5fd; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: .55rem .8rem; margin: .4rem 0; font-size: .9rem; }
+    #logs { background: #020617; border: 1px solid #334155; border-radius: 10px; padding: .8rem; height: 180px; overflow-y: auto; font-family: ui-monospace, Menlo, monospace; font-size: .8rem; }
+    #logs div { padding: .1rem 0; }
+    code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+    .tip { font-size: .88rem; opacity: .78; margin-top: 1.2rem; }
+    .net { font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔁 后台同步（Background Sync）</h1>
+    <p class="net" id="net">网络：检测中…</p>
+  </header>
+  <main>
+    <p>离线时提交的消息不会丢：它们进入 <strong>IndexedDB 发件箱</strong>，并注册一个 <code>sync</code> 任务。<b>网络一恢复</b>，浏览器就会（哪怕页面已关闭）唤醒 Service Worker 把发件箱清空。</p>
+
+    <div class="add">
+      <input id="input" placeholder="输入要发送的消息…" />
+      <button id="btnSend">📤 发送</button>
+    </div>
+
+    <h3>📦 发件箱（待同步）</h3>
+    <ul id="outbox"><li style="opacity:.6">空</li></ul>
+
+    <h3>📜 同步日志</h3>
+    <div id="logs"></div>
+
+    <p class="tip">
+      🔬 体验：DevTools → Network 勾 <b>Offline</b> → 发送几条消息（进入发件箱）→ <b>取消 Offline</b>（恢复网络）→ 观察发件箱被后台清空、日志出现「已发送」。<br/>
+      也可在 DevTools → Application → <b>Background Sync</b> 里手动触发 <code>sync-outbox</code>。不支持该 API 时会自动降级为手动 flush。
+    </p>
+  </main>
+
+  <script src="./idb.js"></script>
+  <script>
+    const logsEl = document.getElementById('logs');
+    const addLog = (t) => { const d = document.createElement('div'); d.textContent = `[${new Date().toLocaleTimeString()}] ${t}`; logsEl.prepend(d); };
+
+    async function renderOutbox() {
+      const items = await idbGetAll();
+      const el = document.getElementById('outbox');
+      el.innerHTML = items.length ? '' : '<li style="opacity:.6">空</li>';
+      items.forEach((i) => { const li = document.createElement('li'); li.textContent = `⏳ ${i.text}`; el.appendChild(li); });
+    }
+
+    async function queueAndSync(text) {
+      const item = { id: Date.now(), text, at: Date.now() };
+      await idbAdd(item);            // 1) 先落地到 IndexedDB 发件箱
+      await renderOutbox();
+      addLog(`已入发件箱："${text}"`);
+
+      const reg = await navigator.serviceWorker.ready;
+      if ('sync' in reg) {
+        // 2) 注册后台同步：网络恢复时浏览器自动触发 SW 的 sync 事件
+        await reg.sync.register('sync-outbox');
+        addLog('已注册 Background Sync（等网络恢复自动发送）');
+      } else {
+        // 降级：不支持时，在线就直接让 SW flush，离线则等 online 事件
+        addLog('浏览器不支持 Background Sync，降级为手动同步');
+        if (navigator.onLine) reg.active?.postMessage('manual-flush');
+      }
+    }
+
+    document.getElementById('btnSend').onclick = () => {
+      const v = input.value.trim(); if (!v) return; input.value = ''; queueAndSync(v);
+    };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnSend').click(); });
+
+    // 接收 SW 广播的同步进度
+    navigator.serviceWorker?.addEventListener('message', (e) => {
+      const m = e.data;
+      if (m.type === 'sync-start') addLog(`🚀 开始同步，共 ${m.count} 条`);
+      if (m.type === 'sync-sent') { addLog(`✅ 已发送："${m.item.text}"`); renderOutbox(); }
+      if (m.type === 'sync-done') addLog('🎉 发件箱已清空');
+    });
+
+    // 降级路径：online 时提醒 SW flush
+    addEventListener('online', async () => {
+      const reg = await navigator.serviceWorker.ready;
+      if (!('sync' in reg)) reg.active?.postMessage('manual-flush');
+    });
+
+    const netEl = document.getElementById('net');
+    const renderNet = () => netEl.textContent = '网络：' + (navigator.onLine ? '在线 🌐' : '离线 📴');
+    renderNet(); addEventListener('online', renderNet); addEventListener('offline', renderNet);
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').then(renderOutbox);
+  </script>
+</body>
+</html>

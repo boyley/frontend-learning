@@ -1,0 +1,13 @@
+{
+  "name": "electron-intro-demo",
+  "version": "1.0.0",
+  "description": "Electron 进程模型入门 demo",
+  "//": "main 指向主进程入口；npm start 用 electron 启动",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

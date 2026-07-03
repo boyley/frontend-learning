@@ -1,0 +1,15 @@
+{
+  "name": "10-coverage-tdd-ci",
+  "version": "1.0.0",
+  "private": true,
+  "description": "覆盖率 + TDD 红-绿-重构 + CI 集成",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "ci": "jest --ci --coverage --runInBand"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0"
+  }
+}

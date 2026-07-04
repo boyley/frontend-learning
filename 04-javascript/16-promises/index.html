@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>16 · Promise</title>
+    <title>16 · Promise 完全指南</title>
     <style>
       body {
         font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-        max-width: 860px;
+        max-width: 900px;
         margin: 0 auto;
         padding: 24px;
         line-height: 1.7;
@@ -25,6 +25,19 @@
         border-radius: 4px;
         margin: 16px 0;
       }
+      .sections {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 12px 0;
+      }
+      .sections span {
+        background: #e8e8e8;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        color: #444;
+      }
       pre#output {
         background: #1e1e1e;
         color: #d4d4d4;
@@ -33,18 +46,44 @@
         overflow-x: auto;
         font-size: 13px;
         line-height: 1.5;
+        max-height: 70vh;
+        overflow-y: auto;
       }
+      hr { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
     </style>
   </head>
   <body>
-    <h1>16 · Promise</h1>
+    <h1>16 · Promise 完全指南</h1>
+
     <p>
-      演示 <code>Promise</code> 三态（pending / fulfilled / rejected）、
-      <code>then/catch/finally</code>、链式调用，以及
-      <code>Promise.all / race / allSettled / any</code>。
+      演示 <code>Promise</code> 三态、<code>then/catch/finally</code>、
+      链式调用、静态方法全集、<strong>微任务执行顺序</strong>、
+      then 返回值三形态、then 二参 vs catch 区别、thenable 拆箱、
+      错误恢复模式，以及 <strong>5 种实战模式</strong>（超时 / 重试 /
+      并发限制 / AbortController / 轮询）。
     </p>
-    <p class="tip">💡 打开浏览器控制台（F12）查看完整输出，下方也会展示关键结果。</p>
+
+    <div class="sections">
+      <span>三态</span><span>链式</span><span>静态方法</span>
+      <span>微任务</span><span>返回值形态</span><span>catch 区别</span>
+      <span>thenable</span><span>错误恢复</span><span>实战</span>
+      <span>async/await 等价</span><span>常见坑</span>
+    </div>
+
+    <p class="tip">
+      💡 打开浏览器控制台（F12 → Console）查看完整输出，
+      下方也会展示关键结果。<br>
+      执行顺序相关小节（微任务 / 链式 / 错误传播）尤其建议看控制台。
+    </p>
+
     <pre id="output">正在加载…</pre>
+
+    <hr>
+    <p style="color:#888; font-size:13px">
+      ⚡ 同步代码 → 微任务(Promise.then) → 宏任务(setTimeout)。
+      理解这个顺序就理解了半个 JS 异步。
+    </p>
+
     <script src="demo.js"></script>
   </body>
 </html>

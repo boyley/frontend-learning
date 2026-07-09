@@ -31,15 +31,15 @@ Node.js 的约定：回调**第一个参数固定是 `error`**，成功时为 `n
 
 ```mermaid
 sequenceDiagram
-    participant Stack as 调用栈(同步)
+    participant Stack as 调用栈
     participant Queue as 任务队列
-    participant Loop as 事件循环
+    participant EventLoop as 事件循环
     Stack->>Stack: forEach 同步回调立即执行
     Stack->>Queue: setTimeout 把回调登记进队列
     Stack->>Stack: 继续执行剩余同步代码
-    Note over Stack: 同步代码全部执行完，栈清空
-    Loop->>Queue: 取出排队的异步回调
-    Queue-->>Stack: 放回栈中执行
+    Note over Stack: 同步代码执行完，栈清空
+    EventLoop->>Queue: 取出排队的异步回调
+    Queue->>Stack: 放回栈中执行
 ```
 
 回调地狱的嵌套结构（层层向右缩进）：
